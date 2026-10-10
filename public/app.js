@@ -125,7 +125,21 @@ const submission = (t) => indexMaps.submissions.get(t.id);
 const pending = () => S.tasks.filter((t) => !submission(t) && !t.closed);
 const unread = () =>
   S.messages.filter((m) => m.recipient === S.me.id && !m.read).length;
-const can = (permission) => !!S?.me.permissions?.includes(permission);
+const can = (permission) => {
+  const module = {
+    "grades.manage": "grades",
+    "materials.manage": "materials",
+    "attendance.manage": "attendance",
+    "events.manage": "calendar",
+    "teaching.customize": "studio",
+    "messages.use": "messages",
+    "wall.participate": "wall",
+  }[permission];
+  return (
+    !!S?.me.permissions?.includes(permission) &&
+    (!module || moduleEnabled(module))
+  );
+};
 const staff = () => can("assignments.manage");
 const csrf = () =>
   decodeURIComponent(
@@ -295,6 +309,9 @@ function heroArt() {
   return `<div class="hero-art"><div class="art-star">${art("spark", 45)}</div><div class="book"></div><div class="art-flower">${art("flower", 85)}</div><div class="sticker">stay<br>curious ✦</div><div class="art-small">${art("spark", 28)}</div></div>`;
 }
 function brand() {
+  const i = institutionData();
+  if (i.logo || i.short_name !== "luma")
+    return `<div class="brand institution-brand">${i.logo ? `<img src="${esc(i.logo)}" alt="Logo de ${esc(i.name)}">` : art("flower", 38)}<div>${esc(i.short_name)}<small>CAMPUS</small></div></div>`;
   return `<div class="brand">${art("flower", 38)}<div>luma<span style="font-weight:400">.</span><small>CAMPUS</small></div></div>`;
 }
 function loginPage() {
@@ -303,8 +320,10 @@ function loginPage() {
   S = null;
   lastETag = "";
   clearDirty();
+  applyAppearance();
+  document.title = institutionData().name + " · Acceso";
   $("#app").innerHTML =
-    `<main class="login"><section class="login-art">${brand()}<div><div class="eyebrow">TU ESCUELA. TU MUNDO.</div><h1>Un lugar para<br>aprender y <em>florecer.</em></h1><p>De casa al aula, y del aula a tus sueños.<br>Todo lo que necesitas, cerquita de ti.</p></div>${heroArt()}<div class="login-bottom">Hecho para conectar personas e ideas. ✦ Luma Campus</div></section><section class="login-form-area"><div class="login-box"><div class="eyebrow">QUÉ BONITO TENERTE AQUÍ</div><h2>Bienvenido a tu campus 🌷</h2><p>Entra y descubre lo que te espera hoy.</p><form id="login-form"><div class="login-error" role="alert"></div><div class="form-field"><label for="email">Correo electrónico</label><input id="email" name="email" type="email" placeholder="tu.nombre@colegio.edu" required autocomplete="username"></div><div class="form-field"><label for="password">Contraseña</label><div class="password-wrap"><input id="password" name="password" type="password" placeholder="Tu contraseña" required autocomplete="current-password"><button type="button" id="toggle-password" aria-label="Mostrar contraseña">Mostrar</button></div></div><button class="btn primary" type="submit">Entrar a mi campus ${icon("arrow", 15)}</button></form><div class="demo-divider">EXPLORA EL CAMPUS DE DEMOSTRACIÓN</div><div class="demo-roles"><button class="demo-role" data-demo="student">${icon("book", 22)}Estudiante</button><button class="demo-role" data-demo="teacher">${icon("class", 22)}Profesor</button><button class="demo-role" data-demo="admin">${icon("shield", 22)}Administrador</button></div><p class="demo-caption">Las cuentas de prueba te permiten explorar los tres roles con datos de ejemplo. Tus cambios se guardan en esta instalación.</p></div></section></main>`;
+    `<main class="login"><section class="login-art">${brand()}<div><div class="eyebrow">TU ESCUELA. TU MUNDO.</div><h1>Un lugar para<br>aprender y <em>florecer.</em></h1><p>De casa al aula, y del aula a tus sueños.<br>Todo lo que necesitas, cerquita de ti.</p></div>${heroArt()}<div class="login-bottom">Hecho para conectar personas e ideas. ✦ Luma Campus</div></section><section class="login-form-area"><div class="login-box"><div class="eyebrow">QUÉ BONITO TENERTE AQUÍ</div><h2>Bienvenido a tu campus 🌷</h2><p>${esc(institutionData().name)} · ${esc(institutionData().motto)}</p><form id="login-form"><div class="login-error" role="alert"></div><div class="form-field"><label for="email">Correo electrónico</label><input id="email" name="email" type="email" placeholder="tu.nombre@colegio.edu" required autocomplete="username"></div><div class="form-field"><label for="password">Contraseña</label><div class="password-wrap"><input id="password" name="password" type="password" placeholder="Tu contraseña" required autocomplete="current-password"><button type="button" id="toggle-password" aria-label="Mostrar contraseña">Mostrar</button></div></div><button class="btn primary" type="submit">Entrar a mi campus ${icon("arrow", 15)}</button></form><div class="demo-divider">EXPLORA EL CAMPUS DE DEMOSTRACIÓN</div><div class="demo-roles"><button class="demo-role" data-demo="student">${icon("book", 22)}Estudiante</button><button class="demo-role" data-demo="teacher">${icon("class", 22)}Profesor</button><button class="demo-role" data-demo="admin">${icon("shield", 22)}Administrador</button></div><p class="demo-caption">Las cuentas de prueba te permiten explorar los tres roles con datos de ejemplo. Tus cambios se guardan en esta instalación.</p></div></section></main>`;
   $("#toggle-password").onclick = () => {
     const input = $("#password"),
       b = $("#toggle-password");
@@ -353,6 +372,8 @@ async function signIn(data, b) {
   }
 }
 function navButton(id, label, name) {
+  if (!moduleEnabled(id)) return "";
+  label = esc(moduleLabel(id, label));
   return `<button data-view="${id}" class="${view === id ? "active" : ""}">${icon(name)}${label}${id === "messages" && unread() ? `<span class="count">${unread()}</span>` : ""}${id === "tasks" && S.me.role === "student" ? `<span class="count">${pending().length}</span>` : ""}</button>`;
 }
 function render(options = {}) {
@@ -363,7 +384,16 @@ function render(options = {}) {
     pollTimer = setTimeout(poll, view === "messages" ? 6000 : 20000);
   }
   reindex();
+  publicInstitution = S.institution;
+  if (!moduleEnabled(view)) view = "home";
+  const tabModule = {
+    resources: "materials",
+    wall: "wall",
+    attendance: "attendance",
+  }[tab];
+  if (tabModule && !moduleEnabled(tabModule)) tab = "work";
   applyAppearance();
+  if (currentCourse && !course(currentCourse)) currentCourse = null;
   const oldScroll = window.scrollY,
     active = document.activeElement,
     focusKey = active?.id || (active?.name ? `[name="${active.name}"]` : null),
@@ -386,11 +416,13 @@ function render(options = {}) {
     search: "Buscar",
   };
   $("#app").innerHTML =
-    `<div class="shell"><button class="sidebar-scrim ${menuOpen ? "open" : ""}" aria-label="Cerrar menú" data-action="menu"></button><aside class="sidebar ${menuOpen ? "open" : ""}">${brand()}<div class="school-pill">${icon("class", 20)}<div>Colegio Las Jacarandas<span>Curso lectivo · ${new Date().getFullYear()}</span></div></div><div class="nav-label">MI CAMPUS</div><nav class="nav">${navButton("home", "Mi inicio", "home")}${navButton("classroom", "Classroom", "class")}${can("teaching.customize") ? navButton("studio", "Mi estudio", "flower") : ""}${navButton("tasks", staff() ? "Actividades" : "Mis tareas", "task")}${navButton("messages", "Mensajería", "message")}${navButton("calendar", "Calendario", "calendar")}${navButton("grades", "Calificaciones", "chart")}${S.me.role === "admin" ? navButton("admin", "Administración", "users") : ""}</nav><div class="sidebar-bottom"><div class="little-note"><span class="sparkle">✧</span>${art("flower", 32)}<strong>A tu ritmo, a tu manera.</strong>Cada pequeño paso también<br>cuenta. Sigue floreciendo.</div><button class="side-profile" data-view="profile" style="background:none;width:100%;text-align:left">${avatar(S.me)}<div><strong>${esc(S.me.name)}</strong><small>${roleNames[S.me.role]} · Luma Campus</small></div>${icon("chevron", 13)}</button></div></aside><main class="main"><header class="topbar"><button class="icon-btn mobile-toggle" data-action="menu" aria-label="Abrir menú">${icon("menu")}</button><div class="breadcrumb">Mi campus ${icon("chevron", 11)} <strong>${labels[view] || "Mi inicio"}</strong></div><div class="top-actions"><form class="search" id="search-form">${icon("search", 15)}<input name="q" placeholder="Busca en tu campus..." aria-label="Buscar" value="${esc(searchQuery)}"><span style="font-size:9px">↵</span></form><button class="icon-btn" data-action="notifications" aria-label="Notificaciones">${icon("bell", 17)}${notificationItems().length ? '<span class="dot"></span>' : ""}</button><button class="icon-btn" data-view="profile" aria-label="Mi perfil" style="border:0">${avatar(S.me)}</button></div></header>${S.me.email.endsWith("@luma.demo") ? `<div class="demo-banner"><span>✦ Campus de demostración · ${roleNames[S.me.role]} · Datos de ejemplo</span><button data-action="logout">Cambiar de cuenta</button></div>` : ""}<div class="content" id="main-content" tabindex="-1">${renderContent()}<footer class="footer"><span>Un lugar para aprender, conectar y crecer. ✦</span><span class="sync-state ${syncStatus}">${syncStatus === "offline" ? "Sin conexión" : "Campus al día"}</span><span>Luma Campus · ${new Date().getFullYear()}</span></footer></div></main></div>`;
+    `<div class="shell"><button class="sidebar-scrim ${menuOpen ? "open" : ""}" aria-label="Cerrar menú" data-action="menu"></button><aside class="sidebar ${menuOpen ? "open" : ""}">${brand()}<div class="school-pill">${icon("class", 20)}<div>${esc(institutionData().name)}<span>Curso lectivo · ${esc(institutionData().year)}</span></div></div><div class="nav-label">MI CAMPUS</div><nav class="nav">${navButton("home", "Mi inicio", "home")}${navButton("classroom", "Classroom", "class")}${can("teaching.customize") ? navButton("studio", "Mi estudio", "flower") : ""}${navButton("tasks", staff() ? "Actividades" : "Mis tareas", "task")}${navButton("messages", "Mensajería", "message")}${navButton("calendar", "Calendario", "calendar")}${navButton("grades", "Calificaciones", "chart")}${S.me.role === "admin" ? navButton("admin", "Administración", "users") : ""}</nav><div class="sidebar-bottom"><div class="little-note"><span class="sparkle">✧</span>${art("flower", 32)}<strong>A tu ritmo, a tu manera.</strong>Cada pequeño paso también<br>cuenta. Sigue floreciendo.</div><button class="side-profile" data-view="profile" style="background:none;width:100%;text-align:left">${avatar(S.me)}<div><strong>${esc(S.me.name)}</strong><small>${roleNames[S.me.role]} · Luma Campus</small></div>${icon("chevron", 13)}</button></div></aside><main class="main"><header class="topbar"><button class="icon-btn mobile-toggle" data-action="menu" aria-label="Abrir menú">${icon("menu")}</button><div class="breadcrumb">Mi campus ${icon("chevron", 11)} <strong>${labels[view] || "Mi inicio"}</strong></div><div class="top-actions"><form class="search" id="search-form">${icon("search", 15)}<input name="q" placeholder="Busca en tu campus..." aria-label="Buscar" value="${esc(searchQuery)}"><span style="font-size:9px">↵</span></form><button class="icon-btn" data-action="notifications" aria-label="Notificaciones">${icon("bell", 17)}${notificationItems().length ? '<span class="dot"></span>' : ""}</button><button class="icon-btn" data-view="profile" aria-label="Mi perfil" style="border:0">${avatar(S.me)}</button></div></header>${S.me.email.endsWith("@luma.demo") ? `<div class="demo-banner"><span>✦ Campus de demostración · ${roleNames[S.me.role]} · Datos de ejemplo</span><button data-action="logout">Cambiar de cuenta</button></div>` : ""}<div class="content" id="main-content" tabindex="-1">${renderContent()}<footer class="footer"><span>Un lugar para aprender, conectar y crecer. ✦</span><span class="sync-state ${syncStatus}">${syncStatus === "offline" ? "Sin conexión" : "Campus al día"}</span><span>Luma Campus · ${new Date().getFullYear()}</span></footer></div></main></div>`;
   bind();
   bindEnhanced();
   bindTeaching();
-  document.title = (labels[view] || "Mi inicio") + " · Luma Campus";
+  bindAdministration();
+  document.title =
+    (labels[view] || "Mi inicio") + " · " + institutionData().name;
   syncRoute();
   if (view === "messages")
     $(".chat-body")?.scrollTo(
@@ -473,7 +505,7 @@ function home() {
       )
     : pending();
   if (staff() && !list.length) list = S.tasks;
-  return `${heading(`Hola, ${esc(S.me.name.split(" ")[0])} <span style="font-size:24px">✳</span>`, "Un nuevo día, un montón de posibilidades. ¡Vamos a hacerlo bonito!")}<section class="hero"><div class="hero-copy"><span class="mini-tag">✦ ESTE ES TU ESPACIO</span><h2>Pequeños pasos.<br><em>Grandes descubrimientos.</em></h2><p>Tu próxima idea favorita puede estar a una clase de distancia.</p><button class="btn primary" data-view="classroom">Vamos a mis aulas ${icon("arrow", 14)}</button></div>${heroArt()}</section>${stats()}${dashboardActions()}<div class="dashboard-grid"><div><div class="section-head"><h2>Mis aulas <small>Un mundo por descubrir</small></h2><button class="link-btn" data-view="classroom">Ver todas ${icon("arrow", 12)}</button></div><div class="courses-grid">${
+  return `${heading(`Hola, ${esc(S.me.name.split(" ")[0])} <span style="font-size:24px">✳</span>`, "Un nuevo día, un montón de posibilidades. ¡Vamos a hacerlo bonito!")}<section class="hero"><div class="hero-copy"><span class="mini-tag">✦ ESTE ES TU ESPACIO</span><h2>Pequeños pasos.<br><em>Grandes descubrimientos.</em></h2><p>Tu próxima idea favorita puede estar a una clase de distancia.</p><button class="btn primary" data-view="classroom">Vamos a mis aulas ${icon("arrow", 14)}</button></div>${heroArt()}</section>${institutionSections()}${stats()}${dashboardActions()}<div class="dashboard-grid"><div><div class="section-head"><h2>Mis aulas <small>Un mundo por descubrir</small></h2><button class="link-btn" data-view="classroom">Ver todas ${icon("arrow", 12)}</button></div><div class="courses-grid">${
     sortedCourses()
       .slice(0, 6)
       .map((c) => courseCard(c))
@@ -505,9 +537,16 @@ function classroom() {
       ["people", "Personas"],
       ["attendance", "Asistencia"],
     ]
+      .filter(([id]) =>
+        moduleEnabled(
+          { resources: "materials", wall: "wall", attendance: "attendance" }[
+            id
+          ] || id,
+        ),
+      )
       .map(
         ([id, name]) =>
-          `<button role="tab" aria-selected="${tab === id}" data-tab="${id}" class="${tab === id ? "active" : ""}">${name}</button>`,
+          `<button role="tab" aria-selected="${tab === id}" data-tab="${id}" class="${tab === id ? "active" : ""}">${esc(moduleLabel({ resources: "materials", wall: "wall", attendance: "attendance", work: "tasks" }[id] || id, name))}</button>`,
       )
       .join("")}</div>${classTab(c)}`;
   }
@@ -528,6 +567,10 @@ function classroom() {
   }</div>`;
 }
 function classTab(c) {
+  if (c.archived && tab === "wall")
+    return empty(
+      "Materia archivada: sus publicaciones y datos se conservan. Restaura la materia desde Administración para continuar.",
+    );
   if (tab === "wall")
     return `<div class="feed"><form id="post-form" class="panel composer">${avatar(S.me)}<textarea name="body" placeholder="Comparte una idea o una pregunta con tu aula..." aria-label="Publicación" required maxlength="4000"></textarea><button class="btn primary">Publicar ${icon("send", 13)}</button></form>${S.posts
       .filter((p) => p.course === c.id)
@@ -673,7 +716,7 @@ function messages() {
         (m.sender === S.me.id && m.recipient === thread) ||
         (m.recipient === S.me.id && m.sender === thread),
     );
-  return `${heading("Conversaciones que conectan 💬", "Tu comunidad, a un mensaje de distancia.")}<div class="messages-layout"><aside class="threads"><div class="thread-heading"><h3>Personas de tu campus</h3><input id="thread-search" value="${esc(threadQuery)}" placeholder="Buscar persona…" aria-label="Buscar conversación"></div>${list.map((p) => `<button class="thread ${p.id === thread ? "active" : ""}" data-thread="${p.id}">${avatar(p)}<div><strong>${esc(p.name)}</strong><p>${esc(last.get(p.id)?.body || roleNames[p.role])}</p></div>${counts.get(p.id) ? `<span class="count">${counts.get(p.id)}</span>` : ""}</button>`).join("") || '<p class="thread-empty">No encontramos esa persona.</p>'}</aside><section class="chat">${p ? `<div class="chat-head">${avatar(p)}<div><strong>${esc(p.name)}</strong><small>${roleNames[p.role]} · Colegio Las Jacarandas</small></div></div><div class="chat-body">${chat.map(messageBubble).join("") || empty("Una conversación puede empezar con un simple hola. ✦")}</div><form class="chat-form" id="message-form"><input name="body" placeholder="Escribe algo bonito…" required maxlength="4000" aria-label="Mensaje" autocomplete="off"><button class="btn primary" aria-label="Enviar mensaje">${icon("send", 18)}</button></form>` : empty("No hay destinatarios disponibles.")}</section></div>`;
+  return `${heading("Conversaciones que conectan 💬", "Tu comunidad, a un mensaje de distancia.")}<div class="messages-layout"><aside class="threads"><div class="thread-heading"><h3>Personas de tu campus</h3><input id="thread-search" value="${esc(threadQuery)}" placeholder="Buscar persona…" aria-label="Buscar conversación"></div>${list.map((p) => `<button class="thread ${p.id === thread ? "active" : ""}" data-thread="${p.id}">${avatar(p)}<div><strong>${esc(p.name)}</strong><p>${esc(last.get(p.id)?.body || roleNames[p.role])}</p></div>${counts.get(p.id) ? `<span class="count">${counts.get(p.id)}</span>` : ""}</button>`).join("") || '<p class="thread-empty">No encontramos esa persona.</p>'}</aside><section class="chat">${p ? `<div class="chat-head">${avatar(p)}<div><strong>${esc(p.name)}</strong><small>${roleNames[p.role]} · ${esc(institutionData().name)}</small></div></div><div class="chat-body">${chat.map(messageBubble).join("") || empty("Una conversación puede empezar con un simple hola. ✦")}</div><form class="chat-form" id="message-form"><input name="body" placeholder="Escribe algo bonito…" required maxlength="4000" aria-label="Mensaje" autocomplete="off"><button class="btn primary" aria-label="Enviar mensaje">${icon("send", 18)}</button></form>` : empty("No hay destinatarios disponibles.")}</section></div>`;
 }
 function messageBubble(m) {
   return `<div class="bubble ${m.sender === S.me.id ? "mine" : ""}">${esc(m.body)}<small>${dateFormat(m.created)} · ${new Date(m.created).toLocaleTimeString("es-CR", { timeZone: "America/Costa_Rica", hour: "2-digit", minute: "2-digit" })}${m.sender === S.me.id ? ` · ${m.read ? "Leído ✓✓" : "Enviado ✓"}` : ""}</small></div>`;
@@ -727,7 +770,7 @@ function grades() {
   }</tbody></table></div>`;
 }
 function profile() {
-  return `${heading("Tu espacio, tu esencia 🌷", "Cuéntale a tu campus un poquito más de ti.")}${teacherProfileCard()}<div class="profile-layout"><aside class="panel profile-card">${avatar(S.me, true)}<h2>${esc(S.me.name)}</h2><span class="badge">${roleNames[S.me.role]}</span><p>${esc(S.me.bio)}</p><p>${esc(S.me.email)}</p><div class="progress"><i style="width:100%"></i></div><p>Parte de nuestra comunidad ✦</p><button class="btn" data-action="logout">${icon("logout", 15)} Cerrar sesión</button></aside><section class="panel"><div class="section-head"><h2>Información personal</h2>${icon("profile", 20)}</div><form id="profile-form"><div class="form-grid"><div class="form-field"><label for="profile-name">Nombre completo</label><input id="profile-name" name="name" value="${esc(S.me.name)}" required maxlength="100"></div><div class="form-field"><label for="profile-email">Correo electrónico</label><input id="profile-email" value="${esc(S.me.email)}" readonly style="background:#f5f2ee"></div><div class="form-field"><label for="profile-phone">Teléfono</label><input id="profile-phone" name="phone" value="${esc(S.me.phone)}" placeholder="Tu número de contacto" maxlength="40"></div><div class="form-field"><label>Mi rol en el campus</label><input value="${roleNames[S.me.role]}" readonly style="background:#f5f2ee"></div>${select(
+  return `${heading("Tu espacio, tu esencia 🌷", "Cuéntale a tu campus un poquito más de ti.")}${adminProfileCard()}${moduleEnabled("studio") ? teacherProfileCard() : ""}<div class="profile-layout"><aside class="panel profile-card">${avatar(S.me, true)}<h2>${esc(S.me.name)}</h2><span class="badge">${roleNames[S.me.role]}</span><p>${esc(S.me.bio)}</p><p>${esc(S.me.email)}</p><div class="progress"><i style="width:100%"></i></div><p>Parte de nuestra comunidad ✦</p><button class="btn" data-action="logout">${icon("logout", 15)} Cerrar sesión</button></aside><section class="panel"><div class="section-head"><h2>Información personal</h2>${icon("profile", 20)}</div><form id="profile-form"><div class="form-grid"><div class="form-field"><label for="profile-name">Nombre completo</label><input id="profile-name" name="name" value="${esc(S.me.name)}" required maxlength="100"></div><div class="form-field"><label for="profile-email">Correo electrónico</label><input id="profile-email" value="${esc(S.me.email)}" readonly style="background:#f5f2ee"></div><div class="form-field"><label for="profile-phone">Teléfono</label><input id="profile-phone" name="phone" value="${esc(S.me.phone)}" placeholder="Tu número de contacto" maxlength="40"></div><div class="form-field"><label>Mi rol en el campus</label><input value="${roleNames[S.me.role]}" readonly style="background:#f5f2ee"></div>${select(
     "color",
     "Color de mi perfil",
     [
@@ -742,17 +785,9 @@ function profile() {
   )}<div class="form-field full"><label for="profile-bio">Un poquito sobre mí</label><textarea id="profile-bio" name="bio" maxlength="1000">${esc(S.me.bio)}</textarea></div></div><div class="form-actions"><button class="btn primary">Guardar mi perfil ${icon("check", 14)}</button></div></form>${profileOptions()}<div style="border-top:1px solid var(--line);margin-top:25px;padding-top:22px;display:flex;justify-content:space-between;align-items:center"><div><h3 style="font-size:12px">Seguridad de tu cuenta</h3><p class="muted" style="font-size:10px;margin-top:5px">Actualiza tu contraseña cuando lo necesites.</p></div><button class="btn small" data-action="password">Cambiar contraseña</button></div><button class="link-btn" data-action="logout" style="margin-top:25px">${icon("logout", 14)} Cerrar sesión</button></section></div>`;
 }
 function admin() {
-  if (S.me.role !== "admin")
-    return empty("Esta área corresponde a administración.");
-  return `${heading("Un campus bien acompañado ✦", "Gestiona las personas, las aulas y las conexiones de tu colegio.", '<button class="btn primary" data-action="new-user">' + icon("plus", 14) + " Nueva persona</button>")}${stats()}<div class="section-head"><h2>Personas del campus <small>${S.people.length} miembros</small></h2><button class="btn small" data-action="new-course">${icon("plus", 13)} Crear aula</button></div>${peopleToolbar()}<div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Aulas</th><th>Acciones</th></tr></thead><tbody>${filteredPeople()
-    .map(
-      (p) =>
-        `<tr><td>${avatar(p)}${esc(p.name)}</td><td>${esc(p.email)}</td><td><span class="badge">${roleNames[p.role]}</span></td><td>${S.courses.filter((c) => c.teacher === p.id || c.students.includes(p.id)).length}</td><td>${p.id !== S.me.id ? `<button class="link-btn" data-message-to="${p.id}">${icon("message", 14)} Escribir</button>` : "Tú"}<button class="link-btn" data-edit-user="${p.id}" style="margin-left:12px">Editar</button></td></tr>`,
-    )
-    .join(
-      "",
-    )}</tbody></table></div><div class="section-head" style="margin-top:28px"><h2>Aulas y matrículas</h2></div><div class="courses-grid">${S.courses.map((c) => courseCard(c)).join("")}</div>`;
+  return adminWorkspace();
 }
+
 function search() {
   let q = searchQuery.toLocaleLowerCase(),
     cs = S.courses.filter((c) =>
@@ -779,7 +814,7 @@ function courseSelect() {
   return select(
     "course",
     "Aula",
-    S.courses.map((c) => [c.id, c.title]),
+    S.courses.filter((c) => !c.archived).map((c) => [c.id, c.title]),
     currentCourse,
   );
 }
@@ -1094,6 +1129,18 @@ function openTask(id) {
     );
     if (t.rubric?.criteria || t.fields?.length)
       $(".modal").classList.add("rubric-review");
+    if (!moduleEnabled("grades") || c.archived)
+      $$(".grade-form").forEach((form) =>
+        form.replaceWith(
+          Object.assign(document.createElement("p"), {
+            className: "form-help",
+            textContent: c.archived
+              ? "Materia archivada. Restaura para modificar su contenido."
+              : "La revisión de calificaciones está desactivada por la institución.",
+          }),
+        ),
+      );
+    if (c.archived) $(".activity-management").hidden = true;
     $("[data-editor-task]").onclick = () => editTask(id);
     $("#toggle-task").onclick = async (e) => {
       const b = e.currentTarget;
@@ -1182,6 +1229,8 @@ function openEvent(id) {
 }
 
 async function selectThread(id) {
+  if (!moduleEnabled("messages"))
+    return toast("La mensajería está desactivada por la institución.");
   if (!canNavigate()) return;
   thread = +id;
   view = "messages";
@@ -1575,11 +1624,13 @@ function normalize(value) {
 }
 function sortedCourses() {
   const favorites = S.me.preferences?.favorites || [];
-  return [...S.courses].sort(
-    (a, b) =>
-      Number(favorites.includes(b.id)) - Number(favorites.includes(a.id)) ||
-      a.title.localeCompare(b.title, "es"),
-  );
+  return S.courses
+    .filter((c) => !c.archived)
+    .sort(
+      (a, b) =>
+        Number(favorites.includes(b.id)) - Number(favorites.includes(a.id)) ||
+        a.title.localeCompare(b.title, "es"),
+    );
 }
 function dueLabel(d) {
   const days = Math.round(
@@ -2061,6 +2112,7 @@ async function poll() {
 }
 async function bootstrap() {
   try {
+    publicInstitution = await api("institution", null, "GET");
     S = await api("state", null, "GET");
     reindex();
     readRoute();
@@ -2142,6 +2194,12 @@ function roleScope() {
 }
 function guardForm(path) {
   const permission = {
+    institution: "institution.manage",
+    "institution-logo": "institution.manage",
+    "membership-bulk": "membership.manage",
+    "teacher-assign": "courses.manage",
+    "user-details": "users.manage",
+    "user-role": "users.manage",
     "teaching-template": "teaching.customize",
     "teaching-template-edit": "teaching.customize",
     "teaching-preferences": "teaching.customize",
@@ -2173,6 +2231,20 @@ function editorSection(number, title, description, fields) {
 function formMeta(path) {
   const type = path.split("-")[0];
   const map = {
+    institution: [
+      "Institución",
+      "flower",
+      "Publica la identidad y los apartados que representan a toda tu comunidad.",
+      "Identidad institucional",
+      "Publicar cambios",
+    ],
+    teacher: [
+      "Asignación docente",
+      "profile",
+      "El responsable gestiona las materias seleccionadas sin modificar sus matrículas.",
+      "Aulas y profesores",
+      "Guardar asignación",
+    ],
     teaching: [
       "Herramienta docente",
       "flower",
@@ -2492,12 +2564,22 @@ function openAppearance() {
 }
 function applyAppearance() {
   const a = S?.me.preferences?.appearance || {};
-  document.body.dataset.accent = a.accent || "purple";
+  document.body.dataset.accent = a.accent || "institution";
+  document.body.style.setProperty(
+    "--institution-primary",
+    institutionData().primary,
+  );
+  document.body.style.setProperty(
+    "--institution-secondary",
+    institutionData().secondary,
+  );
   document.body.dataset.density = a.density || "comfortable";
   document.body.classList.toggle("reduce-motion", !!a.reduce_motion);
 }
 function openPermissions() {
   const rows = [
+    ["Identidad, logo y módulos institucionales", "No", "No", "Sí"],
+    ["Desactivar cuentas y archivar materias", "No", "No", "Sí"],
     ["Crear y editar materias", "No", "No", "Sí"],
     ["Crear cuentas y matricular", "No", "No", "Sí"],
     [

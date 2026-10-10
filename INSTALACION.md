@@ -179,3 +179,32 @@ Ejemplo de cálculo: una rúbrica de 12 puntos con un resultado de 6 se conviert
 Las plantillas pertenecen a su autor, incluso frente a otras cuentas administrativas. Cada actividad guarda su propia copia: editar o borrar la plantilla no cambia evaluaciones existentes. Una vez que hay borradores o entregas, los campos y la rúbrica de la actividad se conservan. El estudiante no administra estas herramientas.
 
 La actualización se realiza con los comandos de la sección 9. La migración 0004 conserva usuarios, aulas, entregas y notas anteriores.
+
+
+## 12. Centro de administración institucional
+
+Entra con una cuenta de administrador y abre **Administración**, o **Mi perfil → Abrir centro de gestión**. En la demostración puedes usar `admin@luma.demo` con `LumaDemo2026!`.
+
+1. **Vista general:** consulta estudiantes, profesores, materias activas, matrículas y pendientes como estudiantes sin aula o profesores sin asignación.
+2. **Identidad:** cambia nombre completo, nombre corto, lema, período y colores. La vista previa permite comprobar la marca antes de publicar. Usa un principal oscuro, por ejemplo `#335d89`; el servidor exige contraste legible con blanco. Sube un logo **PNG de hasta 2 MB y 2048 × 2048 píxeles**. La identidad se aplica al acceso, navegación y acento por defecto; las preferencias personales de color se conservan.
+3. **Materias:** crea o personaliza título, código único, descripción, ilustración, color, grupo, horario y profesor. Reasigna varias materias a un profesor activo. Archivar retira la materia de las aulas activas de profesores y estudiantes; restaurarla recupera su acceso, matrículas y contenido académico.
+4. **Personas:** filtra por nombre, correo, identificador, perfil o estado. Crea cuentas; edita datos de acceso; completa fichas de contacto, departamento e identificador. El teléfono solo aparece en su propia cuenta y en la ficha administrativa. Exporta el directorio con **Exportar CSV**.
+5. **Perfil y acceso:** el botón **Perfil** cambia permisos mediante una operación exclusiva de administración. No puedes cambiar tu propio perfil administrativo ni desactivar tu cuenta. Un profesor con materias activas necesita una reasignación previa para cambiar de perfil o desactivarse. Desactivar bloquea también sus sesiones abiertas y conserva registros; reactivar devuelve el acceso con su contraseña actual. Para editar una cuenta inactiva, reactívala primero.
+6. **Matrículas:** selecciona materias y estudiantes, con búsqueda y selección de visibles. **Añadir** conserva las matrículas actuales; **Retirar** quita a los seleccionados; **Reemplazar** deja únicamente a los seleccionados en las materias elegidas. Revisa el resumen de altas y bajas antes de guardar. Las notas y entregas nunca se borran por estas operaciones. Para dejar un aula vacía, retira sus estudiantes mediante la operación Retirar.
+7. **Módulos y apartados:** cambia los nombres visibles y activa/desactiva mensajería, calendario, notas, asistencia, estudio docente, materiales y muro. Inicio, aulas y actividades son esenciales. La gestión administrativa y el perfil propio siempre quedan disponibles. Desactivar conserva datos y bloquea las acciones del módulo en el servidor; reactivarlo permite continuar. Las notas anteriores siguen asociadas a las entregas y se conservan en la base de datos.
+8. **Tarjetas institucionales:** publica hasta seis tarjetas de bienvenida, orientación, biblioteca o familias. Completa título y mensaje; el enlace HTTP/HTTPS es opcional. Deja la tarjeta completamente vacía para retirarla. Estos apartados y la identidad institucional son públicos; no incluyas datos personales en sus textos.
+9. **Historial:** consulta hasta 100 cambios administrativos recientes con actor y fecha. No almacena contraseñas ni mensajes privados.
+
+Para actualizar tu instalación de Linux / Chromebook, detén primero el servidor con **Ctrl+C** y ejecuta:
+
+```bash
+cd ~
+cp -a LumaCampus "LumaCampus-respaldo-$(date +%Y%m%d-%H%M%S)"
+wget -O LumaCampus-actualizacion.zip 'https://raw.githubusercontent.com/gabo899s/educanMEP/luma-campus/downloads/LumaCampus.zip?v=5'
+unzip -o LumaCampus-actualizacion.zip
+cd LumaCampus
+python3 install.py
+python3 run.py
+```
+
+Abre **http://127.0.0.1:8000**. El ZIP conserva `campus.sqlite3`, `uploads/` y `.venv/`; el instalador aplica la migración 0005. Guarda juntos la base y `uploads/` en tus respaldos: allí se almacena también el logo institucional. El paquete continúa sin necesitar Node ni nuevas dependencias Python.

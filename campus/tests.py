@@ -339,7 +339,7 @@ class UpgradePreservesData(TransactionTestCase):
         t=T.objects.create(course_id=c.id,title='Trabajo existente',description='Preservar',due=date.today(),points=100)
         submitted=S.objects.create(task_id=t.id,student_id=student.id,body='Datos originales',grade=98,feedback='Conservar')
         executor=MigrationExecutor(connection)
-        executor.migrate([('campus','0004_draft_answers_submission_answers_and_more')])
+        executor.migrate([('campus','0005_institution_course_archived_profile_department_and_more')])
         self.assertEqual(Submission.objects.get(id=submitted.id).grade,98)
         self.assertEqual(Submission.objects.get(id=submitted.id).body,'Datos originales')
         self.assertTrue(Course.objects.get(id=c.id).students.filter(id=student.id).exists())

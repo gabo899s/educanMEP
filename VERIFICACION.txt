@@ -1,46 +1,49 @@
-LUMA CAMPUS 4 — VERIFICACIÓN
+LUMA CAMPUS 5 — VERIFICACIÓN
 
-Entorno: Linux, Python 3.12, Chromium.
-- 52 pruebas del servidor correctas; incluye migración con datos existentes.
-- Permisos, CSRF, borradores, cierre de tareas, archivos, favoritos,
-  edición, asistencia atómica, privacidad, CSV y ETag/GZip comprobados.
-- Ensayo con 46 aulas: 55 consultas SQL antes, 11 después (80 % menos).
-- Instalación offline desde las cuatro dependencias incluidas.
-- ZIP excluye bases locales, archivos subidos, .venv y secretos.
-- ZIP extraído en una carpeta independiente: instalación, migraciones,
-  pip check y arranque con run.py --port 8016 correctos.
-- Navegador: favoritos, borradores, entregas con archivos, mensajería,
-  perfil, calificación, cierre/reapertura, materiales y filtros.
-- Dos cuentas simultáneas: recepción de mensajes mientras se escribe,
-  conservación del texto y recuperación después de perder conexión.
-- Escritorio 1440 px y móvil 390 px: sin errores JS ni desbordamiento.
+Entorno verificado: Linux, Python 3.12, Django 5.2.18, Chromium.
+- 72 pruebas del servidor correctas, incluidas 20 del centro administrativo.
+- Migración desde 0001 hasta 0005 con usuarios, aulas, matrículas,
+  entregas y nota original conservados.
+- Permisos por perfil y aula, CSRF, privacidad de conversaciones,
+  archivos, borradores, validaciones, asistencia atómica y ETag/GZip.
+- Número de consultas constante al ampliar el catálogo: regresión sin N+1.
+- ZIP extraído en carpeta independiente; instalación offline desde las
+  cuatro dependencias incluidas; pip check y run.py --port 8018 correctos.
+- ZIP sin bases locales, uploads, .venv, .git ni secretos.
 
-La instalación se verifica en Linux. Windows y macOS incluyen lanzadores,
-pero no se han ejecutado en esos sistemas.
+Administración comprobada en servidor y navegador:
+- Nombre, marca corta, lema, período y colores persistentes.
+- Logo PNG con límite, CRC, dimensiones y datos comprimidos validados;
+  subida, lectura pública, reemplazo y retirada.
+- Profesor/estudiante no pueden utilizar las nuevas acciones administrativas.
+- Fichas administrativas sin preferencias privadas; directorio común sin teléfonos.
+- Materias: creación, colores, ilustraciones, horario y profesor responsable.
+- Asignación docente con alcance actualizado, conservando registros académicos.
+- Matrículas por lote: añadir, retirar y reemplazar; validación atómica;
+  conservación de entregas y notas; resumen de impacto en el formulario.
+- Archivo y restauración conservan datos y actualizan las aulas activas.
+- Desactivación/reactivación de cuentas; sesiones abiertas y acceso bloqueados.
+- Profesor con materias activas protegido frente a desactivación/cambio de rol.
+- Cambios de rol exclusivos de administración; sesiones actualizan permisos.
+- Protección del administrador propio y de la permanencia de administración.
+- Módulos desactivados rechazan acciones en servidor; interfaz coherente,
+  reactivación y etiquetas de navegación personalizadas.
+- Tarjetas institucionales en el inicio, enlaces validados y límites.
+- Exportación CSV administrativa con protección frente a fórmulas.
+- Historial con actor, fecha y operación; no registra contraseñas.
+- Dos sesiones: estudiante ve su colegio, sus materias y sus propios registros.
+- Escritorio 1440 px y móvil 390 px: siete áreas administrativas,
+  editor de identidad y matrículas sin errores JS ni desbordamiento horizontal.
 
-Formularios y permisos:
-- Política central por perfil y alcance de aulas, comprobados en servidor.
-- Estudiante: 17 operaciones administrativas/académicas rechazadas.
-- Profesor: catálogo/cuentas/matrículas y aulas ajenas rechazados.
-- La personalización conserva favoritas y no cambia el rol.
-- Formato de entrega, validación de opciones y plazos comprobados.
-- Migración desde 0001 a 0004 conserva los datos de prueba.
-- ZIP nuevo: profesor crea/edita opciones; estudiante entrega el archivo
-  requerido; personalización persiste; administrador crea un aula.
-- Editor móvil 390 px: sin errores JS ni desbordamiento horizontal.
-
-Estudio docente:
-- Biblioteca privada, permisos y aislamiento entre cuentas.
-- Copias de plantillas independientes de las actividades.
-- Validación de rúbricas y cálculo en servidor con redondeo comprobado.
-- Campos con tipos, límites, condiciones y respuestas obligatorias.
-- Borradores estructurados y protección de esquemas con respuestas existentes.
+Estudio docente conservado:
+- Biblioteca privada, copia independiente de plantillas y rúbricas en servidor.
+- Campos tipados, condicionales, límites y borradores estructurados.
 - Preferencias docentes sin perder personalización visual.
-- ZIP extraído: preferencias, creación y asociación de plantillas,
-  borrador recuperado, campos condicionales y entrega estructurada.
-- Rúbrica real: 6/12 convertido a 38/75; banco de comentarios y
-  desglose para el estudiante comprobados en Chromium.
-- Escritorio 1440 px y móvil 390 px sin errores JS ni desbordamiento.
-- Creación manual de un campo numérico con límites y condición.
-- Duplicación, edición y eliminación de plantillas comprobadas en navegador.
-- La vista previa de prueba no bloquea el guardado de la configuración.
+- Esquemas protegidos cuando existen borradores o entregas.
+- Recorrido Chromium: preferencias, plantillas, actividad, campos condicionales,
+  borrador recuperado, entrega, nota 38/75 y desglose para el estudiante.
+
+Los lanzadores de Windows y macOS están incluidos; la ejecución de esta
+versión se ha verificado en Linux. Configuración para una institución
+por instalación. El historial recoge operaciones administrativas del API,
+no cambios directos en la base ni mensajes privados.

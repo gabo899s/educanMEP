@@ -3,9 +3,12 @@ COMMON = {'profile.edit', 'appearance.edit', 'messages.use', 'wall.participate',
 ROLE_PERMISSIONS = {
     'student': COMMON | {'assignments.submit'},
     'teacher': COMMON | {'assignments.manage', 'grades.manage', 'materials.manage', 'attendance.manage', 'events.manage', 'teaching.customize'},
-    'admin': COMMON | {'assignments.manage', 'grades.manage', 'materials.manage', 'attendance.manage', 'events.manage', 'courses.manage', 'users.manage', 'membership.manage', 'teaching.customize'},
+    'admin': COMMON | {'assignments.manage', 'grades.manage', 'materials.manage', 'attendance.manage', 'events.manage', 'courses.manage', 'users.manage', 'membership.manage', 'teaching.customize', 'institution.manage'},
 }
 ACTION_PERMISSIONS = {
+    'institution': 'institution.manage', 'institution-logo': 'institution.manage', 'institution-logo-delete': 'institution.manage',
+    'user-role': 'users.manage', 'user-status': 'users.manage', 'user-details': 'users.manage', 'course-archive': 'courses.manage',
+    'teacher-assign': 'courses.manage', 'membership-bulk': 'membership.manage',
     'teaching-preferences': 'teaching.customize', 'teaching-template': 'teaching.customize', 'teaching-template-edit': 'teaching.customize', 'teaching-template-delete': 'teaching.customize',
     'profile': 'profile.edit', 'password': 'profile.edit', 'appearance': 'appearance.edit',
     'favorite': 'courses.favorite', 'message': 'messages.use', 'read': 'messages.use',

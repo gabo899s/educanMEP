@@ -7,7 +7,7 @@ function teacherProfileCard() {
 function teacherStudio() {
   if (!can("teaching.customize"))
     return empty("Este espacio corresponde al equipo docente.");
-  const templates = S.teaching_templates || [],
+  const templates = moduleEnabled("studio") ? S.teaching_templates || [] : [],
     rubrics = templates.filter((t) => t.kind === "rubric"),
     fields = templates.filter((t) => t.kind === "fields"),
     review = S.submissions.filter((s) => s.grade == null),
@@ -419,7 +419,7 @@ function updateTeachingPreview() {
   }
 }
 function teachingTaskOptions(t) {
-  const templates = S.teaching_templates || [],
+  const templates = moduleEnabled("studio") ? S.teaching_templates || [] : [],
     locked = t?.configuration_locked;
   return (
     editorSection(

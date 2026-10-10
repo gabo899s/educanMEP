@@ -20,7 +20,7 @@ El primer arranque instala automáticamente las dependencias incluidas, prepara 
 
 No necesitas Node.js ni una base de datos externa. Los paquetes de instalación están en `vendor/wheels/`; no se descargan de Internet. Las instrucciones completas, las cuentas y la solución de problemas están en **INSTALACION.md**.
 
-## Espacio docente — Luma Campus 4
+## Espacio docente — Luma Campus 5
 
 - **Mi perfil → Abrir mi estudio** y **Mi estudio** reúnen aulas, revisiones pendientes y biblioteca privada de herramientas.
 - Rúbricas reutilizables: hasta 10 criterios, con 2 a 5 niveles de logro, descripciones y puntos distintos. Cada criterio incluye 0 puntos. La nota se calcula en el servidor y se ajusta a los puntos de la actividad; incluye comentarios por criterio y desglose visible para el estudiante.
@@ -88,7 +88,7 @@ python3 manage.py test
 node --check public/app.js
 ```
 
-Las 52 pruebas del servidor verifican acceso autenticado, CSRF, permisos por rol/aula, entregas, calificaciones, conversaciones privadas, matrícula, asistencia, validación de enlaces, perfil y acceso a archivos.
+Las 72 pruebas del servidor verifican acceso autenticado, CSRF, permisos por rol/aula, entregas, calificaciones, conversaciones privadas, matrícula, asistencia, validación de enlaces, perfil y acceso a archivos.
 
 ## Publicación
 
@@ -112,3 +112,14 @@ python scripts/package_zip.py
 ```
 
 Genera `downloads/LumaCampus.zip` y su suma SHA-256. El empaquetador excluye Git, entornos virtuales, bases SQLite, archivos personales y paquetes ZIP anteriores.
+
+
+## Centro de administración institucional · versión 5
+
+Administración dispone de siete áreas: vista general, identidad, materias, personas, matrículas, módulos y apartados, e historial. La identidad admite nombre, marca corta, lema, período, colores y logo PNG; las materias conservan su color, ilustración, horario, grupo y responsable. Se pueden archivar y restaurar sin borrar sus registros.
+
+Las fichas incluyen departamento, identificador y contacto. La administración crea/edita cuentas, cambia perfiles con salvaguardas y activa/desactiva el acceso. La reasignación docente y la matrícula por lote conservan actividades, entregas y notas. La vista previa de matrículas muestra altas y bajas antes de guardar.
+
+Los módulos opcionales se pueden desactivar; el servidor bloquea sus acciones mientras conserva sus datos. Los nombres de apartados y hasta seis tarjetas institucionales de inicio son personalizables. El historial guarda las operaciones administrativas y el directorio se puede exportar como CSV.
+
+[Guía de uso e instalación](INSTALACION.md#12-centro-de-administración-institucional) · [Análisis de Moodle y Canvas](REFERENTES_ADMINISTRACION.md). La migración 0005 conserva los datos existentes. Una institución por instalación; el historial no incluye mensajes privados ni contraseñas.

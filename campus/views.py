@@ -18,6 +18,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from .models import Attendance, Course, Draft, Event, Message, Post, Profile, Resource, Submission, Task, TeachingTemplate
 from .settings import BASE_DIR
 from .permissions import authorize, permissions
+from .administration import institution_state, admin_state, admin_mutate, check_module, log_change, ADMIN_ACTIONS
 from .teaching import rubric_schema, fields_schema, field_answers, rubric_assessment
 
 COLORS = {'pink', 'purple', 'green', 'peach', 'blue', 'yellow'}
@@ -36,6 +37,8 @@ def courses(u):
     query = Course.objects.all() if role == 'admin' else Course.objects.filter(teacher=u) if role == 'teacher' else u.courses.all()
     if role not in ['admin', 'teacher', 'student']:
         query = Course.objects.none()
+    if role != 'admin':
+        query = query.filter(archived=False)
     return query.order_by('title').prefetch_related('students')
 
 def getcourse(u, identifier):
@@ -45,6 +48,8 @@ def getcourse(u, identifier):
         raise PermissionError('No tienes acceso a esta aula.')
 
 def staff(u, c=None):
+    if c and c.archived:
+        raise ValueError('Restaura la materia antes de modificar su contenido académico.')
     if u.profile.role == 'admin' or (u.profile.role == 'teacher' and (c is None or c.teacher_id == u.id)):
         return
     raise PermissionError('Esta acción requiere un profesor o administrador.')
@@ -112,10 +117,11 @@ def state(u):
     locked_tasks = set(submissions.values_list('task_id', flat=True)) | set(Draft.objects.filter(task__course_id__in=ids).values_list('task_id', flat=True))
     people = User.objects.filter(is_active=True, profile__isnull=False).select_related('profile').order_by('first_name', 'id')
     return {
+        'institution': institution_state(), 'administration': admin_state(u),
         'me': person(u, private=True), 'people': [person(p) for p in people],
         'courses': [{'id': c.id, 'title': c.title, 'code': c.code, 'summary': c.summary, 'teacher': c.teacher_id,
                      'students': [p.id for p in c.students.all()], 'color': c.color, 'symbol': c.symbol,
-                     'schedule': c.schedule, 'room': c.room} for c in cs],
+                     'schedule': c.schedule, 'room': c.room, 'archived': c.archived} for c in cs],
         'tasks': [{'id': t.id, 'course': t.course_id, 'title': t.title, 'description': t.description,
                    'due': str(t.due), 'points': t.points, 'closed': t.closed,
                    'kind': t.kind, 'submission_mode': t.submission_mode, 'allow_late': t.allow_late, 'color': t.color, 'rubric': t.rubric, 'fields': t.fields,
@@ -153,7 +159,7 @@ def index(request):
     return response
 
 def asset(request, name):
-    if name not in ['app.js', 'teaching.js', 'style.css', 'manrope.ttf', 'dmsans.ttf', 'favicon.svg']:
+    if name not in ['app.js', 'administration.js', 'teaching.js', 'style.css', 'manrope.ttf', 'dmsans.ttf', 'favicon.svg']:
         return HttpResponse(status=404)
     path = BASE_DIR / 'public' / name
     etag = f'"{path.stat().st_mtime_ns:x}-{path.stat().st_size:x}"'
@@ -202,6 +208,9 @@ def task_options(d, task=None):
 
 def mutate(request, u, path, d):
     authorize(u, path)
+    check_module(path)
+    if admin_mutate(request, u, path, d):
+        return
     if path == 'teaching-preferences':
         options = task_options(d)
         points, days = integer(d.get('points',100),1,1000), integer(d.get('due_days',7),1,60)
@@ -280,10 +289,12 @@ def mutate(request, u, path, d):
     elif path in ['post', 'post-edit', 'post-pin', 'post-delete']:
         if path == 'post':
             c = getcourse(u, d['course'])
+            if c.archived: raise ValueError('Restaura la materia antes de modificar su contenido académico.')
             Post.objects.create(course=c, author=u, body=text(d, 'body', 4000))
         else:
             p = Post.objects.get(id=d['id'])
             c = getcourse(u, p.course_id)
+            if c.archived: raise ValueError('Restaura la materia antes de modificar su contenido académico.')
             if p.author_id != u.id or path == 'post-pin':
                 staff(u, c)
             if path == 'post-delete':
@@ -387,7 +398,9 @@ def mutate(request, u, path, d):
             c.save()
     elif path == 'membership':
         admin(u)
-        getcourse(u, d['course']).students.set(students(d))
+        c=getcourse(u,d['course'])
+        if c.archived: raise ValueError('Restaura la materia antes de modificar sus matrículas.')
+        c.students.set(students(d))
     elif path in ['user', 'user-edit']:
         admin(u)
         email = text(d, 'email', 150).lower()
@@ -481,6 +494,11 @@ def api(request, path):
         d = json.loads(request.body or '{}') if request.content_type == 'application/json' else request.POST
         if not isinstance(d, dict) and not hasattr(d, 'getlist'):
             raise ValueError('La solicitud debe contener un objeto con campos.')
+        if path == 'institution' and request.method == 'GET':
+            return JsonResponse(institution_state())
+        if path == 'institution-logo' and request.method == 'GET':
+            from .administration import logo_response
+            return logo_response(request)
         if path == 'login' and request.method == 'POST':
             identifier = text(d, 'email', 150).lower()
             account = User.objects.filter(email__iexact=identifier, is_active=True, profile__isnull=False).first()
@@ -501,11 +519,17 @@ def api(request, path):
                 staff(u, c)
             return download(s)
         if path.startswith('resource-file/') and request.method == 'GET':
+            check_module('resource')
             r = Resource.objects.get(id=int(path.split('/')[1]))
             getcourse(u, r.course_id)
             return download(r)
         if path == 'grades-export' and request.method == 'GET':
+            check_module(path)
             return export_grades(u)
+        if path == 'people-export' and request.method == 'GET':
+            admin(u)
+            from .administration import people_export
+            return people_export()
         if request.method != 'POST':
             return JsonResponse({'error': 'Método no permitido.'}, status=405)
         if path == 'logout':
@@ -513,6 +537,8 @@ def api(request, path):
             return JsonResponse({'ok': True})
         with transaction.atomic():
             mutate(request, u, path, d)
+            if path in ADMIN_ACTIONS:
+                log_change(u, path, d)
         # Reload own profile after admin edits and any cached relation from authorization.
         u = User.objects.select_related('profile').get(id=u.id)
         return state_response(request, u)

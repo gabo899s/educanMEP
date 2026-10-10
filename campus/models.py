@@ -8,6 +8,8 @@ class Profile(models.Model):
     phone=models.CharField(max_length=40,blank=True)
     color=models.CharField(max_length=20,default='pink')
     preferences=models.JSONField(default=dict,blank=True)
+    department=models.CharField(max_length=100,blank=True)
+    identifier=models.CharField(max_length=60,blank=True)
 
 # Adapted from adilmohak/django-lms Course and CourseAllocation (MIT).
 # College-focused title/code/summary retained; school membership replaces programs/semesters.
@@ -21,6 +23,7 @@ class Course(models.Model):
     symbol=models.CharField(max_length=20,default='flower')
     schedule=models.CharField(max_length=100,blank=True)
     room=models.CharField(max_length=60,default='10-A')
+    archived=models.BooleanField(default=False)
 
 class Post(models.Model):
     course=models.ForeignKey(Course,on_delete=models.CASCADE)
@@ -103,3 +106,22 @@ class TeachingTemplate(models.Model):
     title=models.CharField(max_length=120)
     definition=models.JSONField(default=dict)
     updated=models.DateTimeField(auto_now=True)
+
+class Institution(models.Model):
+    name=models.CharField(max_length=120,default='Colegio Las Jacarandas')
+    short_name=models.CharField(max_length=30,default='luma')
+    motto=models.CharField(max_length=200,default='Un lugar para aprender y florecer.')
+    year=models.CharField(max_length=40,default='2026')
+    primary=models.CharField(max_length=7,default='#70547e')
+    secondary=models.CharField(max_length=7,default='#f0e5f1')
+    logo=models.FileField(upload_to='institution/',blank=True)
+    modules=models.JSONField(default=dict,blank=True)
+    sections=models.JSONField(default=list,blank=True)
+    updated=models.DateTimeField(auto_now=True)
+
+class AdministrationLog(models.Model):
+    actor=models.ForeignKey(User,on_delete=models.SET_NULL,null=True)
+    actor_name=models.CharField(max_length=150)
+    action=models.CharField(max_length=50)
+    summary=models.CharField(max_length=250)
+    created=models.DateTimeField(auto_now_add=True)
