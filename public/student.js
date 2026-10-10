@@ -95,7 +95,7 @@ function learningCourseTitle(id, fallback = "Sin materia") {
 }
 function pendingLearning() {
   return S.tasks
-    .filter((t) => !submission(t) && !t.closed)
+    .filter(needsSubmission)
     .sort((a, b) => a.due.localeCompare(b.due) || a.id - b.id);
 }
 function progressFor(c) {
@@ -153,7 +153,7 @@ function studentWorkspace() {
     notes: studentNotes,
     help: studentHelp,
   };
-  return `${heading("Mi espacio para crecer ✦", "Aprender, organizarme y guardar lo que voy descubriendo.", '<button class="btn" data-student-settings>' + icon("flower", 15) + " Mi estilo y accesibilidad</button>")}${studentBanner()}<nav class="student-tabs" aria-label="Mi espacio personal">${studentTabs.map(([id, label, name]) => `<button data-student-tab="${id}" aria-current="${studentTab === id ? "page" : "false"}" class="${studentTab === id ? "active" : ""}">${icon(name, 16)}${label}</button>`).join("")}</nav><div class="student-body">${(bodies[studentTab] || studentDay)()}</div>`;
+  return `${heading("Mi espacio para crecer ✦", "Aprender, organizarme y guardar lo que voy descubriendo.", '<button class="btn" data-student-settings>' + icon("flower", 15) + " Mi estilo y accesibilidad</button>")}${studentBanner()}<nav class="student-tabs" aria-label="Mi espacio personal">${studentTabs.map(([id, label, name]) => `<button data-student-tab="${id}" aria-current="${studentTab === id ? "page" : "false"}" class="${studentTab === id ? "active" : ""}">${icon(name, 16)}${label}</button>`).join("")}</nav><div class="student-body">${(bodies[studentTab] || studentDay)()}${studentTab === "help" ? studentTutoring() : ""}</div>`;
 }
 function studentDay() {
   const p = studentSettings(),

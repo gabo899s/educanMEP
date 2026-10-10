@@ -35,7 +35,7 @@ class AdministrationFlows(TestCase):
         self.assertEqual(AdministrationLog.objects.count(),0)
     def test_public_branding_does_not_expose_people_or_contacts(self):
         self.client.logout();data=self.client.get('/api/institution').json()
-        self.assertEqual(data['name'],'Colegio Las Jacarandas')
+        self.assertEqual(data['name'],'Mi institución')
         self.assertEqual(set(data),{'name','short_name','motto','year','primary','secondary','logo','modules','sections'})
         self.assertEqual(self.client.get('/api/people-export').status_code,401)
     def test_branding_persists_for_all_profiles_and_logs(self):
@@ -48,7 +48,7 @@ class AdministrationFlows(TestCase):
         for primary in ['red','#ffffff','#000000; color:red']:
             d=self.settings();d.update(name='No guardar',primary=primary)
             self.assertEqual(self.post('institution',d).status_code,400)
-            self.assertEqual(Institution.objects.get().name,'Colegio Las Jacarandas')
+            self.assertEqual(Institution.objects.get().name,'Mi institución')
         self.assertEqual(AdministrationLog.objects.count(),0)
     def test_core_modules_cannot_be_disabled_or_forged(self):
         d=self.settings();d['modules']['classroom']['enabled']=False

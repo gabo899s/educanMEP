@@ -23,7 +23,7 @@ def install():
     print('3/4 Verificando y preparando la base de datos...', flush=True)
     command([PYTHON, 'manage.py', 'check'])
     command([PYTHON, 'manage.py', 'migrate', '--noinput'])
-    print('4/4 Preparando el campus de demostración...', flush=True)
+    print('4/4 Preparando el campus para cuentas reales...', flush=True)
     command([PYTHON, 'seed.py'])
     print('\nInstalación completa. Ejecuta: ' + ('py -3' if os.name == 'nt' else 'python3') + ' run.py', flush=True)
 

@@ -1,11 +1,13 @@
 """Política central de perfiles. El alcance de cada aula se verifica en views."""
 COMMON = {'profile.edit', 'appearance.edit', 'messages.use', 'wall.participate', 'courses.favorite'}
 ROLE_PERMISSIONS = {
-    'student': COMMON | {'assignments.submit', 'learning.manage', 'help.ask', 'ai.study'},
+    'student': COMMON | {'assignments.submit', 'learning.manage', 'help.ask', 'ai.study', 'tutoring.reserve'},
     'teacher': COMMON | {'assignments.manage', 'grades.manage', 'materials.manage', 'attendance.manage', 'events.manage', 'teaching.customize', 'help.respond', 'portfolio.review'},
     'admin': COMMON | {'assignments.manage', 'grades.manage', 'materials.manage', 'attendance.manage', 'events.manage', 'courses.manage', 'users.manage', 'membership.manage', 'teaching.customize', 'institution.manage'},
 }
 ACTION_PERMISSIONS = {
+    **{k:'teaching.customize' for k in ['lesson-save','lesson-delete','lesson-copy','library-save','library-delete','library-publish','competency-save','competency-delete','task-adaptation','adaptation-delete','submission-return','tutoring-save','tutoring-cancel','tutoring-agreement','teacher-ai-save','teacher-ai-delete']},
+    'tutoring-book':'tutoring.reserve','tutoring-release':'tutoring.reserve',
     'ai-study':'ai.study',
     **{k: 'learning.manage' for k in ['planner','planner-edit','planner-toggle','planner-delete','goal','goal-edit','goal-progress','goal-delete','note','note-edit','note-pin','note-delete','portfolio','portfolio-edit','portfolio-delete','student-settings','feedback-read']},
     'help-ask':'help.ask','help-reply':'messages.use','help-status':'help.ask','course-timetable':'assignments.manage',

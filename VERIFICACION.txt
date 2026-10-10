@@ -1,8 +1,8 @@
-LUMA CAMPUS 7 — VERIFICACIÓN
+LUMA CAMPUS 8 — VERIFICACIÓN
 
 Entorno verificado: Linux, Python 3.12, Django 5.2.18, Chromium.
-- 141 pruebas del servidor correctas, incluidas 20 del centro administrativo.
-- Migración desde 0001 hasta 0007 con usuarios, aulas, matrículas,
+- 164 pruebas del servidor correctas, incluidas 20 del centro administrativo.
+- Migración desde 0001 hasta 0011 con usuarios, aulas, matrículas,
   entregas y nota original conservados.
 - Permisos por perfil y aula, CSRF, privacidad de conversaciones,
   archivos, borradores, validaciones, asistencia atómica y ETag/GZip.
@@ -10,6 +10,34 @@ Entorno verificado: Linux, Python 3.12, Django 5.2.18, Chromium.
 - ZIP extraído en carpeta independiente; instalación offline desde las
   doce dependencias incluidas; pip check y run.py --port 8022 correctos.
 - ZIP sin bases locales, uploads, .venv, .git ni secretos.
+
+Ampliación docente v8:
+- 23 pruebas nuevas: planificación privada y copias, permisos por materia,
+  biblioteca con archivos independientes, competencias, visibilidad programada,
+  adaptaciones privadas y fecha efectiva, devolución y versiones con notas,
+  comentarios y archivos, tutorías, cancelación y reservas, CSRF y módulos.
+- Luma AI Docente separado del estudiante: borradores privados y revisables,
+  ningún acceso a cuadernos de estudiantes ni publicación/calificación automática.
+- Pruebas del proveedor con respuesta controlada; sin clave se informa y no
+  se crean respuestas ficticias. No se verificó NVIDIA real sin una clave.
+- Instalador y arranque sin creación de usuarios, materias ni trabajos de ejemplo.
+  Dominio de demostración desactivado y fuera del directorio administrativo;
+  registros históricos conservados. Primer administrador mediante asistente.
+- Correcciones: selectores de rúbrica/campos opcionales, foco del modal que
+  respeta el campo elegido, tareas devueltas en pendientes y adaptación precargada.
+- Navegador: planes y copias, competencias, programación, adaptaciones,
+  biblioteca con archivo y publicación, tutoría/reserva, borrador docente de IA
+  revisado y reutilizado, evaluación, devolución, historial y nueva versión.
+- Escritorio 1440 px y móvil 390 px, sin desbordamiento horizontal ni errores JS.
+- ZIP extraído: 164 pruebas completas desde el entorno virtual del paquete,
+  pip check correcto y todas las migraciones hasta 0011 aplicadas.
+- Primer arranque real con run.py --port 8024: base vacía, asistente de
+  administración con contraseña oculta, acceso y centro administrativo correctos.
+- Actualización desde v7 en copia aislada: .venv existente reutilizado,
+  las 25 tablas previas conservan su número de registros (5 usuarios, 6 aulas,
+  2 entregas); cuentas antiguas de demostración desactivadas sin borrar datos.
+- Regresión docente v8 en Chromium: preferencias, rúbrica y campos condicionales,
+  borrador recuperado, entrega estructurada, nota 38/75 y desglose móvil correctos.
 
 Administración comprobada en servidor y navegador:
 - Nombre, marca corta, lema, período y colores persistentes.

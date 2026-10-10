@@ -16,9 +16,27 @@ Extrae todo el ZIP. Requiere Python 3.10 o superior (recomendado: 3.12).
 
 **macOS/Linux:** ejecuta `python3 run.py`, o `sh start.sh`.
 
-El primer arranque instala automáticamente las dependencias incluidas, prepara SQLite y crea las cuentas de demostración. Abre **http://127.0.0.1:8000**. Deja la terminal abierta y usa Ctrl+C para detener el servidor.
+El primer arranque instala automáticamente las dependencias incluidas, prepara SQLite y te guía para crear tu primera cuenta administrativa real. No crea cuentas de prueba. Abre **http://127.0.0.1:8000**. Deja la terminal abierta y usa Ctrl+C para detener el servidor.
 
-No necesitas Node.js ni una base de datos externa. Los paquetes de instalación están en `vendor/wheels/`; no se descargan de Internet. Las instrucciones completas, las cuentas y la solución de problemas están en **INSTALACION.md**.
+No necesitas Node.js ni una base de datos externa. Los paquetes de instalación están en `vendor/wheels/`; no se descargan de Internet. Las instrucciones completas, la creación de cuentas y la solución de problemas están en **INSTALACION.md**.
+
+## Estudio docente completo · versión 8
+
+Ocho áreas con permisos por materia: revisión centralizada, planificación, seguimiento, competencias, biblioteca, rúbricas y campos inteligentes, tutorías y Luma AI Docente.
+
+- Planes privados: objetivos, fecha, duración, contenidos, materiales, actividades y reflexión. Reutilización independiente entre materias asignadas.
+- Revisión con filtros por materia, estudiante y estado: pendientes, tardías, evaluadas, devueltas, sin entrega y publicación. Evaluación directa con rúbrica y banco de comentarios.
+- Seguimiento con promedio ponderado, entregas ausentes, diferencia entre las dos últimas evaluaciones y criterios con evidencia inferior al 70%. Competencias vinculadas a actividades, con metas y evidencia real.
+- Biblioteca privada con carpetas, etiquetas, búsqueda y archivos. Materiales publicados como copias; actividades copiadas como borradores revisables, conservando rúbrica y campos.
+- Actividades publicadas, borradores o programación por fecha y hora del colegio. La visibilidad se controla también en entregas, consultas e importación a Luma AI.
+- Adaptaciones por estudiante: fecha e instrucciones propias, más notas privadas del equipo responsable de la materia.
+- Devoluciones y versiones: se conservan respuestas, archivos, notas, rúbrica, comentarios y motivo de devolución; el estudiante puede corregir cuando la entrega está abierta.
+- Tutorías individuales: horarios sin superposición, reservas por matrícula, pregunta privada, cancelación y acuerdos compartidos con el estudiante.
+- Luma AI Docente usa Kimi K2 para borradores de planes, rúbricas, actividades y comentarios. El docente edita y marca su revisión antes de reutilizarlos; no califica ni publica automáticamente, y no accede a sesiones privadas de estudiantes.
+
+La instalación nueva comienza vacía. El administrador crea cuentas reales, asigna materias y matricula estudiantes. Las cuentas de prueba anteriores quedan fuera del acceso y del directorio; sus datos se conservan para evitar pérdidas. Hay cargas iniciales, progreso de archivos, estados de espera y reintentos de error.
+
+Consulta [DOCENCIA.md](DOCENCIA.md) y [INSTALACION.md](INSTALACION.md#15-actualizar-a-luma-campus-8).
 
 ## Luma AI · versión 7
 
@@ -122,7 +140,7 @@ node --check public/app.js
 node --check public/luma-ai.js
 ```
 
-Las 141 pruebas del servidor verifican acceso autenticado, CSRF, permisos por rol/aula, entregas, calificaciones, conversaciones privadas, matrícula, asistencia, validación de enlaces, perfil y acceso a archivos.
+Las 164 pruebas del servidor verifican acceso autenticado, CSRF, permisos por rol/aula, entregas, calificaciones, conversaciones privadas, matrícula, asistencia, validación de enlaces, perfil y acceso a archivos.
 
 ## Publicación
 
@@ -135,7 +153,7 @@ Para desplegar en un servidor compatible con Python, instala `requirements-produ
 - `LUMA_ALLOWED_HOSTS`: dominios separados por comas.
 - HTTPS y almacenamiento persistente para la base SQLite y `uploads/`.
 
-No uses las cuentas de demostración con datos reales. Para una instalación nueva de producción, omite `seed.py` y crea la primera cuenta administrativa con `python bootstrap_admin.py`.
+No se crean cuentas de demostración. En una instalación nueva crea tu primera cuenta con `python3 bootstrap_admin.py` después de instalar y migrar. El arranque local también te guía para hacerlo. Las cuentas antiguas del dominio de demostración quedan desactivadas, conservando los registros académicos.
 
 Alcance actual: un colegio por instalación. No se incorporaron facturación, integración oficial con Google Classroom, videollamadas, correo de recuperación ni aplicación móvil nativa.
 

@@ -40,7 +40,7 @@ def check_module(action):
 def admin_state(u):
     if u.profile.role != 'admin':
         return None
-    people = User.objects.filter(profile__isnull=False).select_related('profile').order_by('first_name','id')
+    people = User.objects.filter(profile__isnull=False).exclude(email__iendswith='@luma.demo').select_related('profile').order_by('first_name','id')
     return {'people': [{'id': p.id, 'name': p.get_full_name() or p.username, 'email': p.email,
                         'role': p.profile.role, 'active': p.is_active, 'phone': p.profile.phone,
                         'bio': p.profile.bio, 'color': p.profile.color, 'department': p.profile.department,
@@ -233,7 +233,7 @@ def people_export():
     def safe(value):
         value=str(value)
         return "'"+value if value.lstrip().startswith(('=','+','-','@')) else value
-    for u in User.objects.filter(profile__isnull=False).select_related('profile').order_by('id'):
+    for u in User.objects.filter(profile__isnull=False).exclude(email__iendswith='@luma.demo').select_related('profile').order_by('id'):
         writer.writerow([safe(x) for x in [u.get_full_name() or u.username,u.email,u.profile.role,'Activo' if u.is_active else 'Inactivo',u.profile.department,u.profile.identifier]])
     response=HttpResponse('\ufeff'+stream.getvalue(),content_type='text/csv; charset=utf-8')
     response['Content-Disposition']='attachment; filename="Luma-personas.csv"'

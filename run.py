@@ -23,6 +23,10 @@ def main():
             command([PYTHON, 'manage.py', 'check'])
             command([PYTHON, 'manage.py', 'migrate', '--noinput'])
             command([PYTHON, 'seed.py'])
+    account_probe=subprocess.run([str(PYTHON), 'manage.py', 'shell', '-c', "from django.contrib.auth.models import User; import sys; sys.exit(0 if User.objects.filter(is_active=True,profile__role='admin').exclude(email__iendswith='@luma.demo').exists() else 1)"],cwd=ROOT,capture_output=True)
+    if account_probe.returncode:
+        print('Configura tu primera cuenta administrativa real. No se crean cuentas de prueba.',flush=True)
+        command([PYTHON,'bootstrap_admin.py'])
     launcher = 'py -3' if os.name == 'nt' else 'python3'
     with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as sock:
         try:

@@ -16,6 +16,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 from .models import Attendance, Course, Draft, Event, Message, Post, Profile, Resource, Submission, Task, TeachingTemplate
+from .teacher_workspace import workspace_state, mutate_workspace, visible_tasks, assert_task_visible, task_settings, effective_due, adaptation_for, save_version
 from .settings import BASE_DIR
 from .permissions import authorize, permissions
 from .administration import institution_state, admin_state, admin_mutate, check_module, log_change, ADMIN_ACTIONS
@@ -109,27 +110,29 @@ def replace_file(record, f):
 def state(u):
     cs = list(courses(u))
     ids = [c.id for c in cs]
-    tasks = Task.objects.filter(course_id__in=ids).order_by('due', 'id')
+    tasks = visible_tasks(u,Task.objects.filter(course_id__in=ids)).order_by('due', 'id')
     submissions = Submission.objects.filter(task__course_id__in=ids).order_by('id')
     attendance = Attendance.objects.filter(course_id__in=ids).order_by('-date', 'id')
     if u.profile.role == 'student':
         submissions = submissions.filter(student=u)
         attendance = attendance.filter(student=u)
     locked_tasks = set(submissions.values_list('task_id', flat=True)) | set(Draft.objects.filter(task__course_id__in=ids).values_list('task_id', flat=True))
+    from .models import TaskAdaptation
+    adaptations={a.task_id:a for a in TaskAdaptation.objects.filter(student=u,task__course_id__in=ids)} if u.profile.role=='student' else {}
     people = User.objects.filter(is_active=True, profile__isnull=False).select_related('profile').order_by('first_name', 'id')
     return {
         'institution': institution_state(), 'administration': admin_state(u),
-        'student_space': learning_state(u), 'learning_received': received_state(u),
+        'teacher_workspace': workspace_state(u), 'student_space': learning_state(u), 'learning_received': received_state(u),
         'me': person(u, private=True), 'people': [person(p) for p in people],
         'courses': [{'id': c.id, 'title': c.title, 'code': c.code, 'summary': c.summary, 'teacher': c.teacher_id,
-                     'students': [p.id for p in c.students.all()], 'color': c.color, 'symbol': c.symbol,
+                     'students': [p.id for p in c.students.all() if p.is_active], 'color': c.color, 'symbol': c.symbol,
                      'schedule': c.schedule, 'room': c.room, 'archived': c.archived, 'timetable': c.timetable} for c in cs],
         'tasks': [{'id': t.id, 'course': t.course_id, 'title': t.title, 'description': t.description,
-                   'due': str(t.due), 'points': t.points, 'closed': t.closed,
+                   'due': str(a.due if (a:=adaptations.get(t.id)) and a.due else t.due), 'publication':t.publication, 'publish_at':t.publish_at.isoformat() if t.publish_at else None, 'competencies':t.competencies, 'adapted_instructions': (a.instructions if (a:=adaptations.get(t.id)) else ''), 'points': t.points, 'closed': t.closed,
                    'kind': t.kind, 'submission_mode': t.submission_mode, 'allow_late': t.allow_late, 'color': t.color, 'rubric': t.rubric, 'fields': t.fields,
                    'configuration_locked': t.id in locked_tasks} for t in tasks],
         'submissions': [{'id': s.id, 'task': s.task_id, 'student': s.student_id, 'body': s.body, 'file': s.original_name,
-                         'grade': s.grade, 'feedback': s.feedback, 'answers': s.answers, 'rubric_assessment': s.rubric_assessment, 'created': s.created.isoformat(), 'reviewed_at': s.reviewed_at.isoformat() if s.reviewed_at else None} for s in submissions],
+                         'returned':s.returned, 'return_message':s.return_message, 'version':s.version, 'grade': s.grade, 'feedback': s.feedback, 'answers': s.answers, 'rubric_assessment': s.rubric_assessment, 'created': s.created.isoformat(), 'reviewed_at': s.reviewed_at.isoformat() if s.reviewed_at else None} for s in submissions],
         'posts': [{'id': p.id, 'course': p.course_id, 'author': p.author_id, 'body': p.body,
                    'pinned': p.pinned, 'created': p.created.isoformat()}
                   for p in Post.objects.filter(course_id__in=ids).order_by('-pinned', '-created', '-id')],
@@ -161,7 +164,7 @@ def index(request):
     return response
 
 def asset(request, name):
-    if name not in ['app.js', 'luma-ai.js', 'student.js', 'administration.js', 'teaching.js', 'style.css', 'manrope.ttf', 'dmsans.ttf', 'favicon.svg']:
+    if name not in ['app.js', 'luma-ai.js', 'student.js', 'administration.js', 'teaching.js', 'teacher-workspace.js', 'style.css', 'manrope.ttf', 'dmsans.ttf', 'favicon.svg']:
         return HttpResponse(status=404)
     path = BASE_DIR / 'public' / name
     etag = f'"{path.stat().st_mtime_ns:x}-{path.stat().st_size:x}"'
@@ -211,6 +214,8 @@ def task_options(d, task=None):
 def mutate(request, u, path, d):
     authorize(u, path)
     check_module(path)
+    if mutate_workspace(request,u,path,d):
+        return
     if mutate_learning(request, u, path, d):
         return
     if admin_mutate(request, u, path, d):
@@ -310,7 +315,7 @@ def mutate(request, u, path, d):
             c = getcourse(u, d['course'])
             staff(u, c)
             Task.objects.create(course=c, title=text(d, 'title'), description=text(d, 'description', 5000),
-                                due=date.fromisoformat(d['due']), points=integer(d.get('points', 100), 1, 1000), **task_options(d), rubric=rubric_schema(d.get('rubric',{})), fields=fields_schema(d.get('fields',[])))
+                                due=date.fromisoformat(d['due']), points=integer(d.get('points', 100), 1, 1000), **task_options(d), **task_settings(d,course=c), rubric=rubric_schema(d.get('rubric',{})), fields=fields_schema(d.get('fields',[])))
         else:
             t = Task.objects.get(id=d['id'])
             c = getcourse(u, t.course_id)
@@ -330,12 +335,14 @@ def mutate(request, u, path, d):
                 if (rubric != rubric_schema(t.rubric) or fields != fields_schema(t.fields)) and (t.submission_set.exists() or t.draft_set.exists()):
                     raise ValueError('La rúbrica y los campos están protegidos porque ya hay entregas o borradores.')
                 t.rubric,t.fields=rubric,fields
+                for key,value in task_settings(d,t).items():setattr(t,key,value)
                 for key, value in options.items():
                     setattr(t, key, value)
             t.save()
     elif path in ['submit', 'draft']:
         t = Task.objects.get(id=d['task'])
         getcourse(u, t.course_id)
+        assert_task_visible(u,t)
         if u.profile.role != 'student':
             raise PermissionError('Las entregas corresponden a estudiantes.')
         if t.closed:
@@ -351,7 +358,7 @@ def mutate(request, u, path, d):
             Draft.objects.update_or_create(task=t, student=u, defaults={'body': body,'answers':answers})
         else:
             f = upload(request)
-            if not t.allow_late and timezone.localdate() > t.due:
+            if not t.allow_late and timezone.localdate() > effective_due(u,t):
                 raise ValueError('La fecha de entrega terminó y esta actividad no admite entregas tardías.')
             if t.submission_mode == 'text' and f:
                 raise ValueError('Esta actividad solo acepta una respuesta de texto.')
@@ -362,15 +369,21 @@ def mutate(request, u, path, d):
                 raise ValueError('Adjunta el archivo requerido para esta actividad.')
             if not body and not f and not existing_file and not answers:
                 raise ValueError('Escribe tu respuesta o adjunta un archivo.')
-            s, _ = Submission.objects.get_or_create(task=t, student=u)
+            s, created = Submission.objects.get_or_create(task=t, student=u)
+            if not created:
+                save_version(s)
+                s.version+=1
+            s.returned=False;s.return_message=''
             s.body, s.answers = body, answers
             s.save()
             if f:
                 replace_file(s, f)
+            save_version(s)
             Draft.objects.filter(task=t, student=u).delete()
     elif path == 'grade':
         s = Submission.objects.select_related('task').get(id=d['submission'])
         staff(u, getcourse(u, s.task.course_id))
+        if s.returned:raise ValueError('Espera a que el estudiante envíe la nueva versión antes de calificar.')
         if s.task.rubric:
             assessment=rubric_assessment(s.task.rubric,d.get('rubric_selections'),d.get('criterion_feedback',{}),s.task.points)
             s.grade,s.rubric_assessment=assessment['grade'],assessment
@@ -380,6 +393,7 @@ def mutate(request, u, path, d):
         s.feedback=text(d,'feedback',2000,False)
         s.reviewed_at=timezone.now()
         s.save(update_fields=['grade','feedback','rubric_assessment','reviewed_at'])
+        save_version(s)
     elif path in ['course', 'course-edit']:
         admin(u)
         teacher = User.objects.get(id=d['teacher'], profile__role='teacher', is_active=True)
@@ -406,6 +420,7 @@ def mutate(request, u, path, d):
         admin(u)
         email = text(d, 'email', 150).lower()
         validate_email(email)
+        if email.endswith('@luma.demo'):raise ValueError('Usa un correo real; el dominio de demostración está retirado.')
         name = text(d, 'name', 100).split(' ', 1)
         if path == 'user':
             pw = text(d, 'password', 100)
@@ -502,15 +517,18 @@ def api(request, path):
             return logo_response(request)
         if path == 'login' and request.method == 'POST':
             identifier = text(d, 'email', 150).lower()
-            account = User.objects.filter(email__iexact=identifier, is_active=True, profile__isnull=False).first()
+            account = User.objects.filter(email__iexact=identifier, is_active=True, profile__isnull=False).exclude(email__iendswith='@luma.demo').first()
             u = authenticate(request, username=account.username if account else identifier, password=d.get('password', ''))
-            if not u or not hasattr(u, 'profile'):
+            if not u or not hasattr(u, 'profile') or u.email.lower().endswith('@luma.demo'):
                 return JsonResponse({'error': 'Correo o contraseña incorrectos.'}, status=401)
             login(request, u)
             return state_response(request, u)
         if not request.user.is_authenticated:
             return JsonResponse({'error': 'Inicia sesión para continuar.'}, status=401)
         u = request.user
+        if path=='teacher-ai/generate':
+            from .teacher_workspace import teacher_ai
+            return teacher_ai(request,u,d)
         if path.startswith('ai/'):
             from .ai_study import handle, AIError, private_json
             try:
@@ -519,9 +537,31 @@ def api(request, path):
                 return private_json({'error':str(error)},error.status)
         if path == 'state' and request.method == 'GET':
             return state_response(request, u)
+        if path.startswith('submission-history/') and request.method=='GET':
+            from .models import SubmissionVersion
+            sub=Submission.objects.select_related('task').get(pk=int(path.split('/')[1]))
+            c=getcourse(u,sub.task.course_id)
+            if sub.student_id!=u.id:staff(u,c)
+            else:assert_task_visible(u,sub.task)
+            response=JsonResponse({'versions':[{'id':v.id,'number':v.number,'body':v.body,'answers':v.answers,'file':v.original_name,'grade':v.grade,'feedback':v.feedback,'rubric_assessment':v.rubric_assessment,'return_message':v.return_message,'created':v.created.isoformat()} for v in sub.versions.order_by('-number')]})
+            response['Cache-Control']='private, no-store'
+            return response
+        if path.startswith('version-file/') and request.method=='GET':
+            from .models import SubmissionVersion
+            v=SubmissionVersion.objects.select_related('submission__task').get(pk=int(path.split('/')[1]))
+            c=getcourse(u,v.submission.task.course_id)
+            if v.submission.student_id!=u.id:staff(u,c)
+            else:assert_task_visible(u,v.submission.task)
+            return download(v)
+        if path.startswith('library-file/') and request.method=='GET':
+            from .teacher_workspace import own,require_teacher
+            from .models import TeachingLibraryItem
+            require_teacher(u)
+            return download(own(TeachingLibraryItem,u,path.split('/')[1]))
         if path.startswith('file/') and request.method == 'GET':
             s = Submission.objects.select_related('task').get(id=int(path.split('/')[1]))
             c = getcourse(u, s.task.course_id)
+            assert_task_visible(u,s.task)
             if s.student_id != u.id:
                 staff(u, c)
             return download(s)

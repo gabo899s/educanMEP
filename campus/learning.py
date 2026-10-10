@@ -182,6 +182,8 @@ def mutate_learning(request,u,path,d):
             task_id=d.get('task')
             if task_id not in (None,'',0):
                 task=Task.objects.get(id=integer(task_id,1,2**63-1))
+                from .teacher_workspace import assert_task_visible
+                assert_task_visible(u,task)
                 if not (p.pk and p.task_id==task.id and p.course_id==task.course_id): getcourse(u,task.course_id)
                 if p.course_id and p.course_id!=task.course_id: raise ValueError('La actividad debe pertenecer a la materia elegida.')
                 p.course=task.course;p.task=task
@@ -234,6 +236,8 @@ def mutate_learning(request,u,path,d):
                 replace_file(p,ContentFile(saved,name=source_record.original_name or 'Trabajo'))
     elif path=='help-ask':
         task=Task.objects.get(id=integer(d.get('task'),1,2**63-1));getcourse(u,task.course_id)
+        from .teacher_workspace import assert_task_visible
+        assert_task_visible(u,task)
         h=HelpRequest.objects.create(student=u,task=task,question=text(d,'question',4000))
         f=upload(request)
         if f:replace_file(h,f)

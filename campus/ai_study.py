@@ -97,6 +97,9 @@ def add_source(request,u,d):
         if target not in {'resource','task'}:raise ValueError('Elige un material o una actividad de Classroom.')
         obj=(Resource if target=='resource' else Task).objects.select_related('course').get(id=integer(d.get('classroom_id'),1,2**63-1))
         getcourse(u,obj.course_id)
+        if target=='task':
+            from .teacher_workspace import assert_task_visible
+            assert_task_visible(u,obj)
         if target=='resource':
             from .administration import check_module
             check_module('resource')

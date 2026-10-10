@@ -17,7 +17,7 @@ function institutionData() {
   return (
     S?.institution ||
     publicInstitution || {
-      name: "Colegio Las Jacarandas",
+      name: "Mi institución",
       short_name: "luma",
       motto: "Un lugar para aprender y florecer.",
       year: "2026",

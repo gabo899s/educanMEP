@@ -125,7 +125,9 @@ const dateFormat = (d, opts = { day: "numeric", month: "short" }) =>
 const todayISO = () =>
   new Date().toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" });
 const submission = (t) => indexMaps.submissions.get(t.id);
-const pending = () => S.tasks.filter((t) => !submission(t) && !t.closed);
+const needsSubmission = (t) =>
+  (!submission(t) || submission(t).returned) && !t.closed;
+const pending = () => S.tasks.filter(needsSubmission);
 const unread = () =>
   S.messages.filter((m) => m.recipient === S.me.id && !m.read).length;
 const can = (permission) => {
@@ -318,6 +320,7 @@ function brand() {
   return `<div class="brand">${art("flower", 38)}<div>luma<span style="font-weight:400">.</span><small>CAMPUS</small></div></div>`;
 }
 function loginPage() {
+  resetTeacherWorkspace();
   resetAI();
   clearTimeout(pollTimer);
   pollingView = null;
@@ -327,7 +330,7 @@ function loginPage() {
   applyAppearance();
   document.title = institutionData().name + " · Acceso";
   $("#app").innerHTML =
-    `<main class="login"><section class="login-art">${brand()}<div><div class="eyebrow">TU ESCUELA. TU MUNDO.</div><h1>Un lugar para<br>aprender y <em>florecer.</em></h1><p>De casa al aula, y del aula a tus sueños.<br>Todo lo que necesitas, cerquita de ti.</p></div>${heroArt()}<div class="login-bottom">Hecho para conectar personas e ideas. ✦ Luma Campus</div></section><section class="login-form-area"><div class="login-box"><div class="eyebrow">QUÉ BONITO TENERTE AQUÍ</div><h2>Bienvenido a tu campus 🌷</h2><p>${esc(institutionData().name)} · ${esc(institutionData().motto)}</p><form id="login-form"><div class="login-error" role="alert"></div><div class="form-field"><label for="email">Correo electrónico</label><input id="email" name="email" type="email" placeholder="tu.nombre@colegio.edu" required autocomplete="username"></div><div class="form-field"><label for="password">Contraseña</label><div class="password-wrap"><input id="password" name="password" type="password" placeholder="Tu contraseña" required autocomplete="current-password"><button type="button" id="toggle-password" aria-label="Mostrar contraseña">Mostrar</button></div></div><button class="btn primary" type="submit">Entrar a mi campus ${icon("arrow", 15)}</button></form><div class="demo-divider">EXPLORA EL CAMPUS DE DEMOSTRACIÓN</div><div class="demo-roles"><button class="demo-role" data-demo="student">${icon("book", 22)}Estudiante</button><button class="demo-role" data-demo="teacher">${icon("class", 22)}Profesor</button><button class="demo-role" data-demo="admin">${icon("shield", 22)}Administrador</button></div><p class="demo-caption">Las cuentas de prueba te permiten explorar los tres roles con datos de ejemplo. Tus cambios se guardan en esta instalación.</p></div></section></main>`;
+    `<main class="login"><section class="login-art">${brand()}<div><div class="eyebrow">TU ESCUELA. TU MUNDO.</div><h1>Un lugar para<br>aprender y <em>florecer.</em></h1><p>De casa al aula, y del aula a tus sueños.<br>Todo lo que necesitas, cerquita de ti.</p></div>${heroArt()}<div class="login-bottom">Hecho para conectar personas e ideas. ✦ Luma Campus</div></section><section class="login-form-area"><div class="login-box"><div class="eyebrow">QUÉ BONITO TENERTE AQUÍ</div><h2>Bienvenido a tu campus 🌷</h2><p>${esc(institutionData().name)} · ${esc(institutionData().motto)}</p><form id="login-form"><div class="login-error" role="alert"></div><div class="form-field"><label for="email">Correo electrónico</label><input id="email" name="email" type="email" placeholder="tu.nombre@colegio.edu" required autocomplete="username"></div><div class="form-field"><label for="password">Contraseña</label><div class="password-wrap"><input id="password" name="password" type="password" placeholder="Tu contraseña" required autocomplete="current-password"><button type="button" id="toggle-password" aria-label="Mostrar contraseña">Mostrar</button></div></div><button class="btn primary" type="submit">Entrar a mi campus ${icon("arrow", 15)}</button></form><p class="form-help">Accede con la cuenta creada por tu institución. Si aún no existe un administrador, créalo en la terminal con python3 bootstrap_admin.py.</p></div></section></main>`;
   $("#toggle-password").onclick = () => {
     const input = $("#password"),
       b = $("#toggle-password");
@@ -342,25 +345,9 @@ function loginPage() {
     e.preventDefault();
     await signIn(Object.fromEntries(new FormData(e.target)), e.submitter);
   };
-  $$("[data-demo]").forEach(
-    (b) =>
-      (b.onclick = () =>
-        signIn(
-          {
-            email: {
-              student: "estudiante@luma.demo",
-              teacher: "profe@luma.demo",
-              admin: "admin@luma.demo",
-            }[b.dataset.demo],
-            password: "LumaDemo2026!",
-          },
-          b,
-        )),
-  );
 }
 async function signIn(data, b) {
   busy(b, true, "Entrando…");
-  $$("[data-demo]").forEach((el) => (el.disabled = true));
   try {
     S = await api("login", data);
     view = "home";
@@ -374,7 +361,6 @@ async function signIn(data, b) {
     $(".login-error").textContent = e.message;
   } finally {
     busy(b, false);
-    $$("[data-demo]").forEach((el) => (el.disabled = false));
   }
 }
 function navButton(id, label, name) {
@@ -425,7 +411,7 @@ function render(options = {}) {
     search: "Buscar",
   };
   $("#app").innerHTML =
-    `<div class="shell"><button class="sidebar-scrim ${menuOpen ? "open" : ""}" aria-label="Cerrar menú" data-action="menu"></button><aside class="sidebar ${menuOpen ? "open" : ""}">${brand()}<div class="school-pill">${icon("class", 20)}<div>${esc(institutionData().name)}<span>Curso lectivo · ${esc(institutionData().year)}</span></div></div><div class="nav-label">MI CAMPUS</div><nav class="nav">${navButton("home", "Mi inicio", "home")}${S.me.role === "student" ? navButton("student", "Mi espacio", "flower") + navButton("ai", "Luma AI", "spark") : ""}${S.me.role === "teacher" ? navButton("support", "Acompañamiento", "heart") : ""}${navButton("classroom", "Classroom", "class")}${can("teaching.customize") ? navButton("studio", "Mi estudio", "flower") : ""}${navButton("tasks", staff() ? "Actividades" : "Mis tareas", "task")}${navButton("messages", "Mensajería", "message")}${navButton("calendar", "Calendario", "calendar")}${navButton("grades", "Calificaciones", "chart")}${S.me.role === "admin" ? navButton("admin", "Administración", "users") : ""}</nav><div class="sidebar-bottom"><div class="little-note"><span class="sparkle">✧</span>${art("flower", 32)}<strong>A tu ritmo, a tu manera.</strong>Cada pequeño paso también<br>cuenta. Sigue floreciendo.</div><button class="side-profile" data-view="profile" style="background:none;width:100%;text-align:left">${avatar(S.me)}<div><strong>${esc(S.me.name)}</strong><small>${roleNames[S.me.role]} · Luma Campus</small></div>${icon("chevron", 13)}</button></div></aside><main class="main"><header class="topbar"><button class="icon-btn mobile-toggle" data-action="menu" aria-label="Abrir menú">${icon("menu")}</button><div class="breadcrumb">Mi campus ${icon("chevron", 11)} <strong>${labels[view] || "Mi inicio"}</strong></div><div class="top-actions"><form class="search" id="search-form">${icon("search", 15)}<input name="q" placeholder="Busca en tu campus..." aria-label="Buscar" value="${esc(searchQuery)}"><span style="font-size:9px">↵</span></form><button class="icon-btn" data-action="notifications" aria-label="Notificaciones">${icon("bell", 17)}${notificationItems().length ? '<span class="dot"></span>' : ""}</button><button class="icon-btn" data-view="profile" aria-label="Mi perfil" style="border:0">${avatar(S.me)}</button></div></header>${S.me.email.endsWith("@luma.demo") ? `<div class="demo-banner"><span>✦ Campus de demostración · ${roleNames[S.me.role]} · Datos de ejemplo</span><button data-action="logout">Cambiar de cuenta</button></div>` : ""}<div class="content" id="main-content" tabindex="-1">${renderContent()}<footer class="footer"><span>Un lugar para aprender, conectar y crecer. ✦</span><span class="sync-state ${syncStatus}">${syncStatus === "offline" ? "Sin conexión" : "Campus al día"}</span><span>Luma Campus · ${new Date().getFullYear()}</span></footer></div></main></div>`;
+    `<div class="shell"><button class="sidebar-scrim ${menuOpen ? "open" : ""}" aria-label="Cerrar menú" data-action="menu"></button><aside class="sidebar ${menuOpen ? "open" : ""}">${brand()}<div class="school-pill">${icon("class", 20)}<div>${esc(institutionData().name)}<span>Curso lectivo · ${esc(institutionData().year)}</span></div></div><div class="nav-label">MI CAMPUS</div><nav class="nav">${navButton("home", "Mi inicio", "home")}${S.me.role === "student" ? navButton("student", "Mi espacio", "flower") + navButton("ai", "Luma AI", "spark") : ""}${S.me.role === "teacher" ? navButton("support", "Acompañamiento", "heart") : ""}${navButton("classroom", "Classroom", "class")}${can("teaching.customize") ? navButton("studio", "Mi estudio", "flower") : ""}${navButton("tasks", staff() ? "Actividades" : "Mis tareas", "task")}${navButton("messages", "Mensajería", "message")}${navButton("calendar", "Calendario", "calendar")}${navButton("grades", "Calificaciones", "chart")}${S.me.role === "admin" ? navButton("admin", "Administración", "users") : ""}</nav><div class="sidebar-bottom"><div class="little-note"><span class="sparkle">✧</span>${art("flower", 32)}<strong>A tu ritmo, a tu manera.</strong>Cada pequeño paso también<br>cuenta. Sigue floreciendo.</div><button class="side-profile" data-view="profile" style="background:none;width:100%;text-align:left">${avatar(S.me)}<div><strong>${esc(S.me.name)}</strong><small>${roleNames[S.me.role]} · Luma Campus</small></div>${icon("chevron", 13)}</button></div></aside><main class="main"><header class="topbar"><button class="icon-btn mobile-toggle" data-action="menu" aria-label="Abrir menú">${icon("menu")}</button><div class="breadcrumb">Mi campus ${icon("chevron", 11)} <strong>${labels[view] || "Mi inicio"}</strong></div><div class="top-actions"><form class="search" id="search-form">${icon("search", 15)}<input name="q" placeholder="Busca en tu campus..." aria-label="Buscar" value="${esc(searchQuery)}"><span style="font-size:9px">↵</span></form><button class="icon-btn" data-action="notifications" aria-label="Notificaciones">${icon("bell", 17)}${notificationItems().length ? '<span class="dot"></span>' : ""}</button><button class="icon-btn" data-view="profile" aria-label="Mi perfil" style="border:0">${avatar(S.me)}</button></div></header><div class="content" id="main-content" tabindex="-1">${renderContent()}<footer class="footer"><span>Un lugar para aprender, conectar y crecer. ✦</span><span class="sync-state ${syncStatus}">${syncStatus === "offline" ? "Sin conexión" : "Campus al día"}</span><span>Luma Campus · ${new Date().getFullYear()}</span></footer></div></main></div>`;
   bind();
   bindEnhanced();
   bindTeaching();
@@ -639,6 +625,7 @@ function classTab(c) {
 }
 function status(t) {
   const s = submission(t);
+  if (s?.returned) return '<span class="badge draft">Por corregir</span>';
   if (s?.grade != null) return '<span class="badge done">Calificada</span>';
   if (s) return '<span class="badge wait">Entregada</span>';
   if (t.closed) return '<span class="badge closed">Cerrada</span>';
@@ -653,7 +640,7 @@ function taskRow(t) {
     s = submission(t),
     ss = S.submissions.filter((s) => s.task === t.id),
     late = !s && !t.closed && t.due < todayISO();
-  return `<article class="task-item ${late ? "is-overdue" : ""}"><span class="stat-icon ${esc(t.color || c?.color || "pink")}">${icon("file", 20)}</span><div class="task-text"><h3>${esc(t.title)}</h3><p>${esc(c?.title)} · ${dueLabel(t.due)} · ${t.points} puntos</p>${staff() ? `<div class="task-meta">${ss.length}/${c?.students.length || 0} entregas · ${ss.filter((s) => s.grade == null).length} por revisar</div>` : ""}</div>${staff() ? `<span class="badge ${t.closed ? "closed" : ""}">${t.closed ? "Cerrada" : "Activa"}</span>` : status(t)}<button class="btn small" data-task="${t.id}">${staff() ? "Revisar" : s ? "Ver entrega" : t.closed ? "Ver actividad" : "Abrir actividad"} ${icon("arrow", 12)}</button>${staff() ? `<button class="icon-btn task-edit" data-edit-task="${t.id}" aria-label="Editar ${esc(t.title)}">${icon("profile", 14)}</button>` : ""}</article>`;
+  return `<article class="task-item ${late ? "is-overdue" : ""}"><span class="stat-icon ${esc(t.color || c?.color || "pink")}">${icon("file", 20)}</span><div class="task-text"><h3>${esc(t.title)}</h3><p>${esc(c?.title)} · ${dueLabel(t.due)} · ${t.points} puntos</p>${staff() ? `<div class="task-meta">${ss.length}/${c?.students.length || 0} entregas · ${ss.filter((s) => s.grade == null).length} por revisar</div>` : ""}</div>${staff() ? `<span class="badge ${t.closed ? "closed" : ""}">${t.closed ? "Cerrada" : esc(publicationLabel(t))}</span>` : status(t)}<button class="btn small" data-task="${t.id}">${staff() ? "Revisar" : s?.returned ? "Corregir entrega" : s ? "Ver entrega" : t.closed ? "Ver actividad" : "Abrir actividad"} ${icon("arrow", 12)}</button>${staff() ? `<button class="icon-btn task-edit" data-edit-task="${t.id}" aria-label="Editar ${esc(t.title)}">${icon("profile", 14)}</button>` : ""}</article>`;
 }
 
 function tasks() {
@@ -663,7 +650,7 @@ function tasks() {
   list = list.filter((t) => {
     const sub = submission(t);
     if (taskFilter === "all") return true;
-    if (taskFilter === "late") return !t.closed && t.due < todayISO() && !sub;
+    if (taskFilter === "late") return needsSubmission(t) && t.due < todayISO();
     if (taskFilter === "closed") return t.closed;
     if (staff())
       return taskFilter === "done"
@@ -671,7 +658,9 @@ function tasks() {
         : taskFilter === "review"
           ? S.submissions.some((s) => s.task === t.id && s.grade == null)
           : !t.closed;
-    return taskFilter === "pending" ? !sub && !t.closed : !!sub;
+    return taskFilter === "pending"
+      ? needsSubmission(t)
+      : !!sub && !sub.returned;
   });
   list.sort((a, b) =>
     taskSort === "title"
@@ -822,8 +811,8 @@ function field(name, label, type = "text", value = "", extra = "") {
 function textarea(name, label, value = "", extra = "") {
   return `<div class="form-field"><label for="f-${name}">${label}</label><textarea id="f-${name}" name="${name}" ${extra}>${esc(value)}</textarea></div>`;
 }
-function select(name, label, items, selected) {
-  return `<div class="form-field"><label for="f-${name}">${label}</label><select id="f-${name}" name="${name}" required>${items.map(([id, label]) => `<option value="${id}" ${String(selected) === String(id) ? "selected" : ""}>${esc(label)}</option>`).join("")}</select></div>`;
+function select(name, label, items, selected, required = true) {
+  return `<div class="form-field"><label for="f-${name}">${label}</label><select id="f-${name}" name="${name}" ${required ? "required" : ""}>${items.map(([id, label]) => `<option value="${id}" ${String(selected) === String(id) ? "selected" : ""}>${esc(label)}</option>`).join("")}</select></div>`;
 }
 function courseSelect() {
   return select(
@@ -856,13 +845,12 @@ function modal(title, body, editor = false) {
   $(".overlay").onclick = (e) => {
     if (e.target === e.currentTarget) closeModal();
   };
-  setTimeout(
-    () =>
+  setTimeout(() => {
+    if (!document.activeElement?.closest(".modal"))
       $(
         ".modal input:not([type=hidden]),.modal textarea,.modal select,.modal button:not([data-close])",
-      )?.focus(),
-    20,
-  );
+      )?.focus();
+  }, 20);
 }
 function closeModal(force = false) {
   if (modalBusy && !force) return;
@@ -976,7 +964,7 @@ function formModal(
         path,
         input,
         "POST",
-        multipart ? { onProgress: uploadProgress } : {},
+        input instanceof FormData ? { onProgress: uploadProgress } : {},
       );
       clearDirty();
       modalPending(false);
@@ -1008,7 +996,7 @@ function openTask(id) {
   if (!staff()) {
     modal(
       t.title,
-      `${intro}<div class="student-row-actions"><button class="btn small" data-task-ai="${id}">Pensar con Luma AI ${icon("spark", 14)}</button>${moduleEnabled("messages") ? `<button class="btn small" data-task-help="${id}">Pedir ayuda al profesor ${icon("heart", 14)}</button>` : ""}<button class="btn small" data-task-plan="${id}">Planear mi estudio</button>${sub ? `<button class="btn small" data-task-portfolio="${sub.id}">Guardar en mi portafolio</button>` : ""}</div>${sub ? `<section class="submission"><small>Tu entrega · ${dateFormat(sub.created)}</small><p>${esc(sub.body)}</p>${submissionFieldsView(t, sub.answers)}${sub.file ? `<a class="btn small" href="/api/file/${sub.id}">${icon("download", 14)} ${esc(sub.file)}</a>` : ""}${sub.grade != null ? `<div class="grade-feedback"><strong>${sub.grade}<small> / ${t.points}</small></strong><p>${esc(sub.feedback || "Tu profesor ya revisó tu trabajo.")}</p></div>` : ""}</section>` : ""}${sub?.grade != null ? '<span class="badge done">Trabajo revisado. ¡Sigue creciendo!</span>' : t.closed || (!t.allow_late && t.due < todayISO()) ? '<div class="notice">Esta actividad está cerrada. Puedes consultar tu entrega; para hacer cambios, contacta a tu profesor.</div>' : `<form id="submit-form"><input type="hidden" name="task" value="${t.id}">${textarea("body", "Tu respuesta", draft?.body ?? sub?.body ?? "", 'maxlength="10000" placeholder="Comparte lo que aprendiste…"')}${t.fields?.length ? `<section class="smart-submission"><h3>Tu recorrido de aprendizaje</h3>${smartFieldsHTML(t.fields, draft?.answers ?? sub?.answers ?? {})}</section>` : ""}<div class="draft-hint" id="draft-hint">${draft ? "Borrador guardado en tu cuenta" : "Tu respuesta se guarda como borrador al hacer una pausa."}</div>${t.submission_mode === "text" ? '<input type="file" name="file" hidden><p class="form-help">Esta actividad acepta una respuesta de texto.</p>' : attachmentField(t.submission_mode === "file" ? "Archivo requerido · máximo 5 MB" : undefined)}<div id="file-preview" class="file-preview" hidden></div><div class="upload-status" aria-live="polite" hidden></div><div class="form-actions"><button type="button" class="btn" id="save-draft">Guardar borrador</button><button class="btn primary">${sub ? "Actualizar entrega" : "Entregar actividad"} ${icon("send", 14)}</button></div><p class="form-help">El borrador guarda el texto. El archivo se envía al entregar la actividad.</p></form>`}`,
+      `${intro}${t.adapted_instructions ? `<div class="notice preserve-lines"><strong>Tu acompañamiento individual</strong><p>${esc(t.adapted_instructions)}</p></div>` : ""}${sub?.returned ? `<div class="notice preserve-lines"><strong>Una nueva oportunidad</strong><p>${esc(sub.return_message)}</p></div>` : ""}<div class="student-row-actions"><button class="btn small" data-task-ai="${id}">Pensar con Luma AI ${icon("spark", 14)}</button>${moduleEnabled("messages") ? `<button class="btn small" data-task-help="${id}">Pedir ayuda al profesor ${icon("heart", 14)}</button>` : ""}<button class="btn small" data-task-plan="${id}">Planear mi estudio</button>${sub ? `<button class="btn small" data-history="${sub.id}">Historial de versiones</button><button class="btn small" data-task-portfolio="${sub.id}">Guardar en mi portafolio</button>` : ""}</div>${sub ? `<section class="submission"><small>Tu entrega · ${dateFormat(sub.created)}</small><p>${esc(sub.body)}</p>${submissionFieldsView(t, sub.answers)}${sub.file ? `<a class="btn small" href="/api/file/${sub.id}">${icon("download", 14)} ${esc(sub.file)}</a>` : ""}${sub.grade != null ? `<div class="grade-feedback"><strong>${sub.grade}<small> / ${t.points}</small></strong><p>${esc(sub.feedback || "Tu profesor ya revisó tu trabajo.")}</p></div>` : ""}</section>` : ""}${sub?.grade != null ? '<span class="badge done">Trabajo revisado. ¡Sigue creciendo!</span>' : t.closed || (!t.allow_late && t.due < todayISO()) ? '<div class="notice">Esta actividad está cerrada. Puedes consultar tu entrega; para hacer cambios, contacta a tu profesor.</div>' : `<form id="submit-form"><input type="hidden" name="task" value="${t.id}">${textarea("body", "Tu respuesta", draft?.body ?? sub?.body ?? "", 'maxlength="10000" placeholder="Comparte lo que aprendiste…"')}${t.fields?.length ? `<section class="smart-submission"><h3>Tu recorrido de aprendizaje</h3>${smartFieldsHTML(t.fields, draft?.answers ?? sub?.answers ?? {})}</section>` : ""}<div class="draft-hint" id="draft-hint">${draft ? "Borrador guardado en tu cuenta" : "Tu respuesta se guarda como borrador al hacer una pausa."}</div>${t.submission_mode === "text" ? '<input type="file" name="file" hidden><p class="form-help">Esta actividad acepta una respuesta de texto.</p>' : attachmentField(t.submission_mode === "file" ? "Archivo requerido · máximo 5 MB" : undefined)}<div id="file-preview" class="file-preview" hidden></div><div class="upload-status" aria-live="polite" hidden></div><div class="form-actions"><button type="button" class="btn" id="save-draft">Guardar borrador</button><button class="btn primary">${sub ? "Actualizar entrega" : "Entregar actividad"} ${icon("send", 14)}</button></div><p class="form-help">El borrador guarda el texto. El archivo se envía al entregar la actividad.</p></form>`}`,
     );
     if (t.rubric?.criteria || t.fields?.length)
       $(".modal").classList.add("rubric-review");
@@ -1025,6 +1013,7 @@ function openTask(id) {
       "click",
       () => closeTaskForPersonal() && openPortfolioEditor(null, sub.id),
     );
+    bindTeacherWorkspace();
     const form = $("#submit-form");
     if (!form) return;
     form.dataset.savedBody = form.elements.body.value;
@@ -1153,7 +1142,7 @@ function openTask(id) {
       missing = c.students.filter((id) => !ss.some((s) => s.student === id));
     modal(
       t.title,
-      `${intro}<div class="activity-management"><button class="btn small" data-editor-task="${id}">Editar actividad</button><button class="btn small" id="toggle-task">${t.closed ? "Reabrir entregas" : "Cerrar entregas"}</button><span class="badge ${t.closed ? "closed" : ""}">${t.closed ? "Cerrada" : "Activa"}</span></div><div class="review-summary"><strong>${ss.length}/${c.students.length}</strong> entregas <span>${ss.filter((s) => s.grade == null).length} por revisar</span></div>${ss.map((s) => `<section class="submission"><div class="post-head">${avatar(person(s.student))}<div><strong>${esc(person(s.student)?.name)}</strong><small>${dateFormat(s.created)} · ${s.grade != null ? "Calificada" : "Pendiente de revisión"}</small></div></div><p>${esc(s.body)}</p>${submissionFieldsView(t, s.answers)}${s.file ? `<a class="btn small" href="/api/file/${s.id}">${icon("download", 14)} ${esc(s.file)}</a>` : ""}<form class="grade-form" data-id="${s.id}">${gradingFields(t, s)}<button class="btn primary small">Guardar calificación</button></form></section>`).join("") || empty("Aún no hay entregas.")}${missing.length ? `<div class="missing-students"><h3>Por entregar · ${missing.length}</h3>${missing.map((id) => `<span>${avatar(person(id))}${esc(person(id)?.name)}</span>`).join("")}</div>` : ""}`,
+      `${intro}<div class="activity-management"><button class="btn small" data-editor-task="${id}">Editar actividad</button><button class="btn small" id="toggle-task">${t.closed ? "Reabrir entregas" : "Cerrar entregas"}</button><span class="badge ${t.closed ? "closed" : ""}">${t.closed ? "Cerrada" : "Activa"}</span></div><div class="review-summary"><strong>${ss.length}/${c.students.length}</strong> entregas <span>${ss.filter((s) => s.grade == null).length} por revisar</span></div>${ss.map((s) => `<section class="submission"><div class="post-head">${avatar(person(s.student))}<div><strong>${esc(person(s.student)?.name)}</strong><small>${dateFormat(s.created)} · ${s.grade != null ? "Calificada" : "Pendiente de revisión"}</small></div></div><p>${esc(s.body)}</p>${submissionFieldsView(t, s.answers)}${s.file ? `<a class="btn small" href="/api/file/${s.id}">${icon("download", 14)} ${esc(s.file)}</a>` : ""}<button class="btn small" data-history="${s.id}">Historial</button>${s.returned ? `<div class="notice">Devuelta para corregir: ${esc(s.return_message)}</div>` : `<button class="btn small" data-return-submission="${s.id}">Devolver para corregir</button>`}<form class="grade-form" ${s.returned ? "hidden" : ""} data-id="${s.id}">${gradingFields(t, s)}<button class="btn primary small">Guardar calificación</button></form></section>`).join("") || empty("Aún no hay entregas.")}${missing.length ? `<div class="missing-students"><h3>Por entregar · ${missing.length}</h3>${missing.map((id) => `<span>${avatar(person(id))}${esc(person(id)?.name)}</span>`).join("")}</div>` : ""}`,
     );
     if (t.rubric?.criteria || t.fields?.length)
       $(".modal").classList.add("rubric-review");
@@ -1191,6 +1180,7 @@ function openTask(id) {
         busy(b, false);
       }
     };
+    bindTeacherWorkspace();
     $$(".grade-form").forEach((form) => bindGrading(form, t));
     $$(".grade-form").forEach(
       (form) =>
@@ -2276,6 +2266,21 @@ function guardForm(path) {
     "teacher-assign": "courses.manage",
     "user-details": "users.manage",
     "user-role": "users.manage",
+    ...Object.fromEntries(
+      [
+        "lesson-save",
+        "library-save",
+        "library-publish",
+        "competency-save",
+        "task-adaptation",
+        "submission-return",
+        "tutoring-save",
+        "tutoring-agreement",
+        "teacher-ai-save",
+      ].map((k) => [k, "teaching.customize"]),
+    ),
+    "tutoring-book": "tutoring.reserve",
+    unused: "teaching.customize",
     "teaching-template": "teaching.customize",
     "teaching-template-edit": "teaching.customize",
     "teaching-preferences": "teaching.customize",
@@ -2307,6 +2312,48 @@ function editorSection(number, title, description, fields) {
 function formMeta(path) {
   const type = path.split("-")[0];
   const map = {
+    lesson: [
+      "Planificación docente",
+      "calendar",
+      "Organiza objetivos, materiales y actividades. El plan es privado de tu cuenta.",
+      "Mi planificación",
+      "Guardar planificación",
+    ],
+    library: [
+      "Biblioteca privada",
+      "book",
+      "Guarda copias de tus materiales para reutilizarlos en las aulas a tu cargo.",
+      "Mi recurso",
+      "Guardar recurso",
+    ],
+    competency: [
+      "Competencia",
+      "star",
+      "Define evidencias observables y una meta para acompañar el aprendizaje.",
+      "Criterios de avance",
+      "Guardar competencia",
+    ],
+    submission: [
+      "Nueva oportunidad",
+      "heart",
+      "Acompaña la revisión conservando el historial del trabajo.",
+      "Comentarios para revisar",
+      "Devolver trabajo",
+    ],
+    tutoring: [
+      "Tutoría",
+      "heart",
+      "Un espacio individual de consulta y seguimiento.",
+      "Acompañamiento",
+      "Guardar tutoría",
+    ],
+    teacher: [
+      "Borrador docente",
+      "spark",
+      "Revisa y adapta antes de utilizar un contenido de IA.",
+      "Mi revisión",
+      "Guardar revisión",
+    ],
     planner: [
       "Agenda privada",
       "calendar",
@@ -2375,7 +2422,7 @@ function formMeta(path) {
       "file",
       "Una actividad clara empieza con una buena idea. Define qué aprenderán, cómo entregarán y dale tu estilo.",
       "Contenido y propósito",
-      "Publicar actividad",
+      "Guardar actividad",
     ],
     course: [
       "Materia / aula",
@@ -2542,7 +2589,8 @@ function openTaskEditor(id) {
       "Elige el color que acompañará a esta actividad.",
       paletteField("color", t?.color || defaults.color || "purple"),
     ) +
-    teachingTaskOptions(t);
+    teachingTaskOptions(t) +
+    teacherPublicationFields(t);
   formModal(
     t ? "Renueva tu actividad" : "Crea algo que inspire",
     body,
@@ -2553,12 +2601,16 @@ function openTaskEditor(id) {
       points: +d.points,
       allow_late: f.has("allow_late"),
       ...taskTeachingData(d, t),
+      publication: d.publication,
+      publish_at: d.publish_at,
+      competencies: f.getAll("competency").map(Number),
     }),
     t
       ? "Actividad actualizada. Sus entregas se conservan."
-      : "Actividad publicada en el aula.",
+      : "Actividad guardada. Revisa su estado de publicación.",
   );
   bindTaskTeaching(t);
+  bindTeacherPublication(t);
 }
 function bindEditorPresets() {
   const presets = {

@@ -44,27 +44,32 @@ También puedes usar:
 sh start.sh
 ```
 
-En el primer inicio se crea `.venv`, se instalan las dependencias incluidas, se crea la base de datos y se preparan las cuentas de prueba. Los siguientes inicios conservan tus cambios.
+En el primer inicio se crea `.venv`, se instalan las dependencias incluidas, se crea la base de datos y se solicita crear tu primera cuenta administrativa real. No hay cuentas de prueba. Los siguientes inicios conservan tus cambios.
 
 Abre **http://127.0.0.1:8000** en tu navegador. Mantén la terminal abierta mientras uses la plataforma. Para detenerla, presiona **Ctrl+C**.
 
 ## 4. Entrar al campus
 
-En la pantalla de acceso hay botones para probar cada rol. Las cuentas son:
+Accede con la cuenta real de tu institución. En una instalación nueva, `run.py` solicita en la terminal el correo, nombre y contraseña del primer administrador. Al escribir la contraseña no se ven caracteres; es normal.
 
-| Rol | Correo | Contraseña |
-| --- | --- | --- |
-| Estudiante | estudiante@luma.demo | LumaDemo2026! |
-| Profesor | profe@luma.demo | LumaDemo2026! |
-| Administrador | admin@luma.demo | LumaDemo2026! |
+Si prefieres crear esa cuenta antes de arrancar:
 
-Prueba este recorrido:
+```bash
+python3 install.py
+python3 bootstrap_admin.py
+python3 run.py
+```
 
-1. Estudiante → Mis tareas → Abrir actividad → escribe una respuesta → Entregar.
-2. Cambiar de cuenta → Profesor → Actividades → Revisar → califica la entrega.
-3. Estudiante → Calificaciones → consulta la nota y los comentarios.
-4. Envía un mensaje al profesor; cambia a su cuenta para responder.
-5. Administrador → Administración → crea una persona o un aula. Para matricular estudiantes, abre el aula → Personas → Gestionar matrículas.
+En Windows sustituye `python3` por `py -3`. El asistente utiliza el entorno virtual instalado; no necesitas instalar Django globalmente.
+
+1. Administración → Identidad: cambia nombre, colores y logo.
+2. Administración → Personas: crea los profesores y estudiantes con correos y contraseñas reales.
+3. Administración → Materias: crea materias y asigna un profesor real.
+4. Administración → Matrículas: incorpora estudiantes.
+5. El profesor entra con su cuenta → Mi estudio → planifica, crea actividades y materiales.
+6. El estudiante entra con su cuenta → Classroom → entrega su trabajo; el profesor lo revisa.
+
+Las cuentas antiguas de demostración se desactivan al instalar o iniciar esta versión. Sus registros académicos permanecen en la base; no se borran automáticamente. Si antes solo usabas perfiles de prueba, crea tu cuenta real de administración y reasigna o archiva las materias anteriores desde Administración.
 
 Las conversaciones se actualizan cada 6 segundos mientras esa pantalla está abierta. Si quieres probar dos cuentas simultáneamente, abre una en una ventana privada o en otro navegador.
 
@@ -108,7 +113,7 @@ macOS/Linux:
 .venv/bin/python manage.py test
 ```
 
-Se incluyen **52 pruebas** del servidor. No necesitas Node.js para ejecutar la aplicación ni sus pruebas de Python.
+Se incluyen **164 pruebas** del servidor. No necesitas Node.js para ejecutar la aplicación ni sus pruebas de Python.
 
 ## 7. Problemas habituales
 
@@ -124,7 +129,7 @@ Se incluyen **52 pruebas** del servidor. No necesitas Node.js para ejecutar la a
 
 `campus.sqlite3` guarda los registros y `uploads/` guarda los archivos entregados. Ambos se crean localmente; el ZIP no incluye sesiones ni una base de datos anterior. Cierra el servidor antes de hacer una copia de seguridad de estos archivos.
 
-Este paquete permite ejecutar y probar el campus localmente. Para ponerlo en Internet, consulta la sección Publicación del README y configura un servidor Python con HTTPS. Las cuentas de prueba son para demostración.
+Este paquete permite ejecutar y probar el campus localmente. Para ponerlo en Internet, consulta la sección Publicación del README y configura un servidor Python con HTTPS. La instalación nueva requiere configurar cuentas reales.
 
 ## 9. Actualizar Luma Campus conservando tus datos (Linux / Chromebook)
 
@@ -183,7 +188,7 @@ La actualización se realiza con los comandos de la sección 9. La migración 00
 
 ## 12. Centro de administración institucional
 
-Entra con una cuenta de administrador y abre **Administración**, o **Mi perfil → Abrir centro de gestión**. En la demostración puedes usar `admin@luma.demo` con `LumaDemo2026!`.
+Entra con una cuenta de administrador y abre **Administración**, o **Mi perfil → Abrir centro de gestión**.
 
 1. **Vista general:** consulta estudiantes, profesores, materias activas, matrículas y pendientes como estudiantes sin aula o profesores sin asignación.
 2. **Identidad:** cambia nombre completo, nombre corto, lema, período y colores. La vista previa permite comprobar la marca antes de publicar. Usa un principal oscuro, por ejemplo `#335d89`; el servidor exige contraste legible con blanco. Sube un logo **PNG de hasta 2 MB y 2048 × 2048 píxeles**. La identidad se aplica al acceso, navegación y acento por defecto; las preferencias personales de color se conservan.
@@ -200,7 +205,7 @@ Para actualizar tu instalación de Linux / Chromebook, detén primero el servido
 ```bash
 cd ~
 cp -a LumaCampus "LumaCampus-respaldo-$(date +%Y%m%d-%H%M%S)"
-wget -O LumaCampus-actualizacion.zip 'https://raw.githubusercontent.com/gabo899s/educanMEP/luma-campus/downloads/LumaCampus.zip?v=7'
+wget -O LumaCampus-actualizacion.zip 'https://raw.githubusercontent.com/gabo899s/educanMEP/luma-campus/downloads/LumaCampus.zip?v=8'
 unzip -o LumaCampus-actualizacion.zip
 cd LumaCampus
 python3 install.py
@@ -240,7 +245,7 @@ sudo apt update
 sudo apt install -y python3 python3-venv unzip wget tesseract-ocr tesseract-ocr-spa tesseract-ocr-eng poppler-utils
 cd ~
 cp -a LumaCampus "LumaCampus-respaldo-$(date +%Y%m%d-%H%M%S)"
-wget -O LumaCampus-actualizacion.zip 'https://raw.githubusercontent.com/gabo899s/educanMEP/luma-campus/downloads/LumaCampus.zip?v=7'
+wget -O LumaCampus-actualizacion.zip 'https://raw.githubusercontent.com/gabo899s/educanMEP/luma-campus/downloads/LumaCampus.zip?v=8'
 unzip -o LumaCampus-actualizacion.zip
 cd LumaCampus
 python3 install.py
@@ -260,7 +265,7 @@ Abre **http://127.0.0.1:8000** y entra como estudiante. Luma AI no aparece para 
 sudo apt update
 sudo apt install -y python3 python3-venv unzip wget tesseract-ocr tesseract-ocr-spa tesseract-ocr-eng poppler-utils
 cd ~
-wget -O LumaCampus.zip 'https://raw.githubusercontent.com/gabo899s/educanMEP/luma-campus/downloads/LumaCampus.zip?v=7'
+wget -O LumaCampus.zip 'https://raw.githubusercontent.com/gabo899s/educanMEP/luma-campus/downloads/LumaCampus.zip?v=8'
 unzip LumaCampus.zip
 cd LumaCampus
 python3 install.py
@@ -297,3 +302,36 @@ El chat, los PDF con texto, enlaces y sesiones usan las dependencias Python incl
 - Importar una actividad o detectar un entregable activa tutoría persistente. Las pistas no deben contener respuestas finales, apartados resueltos, código entregable ni proyectos completos. Los filtros incluyen un revisor independiente y respuestas seguras si la revisión falla. Son controles de IA, no una garantía absoluta de detección perfecta.
 
 Guarda juntos `campus.sqlite3`, `uploads/` y tu configuración privada en los respaldos. El ZIP nunca incluye sesiones, fuentes ni claves locales. La comprobación del contrato NVIDIA y las pruebas de interfaz usan un proveedor simulado únicamente en las pruebas; una respuesta real requiere tu clave y acceso al servicio.
+
+
+## 15. Actualizar a Luma Campus 8
+
+En Linux / Chromebook, detén el servidor anterior con **Ctrl+C** y copia este bloque completo. Conserva la copia de respaldo hasta comprobar tus datos:
+
+```bash
+cd "$HOME"
+sudo apt update
+sudo apt install -y python3 python3-venv unzip wget tesseract-ocr tesseract-ocr-spa tesseract-ocr-eng poppler-utils
+if [ -d LumaCampus ]; then
+  cp -a LumaCampus "LumaCampus-respaldo-$(date +%Y%m%d-%H%M%S)"
+fi
+wget -O LumaCampus-v8.zip 'https://raw.githubusercontent.com/gabo899s/educanMEP/luma-campus/downloads/LumaCampus.zip?v=8'
+unzip -o LumaCampus-v8.zip
+cd LumaCampus
+python3 install.py
+python3 run.py
+```
+
+Abre **http://127.0.0.1:8000**. El arranque solicita crear administración si no existe una cuenta real activa. Si ya existe, inicia sesión con ella. No hay contraseñas compartidas ni botones de prueba. Las nuevas migraciones conservan las cuentas reales, matrículas, entregas, sesiones de IA, preferencias y archivos existentes. El ZIP no sobrescribe la base, `uploads/`, `.venv/` ni `.env`.
+
+Para habilitar ambas áreas de IA, detén el servidor con **Ctrl+C**, configura tu clave privada y vuelve a iniciar:
+
+```bash
+cd "$HOME/LumaCampus"
+python3 configure_ai.py
+python3 run.py
+```
+
+No pegues la clave en el navegador, repositorio ni chat. No hace falta repetir la configuración si tu `.env` ya contiene una clave válida.
+
+El docente entra en **Mi estudio**. El estudiante reserva tutorías en **Mi espacio → Consultas / ayuda**. Los borradores y las actividades programadas no son visibles para estudiantes hasta la publicación. Consulta **DOCENCIA.md** para el recorrido completo y los límites de cada herramienta.

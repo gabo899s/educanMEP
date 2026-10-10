@@ -47,6 +47,10 @@ class Task(models.Model):
     rubric=models.JSONField(default=dict,blank=True)
     fields=models.JSONField(default=list,blank=True)
 
+    publication=models.CharField(max_length=12,default='published')
+    publish_at=models.DateTimeField(null=True,blank=True)
+    competencies=models.JSONField(default=list,blank=True)
+
 class Submission(models.Model):
     task=models.ForeignKey(Task,on_delete=models.CASCADE)
     student=models.ForeignKey(User,on_delete=models.CASCADE)
@@ -61,6 +65,10 @@ class Submission(models.Model):
     created=models.DateTimeField(auto_now=True)
     class Meta:
         unique_together=[('task','student')]
+
+    returned=models.BooleanField(default=False)
+    return_message=models.TextField(blank=True)
+    version=models.PositiveIntegerField(default=1)
 
 class Message(models.Model):
     sender=models.ForeignKey(User,on_delete=models.CASCADE,related_name='sent_messages')
@@ -110,7 +118,7 @@ class TeachingTemplate(models.Model):
     updated=models.DateTimeField(auto_now=True)
 
 class Institution(models.Model):
-    name=models.CharField(max_length=120,default='Colegio Las Jacarandas')
+    name=models.CharField(max_length=120,default='Mi institución')
     short_name=models.CharField(max_length=30,default='luma')
     motto=models.CharField(max_length=200,default='Un lugar para aprender y florecer.')
     year=models.CharField(max_length=40,default='2026')
@@ -233,3 +241,80 @@ class AIStudyTurn(models.Model):
     created=models.DateTimeField(auto_now_add=True)
     class Meta:
         constraints=[models.UniqueConstraint(fields=['session','request_id'],name='ai_unique_request')]
+
+
+class LessonPlan(models.Model):
+    author=models.ForeignKey(User,on_delete=models.CASCADE)
+    course=models.ForeignKey(Course,on_delete=models.CASCADE)
+    title=models.CharField(max_length=160)
+    date=models.DateField()
+    duration=models.PositiveIntegerField(default=60)
+    objectives=models.TextField()
+    content=models.TextField(blank=True)
+    materials=models.TextField(blank=True)
+    activities=models.TextField(blank=True)
+    reflection=models.TextField(blank=True)
+    updated=models.DateTimeField(auto_now=True)
+
+class TeachingLibraryItem(models.Model):
+    author=models.ForeignKey(User,on_delete=models.CASCADE)
+    title=models.CharField(max_length=200)
+    folder=models.CharField(max_length=100,blank=True)
+    tags=models.JSONField(default=list,blank=True)
+    kind=models.CharField(max_length=12,default='resource')
+    definition=models.JSONField(default=dict)
+    file=models.FileField(upload_to='teaching-library/',blank=True)
+    original_name=models.CharField(max_length=255,blank=True)
+    updated=models.DateTimeField(auto_now=True)
+
+class Competency(models.Model):
+    course=models.ForeignKey(Course,on_delete=models.CASCADE)
+    title=models.CharField(max_length=160)
+    description=models.TextField(blank=True)
+    target=models.PositiveIntegerField(default=70)
+
+class TaskAdaptation(models.Model):
+    task=models.ForeignKey(Task,on_delete=models.CASCADE)
+    student=models.ForeignKey(User,on_delete=models.CASCADE)
+    due=models.DateField(null=True,blank=True)
+    instructions=models.TextField(blank=True)
+    private_notes=models.TextField(blank=True)
+    class Meta:
+        constraints=[models.UniqueConstraint(fields=['task','student'],name='unique_task_adaptation')]
+
+class SubmissionVersion(models.Model):
+    submission=models.ForeignKey(Submission,on_delete=models.CASCADE,related_name='versions')
+    number=models.PositiveIntegerField()
+    body=models.TextField(blank=True)
+    answers=models.JSONField(default=dict)
+    file=models.FileField(upload_to='submission-versions/',blank=True)
+    original_name=models.CharField(max_length=255,blank=True)
+    grade=models.PositiveIntegerField(null=True,blank=True)
+    feedback=models.TextField(blank=True)
+    rubric_assessment=models.JSONField(default=dict)
+    created=models.DateTimeField(auto_now_add=True)
+    class Meta:
+        constraints=[models.UniqueConstraint(fields=['submission','number'],name='unique_submission_version')]
+
+    return_message=models.TextField(blank=True)
+
+class TutoringSlot(models.Model):
+    teacher=models.ForeignKey(User,on_delete=models.CASCADE)
+    course=models.ForeignKey(Course,on_delete=models.CASCADE)
+    starts=models.DateTimeField()
+    minutes=models.PositiveIntegerField(default=30)
+    location=models.CharField(max_length=160)
+    student=models.ForeignKey(User,on_delete=models.SET_NULL,null=True,blank=True,related_name='tutoring_bookings')
+    question=models.TextField(blank=True)
+    agreement=models.TextField(blank=True)
+    cancelled=models.BooleanField(default=False)
+
+class TeacherAIDraft(models.Model):
+    author=models.ForeignKey(User,on_delete=models.CASCADE)
+    course=models.ForeignKey(Course,on_delete=models.SET_NULL,null=True,blank=True)
+    kind=models.CharField(max_length=12)
+    title=models.CharField(max_length=160)
+    prompt=models.TextField()
+    content=models.TextField()
+    status=models.CharField(max_length=12,default='draft')
+    created=models.DateTimeField(auto_now_add=True)
