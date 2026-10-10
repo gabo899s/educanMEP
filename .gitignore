@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+campus.sqlite3
+uploads/
+.env
+*.zip
