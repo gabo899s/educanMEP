@@ -17,6 +17,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 
 from .models import Attendance, Course, Draft, Event, Message, Post, Profile, Resource, Submission, Task
 from .settings import BASE_DIR
+from .permissions import authorize, permissions
 
 COLORS = {'pink', 'purple', 'green', 'peach', 'blue', 'yellow'}
 SYMBOLS = {'flower', 'orbit', 'leaf', 'sun', 'star', 'spark'}
@@ -26,12 +27,14 @@ def person(u, private=False):
     result = {'id': u.id, 'name': u.get_full_name() or u.username, 'email': u.email,
               'role': p.role, 'bio': p.bio, 'color': p.color}
     if private:
-        result.update(phone=p.phone, preferences=p.preferences)
+        result.update(phone=p.phone, preferences=p.preferences, permissions=permissions(u))
     return result
 
 def courses(u):
     role = u.profile.role
     query = Course.objects.all() if role == 'admin' else Course.objects.filter(teacher=u) if role == 'teacher' else u.courses.all()
+    if role not in ['admin', 'teacher', 'student']:
+        query = Course.objects.none()
     return query.order_by('title').prefetch_related('students')
 
 def getcourse(u, identifier):
@@ -112,7 +115,8 @@ def state(u):
                      'students': [p.id for p in c.students.all()], 'color': c.color, 'symbol': c.symbol,
                      'schedule': c.schedule, 'room': c.room} for c in cs],
         'tasks': [{'id': t.id, 'course': t.course_id, 'title': t.title, 'description': t.description,
-                   'due': str(t.due), 'points': t.points, 'closed': t.closed} for t in tasks],
+                   'due': str(t.due), 'points': t.points, 'closed': t.closed,
+                   'kind': t.kind, 'submission_mode': t.submission_mode, 'allow_late': t.allow_late, 'color': t.color} for t in tasks],
         'submissions': [{'id': s.id, 'task': s.task_id, 'student': s.student_id, 'body': s.body, 'file': s.original_name,
                          'grade': s.grade, 'feedback': s.feedback, 'created': s.created.isoformat()} for s in submissions],
         'posts': [{'id': p.id, 'course': p.course_id, 'author': p.author_id, 'body': p.body,
@@ -183,7 +187,17 @@ def export_grades(u):
     response['Cache-Control'] = 'private, no-store'
     return response
 
+def task_options(d, task=None):
+    kind = d.get('kind', task.kind if task else 'assignment')
+    mode = d.get('submission_mode', task.submission_mode if task else 'both')
+    color = d.get('color', task.color if task else 'purple')
+    late = d.get('allow_late', task.allow_late if task else True)
+    if kind not in {'assignment', 'project', 'quiz', 'reading'} or mode not in {'both', 'text', 'file'} or color not in COLORS:
+        raise ValueError('Selecciona opciones válidas para la actividad.')
+    return {'kind': kind, 'submission_mode': mode, 'allow_late': boolean(late), 'color': color}
+
 def mutate(request, u, path, d):
+    authorize(u, path)
     if path == 'profile':
         name = text(d, 'name', 100).split(' ', 1)
         bio = text(d, 'bio', 1000, False)
@@ -196,6 +210,14 @@ def mutate(request, u, path, d):
         p = u.profile
         p.bio, p.phone, p.color = bio, phone, color
         p.save()
+    elif path == 'appearance':
+        accent, density = d.get('accent', 'purple'), d.get('density', 'comfortable')
+        motion = boolean(d.get('reduce_motion', False))
+        if accent not in COLORS or density not in {'comfortable', 'compact'}:
+            raise ValueError('Selecciona una apariencia válida.')
+        p = u.profile
+        p.preferences = {**p.preferences, 'appearance': {'accent': accent, 'density': density, 'reduce_motion': motion}}
+        p.save(update_fields=['preferences'])
     elif path == 'favorite':
         c = getcourse(u, d['course'])
         p = u.profile
@@ -244,7 +266,7 @@ def mutate(request, u, path, d):
             c = getcourse(u, d['course'])
             staff(u, c)
             Task.objects.create(course=c, title=text(d, 'title'), description=text(d, 'description', 5000),
-                                due=date.fromisoformat(d['due']), points=integer(d.get('points', 100), 1, 1000))
+                                due=date.fromisoformat(d['due']), points=integer(d.get('points', 100), 1, 1000), **task_options(d))
         else:
             t = Task.objects.get(id=d['id'])
             c = getcourse(u, t.course_id)
@@ -257,6 +279,11 @@ def mutate(request, u, path, d):
                     raise ValueError('No puedes cambiar los puntos de una actividad con entregas.')
                 t.title, t.description = text(d, 'title'), text(d, 'description', 5000)
                 t.due, t.points = date.fromisoformat(d['due']), points
+                options = task_options(d, t)
+                if options['submission_mode'] != t.submission_mode and t.submission_set.exists():
+                    raise ValueError('Con entregas existentes, conserva el formato de entrega.')
+                for key, value in options.items():
+                    setattr(t, key, value)
             t.save()
     elif path in ['submit', 'draft']:
         t = Task.objects.get(id=d['task'])
@@ -272,7 +299,16 @@ def mutate(request, u, path, d):
             Draft.objects.update_or_create(task=t, student=u, defaults={'body': body})
         else:
             f = upload(request)
-            if not body and not f:
+            if not t.allow_late and timezone.localdate() > t.due:
+                raise ValueError('La fecha de entrega terminó y esta actividad no admite entregas tardías.')
+            if t.submission_mode == 'text' and f:
+                raise ValueError('Esta actividad solo acepta una respuesta de texto.')
+            if t.submission_mode == 'text' and not body:
+                raise ValueError('Escribe la respuesta de texto requerida.')
+            existing_file = Submission.objects.filter(task=t, student=u).exclude(file='').exists()
+            if t.submission_mode == 'file' and not f and not existing_file:
+                raise ValueError('Adjunta el archivo requerido para esta actividad.')
+            if not body and not f and not existing_file:
                 raise ValueError('Escribe tu respuesta o adjunta un archivo.')
             s, _ = Submission.objects.get_or_create(task=t, student=u)
             s.body = body

@@ -222,6 +222,104 @@ class CampusFlows(TestCase):
         response=self.client.get('/api/state',HTTP_ACCEPT_ENCODING='gzip',HTTP_IF_NONE_MATCH=response['ETag'])
         self.assertEqual(response.status_code,304)
 
+    def test_student_denied_every_academic_and_admin_write(self):
+        actions=['course','course-edit','user','user-edit','membership','task','task-edit','task-toggle','grade','resource','resource-edit','resource-delete','attendance','event','event-edit','event-delete','post-pin']
+        for action in actions:
+            with self.subTest(action=action):
+                self.assertEqual(self.post(action, {}).status_code,403)
+        self.assertEqual(Course.objects.count(),1)
+        self.assertEqual(Task.objects.count(),1)
+
+    def test_teacher_cannot_manage_catalog_accounts_or_membership(self):
+        self.client.force_login(self.users['teacher'])
+        for action in ['course','course-edit','user','user-edit','membership','submit','draft']:
+            with self.subTest(action=action):
+                self.assertEqual(self.post(action,{}).status_code,403)
+
+    def test_teacher_cannot_write_in_another_teachers_class(self):
+        other=User.objects.create_user('anotherteacher');Profile.objects.create(user=other,role='teacher')
+        c=Course.objects.create(title='Otra aula',code='OTHER',teacher=other)
+        task=Task.objects.create(course=c,title='Privada',description='Privada',due=date.today())
+        resource=Resource.objects.create(course=c,title='Privado',body='Privado')
+        post=Post.objects.create(course=c,author=other,body='Privado')
+        sub=Submission.objects.create(task=task,student=self.users['student'],body='Entrega')
+        self.client.force_login(self.users['teacher'])
+        cases=[('task',{'course':c.id}),('task-edit',{'id':task.id}),('task-toggle',{'id':task.id,'closed':True}),('grade',{'submission':sub.id,'grade':50}),('resource',{'course':c.id}),('resource-edit',{'id':resource.id}),('resource-delete',{'id':resource.id}),('attendance',{'course':c.id}),('post-edit',{'id':post.id}),('post-delete',{'id':post.id}),('post-pin',{'id':post.id})]
+        for action,data in cases:
+            with self.subTest(action=action): self.assertEqual(self.post(action,data).status_code,403)
+        self.assertTrue(Resource.objects.filter(id=resource.id).exists())
+        self.assertTrue(Post.objects.filter(id=post.id).exists())
+        self.assertIsNone(Submission.objects.get(id=sub.id).grade)
+
+    def test_state_exposes_only_own_permissions_and_cannot_promote_self(self):
+        data=self.client.get('/api/state').json()
+        self.assertIn('assignments.submit',data['me']['permissions'])
+        self.assertNotIn('courses.manage',data['me']['permissions'])
+        self.assertTrue(all('permissions' not in p for p in data['people']))
+        self.post('profile',{'name':'Intento','bio':'','role':'admin','permissions':['courses.manage']})
+        self.assertEqual(self.users['student'].profile.role,'student')
+        self.assertEqual(self.post('course',{}).status_code,403)
+
+    def test_appearance_persists_without_overwriting_favorites_or_role(self):
+        self.post('favorite',{'course':self.c.id,'favorite':True})
+        response=self.post('appearance',{'accent':'green','density':'compact','reduce_motion':True,'role':'admin'})
+        self.assertEqual(response.status_code,200)
+        me=response.json()['me']
+        self.assertEqual(me['preferences']['appearance'],{'accent':'green','density':'compact','reduce_motion':True})
+        self.assertEqual(me['preferences']['favorites'],[self.c.id])
+        self.assertEqual(me['role'],'student')
+        self.assertEqual(self.post('appearance',{'accent':'evil','density':'compact'}).status_code,400)
+        self.assertEqual(self.post('appearance',{'accent':'pink','reduce_motion':'false'}).status_code,400)
+
+    def test_activity_options_validate_and_persist(self):
+        self.client.force_login(self.users['teacher'])
+        data={'course':self.c.id,'title':'Proyecto','description':'Investiga','due':str(date.today()),'points':80,'kind':'project','submission_mode':'file','allow_late':False,'color':'green'}
+        response=self.post('task',data);self.assertEqual(response.status_code,200)
+        task=Task.objects.get(title='Proyecto')
+        self.assertEqual((task.kind,task.submission_mode,task.allow_late,task.color),('project','file',False,'green'))
+        for field,value in [('kind','fake'),('submission_mode','fake'),('color','fake'),('allow_late','false')]:
+            with self.subTest(field=field): self.assertEqual(self.post('task',{**data,field:value}).status_code,400)
+        self.assertEqual(Task.objects.count(),2)
+
+    def test_submission_mode_is_enforced_on_server(self):
+        with TemporaryDirectory() as temp,override_settings(MEDIA_ROOT=temp):
+            self.t.submission_mode='file';self.t.save()
+            self.assertEqual(self.post('submit',{'task':self.t.id,'body':'Solo texto'}).status_code,400)
+            f=SimpleUploadedFile('proyecto.txt',b'Proyecto')
+            self.assertEqual(self.client.post('/api/submit',{'task':self.t.id,'file':f}).status_code,200)
+            self.assertTrue(Submission.objects.get().file)
+            self.assertEqual(self.post('submit', {'task':self.t.id,'body':''}).status_code,200)
+            self.assertTrue(Submission.objects.get().file)
+            Submission.objects.all().delete()
+            self.t.submission_mode='text';self.t.save()
+            f=SimpleUploadedFile('archivo.txt',b'Archivo')
+            self.assertEqual(self.client.post('/api/submit',{'task':self.t.id,'body':'Texto','file':f}).status_code,400)
+            self.assertFalse(Submission.objects.exists())
+            self.assertEqual(self.post('submit',{'task':self.t.id,'body':'Respuesta'}).status_code,200)
+
+    def test_deadline_policy_and_legacy_defaults(self):
+        from datetime import timedelta
+        from django.utils import timezone
+        self.t.due=timezone.localdate()-timedelta(days=1);self.t.allow_late=False;self.t.save()
+        self.assertEqual(self.post('submit',{'task':self.t.id,'body':'Tarde'}).status_code,400)
+        self.assertFalse(Submission.objects.exists())
+        self.assertEqual(self.post('draft',{'task':self.t.id,'body':'Borrador'}).status_code,200)
+        self.t.allow_late=True;self.t.save()
+        self.assertEqual(self.post('submit',{'task':self.t.id,'body':'Permitida'}).status_code,200)
+
+    def test_task_delivery_mode_cannot_change_after_submission(self):
+        self.post('submit',{'task':self.t.id,'body':'Entrega existente'})
+        self.client.force_login(self.users['teacher'])
+        data={'id':self.t.id,'title':'Cambio','description':'Cambio','due':str(date.today()),'submission_mode':'file'}
+        self.assertEqual(self.post('task-edit',data).status_code,400)
+        self.t.refresh_from_db();self.assertEqual(self.t.submission_mode,'both');self.assertEqual(self.t.title,'Células')
+        self.assertEqual(Submission.objects.get().body,'Entrega existente')
+
+    def test_unrecognized_profile_fails_closed(self):
+        self.users['student'].profile.role='unknown';self.users['student'].profile.save()
+        data=self.client.get('/api/state').json();self.assertEqual(data['courses'],[]);self.assertEqual(data['me']['permissions'],[])
+        self.assertEqual(self.post('profile',{'name':'Cambio'}).status_code,403)
+
 from django.test import TransactionTestCase
 from django.db.migrations.executor import MigrationExecutor
 from django.db import connection
@@ -241,9 +339,12 @@ class UpgradePreservesData(TransactionTestCase):
         t=T.objects.create(course_id=c.id,title='Trabajo existente',description='Preservar',due=date.today(),points=100)
         submitted=S.objects.create(task_id=t.id,student_id=student.id,body='Datos originales',grade=98,feedback='Conservar')
         executor=MigrationExecutor(connection)
-        executor.migrate([('campus','0002_event_author_post_pinned_profile_preferences_and_more')])
+        executor.migrate([('campus','0003_task_allow_late_task_color_task_kind_and_more')])
         self.assertEqual(Submission.objects.get(id=submitted.id).grade,98)
         self.assertEqual(Submission.objects.get(id=submitted.id).body,'Datos originales')
         self.assertTrue(Course.objects.get(id=c.id).students.filter(id=student.id).exists())
         self.assertEqual(Profile.objects.get(user_id=student.id).preferences,{})
-        self.assertFalse(Task.objects.get(id=t.id).closed)
+        upgraded=Task.objects.get(id=t.id)
+        self.assertFalse(upgraded.closed)
+        self.assertEqual(upgraded.submission_mode,'both')
+        self.assertTrue(upgraded.allow_late)

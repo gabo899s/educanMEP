@@ -38,6 +38,9 @@ const paths = {
   menu: "M4 6h16 M4 12h16 M4 18h16",
   shield: "M12 2 3 6v6c0 5 9 10 9 10s9-5 9-10V6l-9-4Z m-4 10 3 3 5-6",
   link: "m10 13 4-4 M7 15l-2 2a3 3 0 0 1-4-4l5-5a3 3 0 0 1 4 0 M14 9l2-2a3 3 0 0 1 4 4l-5 5a3 3 0 0 1-4 0",
+  flower:
+    "M12 8c-8-9-14 1-7 4-8 6 1 12 7 4 6 8 15 2 7-4 7-3 1-13-7-4Z M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z",
+  star: "m12 3 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z",
   heart: "M20 4a6 6 0 0 0-8 1 6 6 0 0 0-8-1c-6 5 0 12 8 17 8-5 14-12 8-17Z",
 };
 function icon(name, size = 18) {
@@ -122,7 +125,8 @@ const submission = (t) => indexMaps.submissions.get(t.id);
 const pending = () => S.tasks.filter((t) => !submission(t) && !t.closed);
 const unread = () =>
   S.messages.filter((m) => m.recipient === S.me.id && !m.read).length;
-const staff = () => S.me.role !== "student";
+const can = (permission) => !!S?.me.permissions?.includes(permission);
+const staff = () => can("assignments.manage");
 const csrf = () =>
   decodeURIComponent(
     document.cookie
@@ -359,6 +363,7 @@ function render(options = {}) {
     pollTimer = setTimeout(poll, view === "messages" ? 6000 : 20000);
   }
   reindex();
+  applyAppearance();
   const oldScroll = window.scrollY,
     active = document.activeElement,
     focusKey = active?.id || (active?.name ? `[name="${active.name}"]` : null),
@@ -587,7 +592,7 @@ function taskRow(t) {
     s = submission(t),
     ss = S.submissions.filter((s) => s.task === t.id),
     late = !s && !t.closed && t.due < todayISO();
-  return `<article class="task-item ${late ? "is-overdue" : ""}"><span class="stat-icon ${c?.color || "pink"}">${icon("file", 20)}</span><div class="task-text"><h3>${esc(t.title)}</h3><p>${esc(c?.title)} · ${dueLabel(t.due)} · ${t.points} puntos</p>${staff() ? `<div class="task-meta">${ss.length}/${c?.students.length || 0} entregas · ${ss.filter((s) => s.grade == null).length} por revisar</div>` : ""}</div>${staff() ? `<span class="badge ${t.closed ? "closed" : ""}">${t.closed ? "Cerrada" : "Activa"}</span>` : status(t)}<button class="btn small" data-task="${t.id}">${staff() ? "Revisar" : s ? "Ver entrega" : t.closed ? "Ver actividad" : "Abrir actividad"} ${icon("arrow", 12)}</button>${staff() ? `<button class="icon-btn task-edit" data-edit-task="${t.id}" aria-label="Editar ${esc(t.title)}">${icon("profile", 14)}</button>` : ""}</article>`;
+  return `<article class="task-item ${late ? "is-overdue" : ""}"><span class="stat-icon ${esc(t.color || c?.color || "pink")}">${icon("file", 20)}</span><div class="task-text"><h3>${esc(t.title)}</h3><p>${esc(c?.title)} · ${dueLabel(t.due)} · ${t.points} puntos</p>${staff() ? `<div class="task-meta">${ss.length}/${c?.students.length || 0} entregas · ${ss.filter((s) => s.grade == null).length} por revisar</div>` : ""}</div>${staff() ? `<span class="badge ${t.closed ? "closed" : ""}">${t.closed ? "Cerrada" : "Activa"}</span>` : status(t)}<button class="btn small" data-task="${t.id}">${staff() ? "Revisar" : s ? "Ver entrega" : t.closed ? "Ver actividad" : "Abrir actividad"} ${icon("arrow", 12)}</button>${staff() ? `<button class="icon-btn task-edit" data-edit-task="${t.id}" aria-label="Editar ${esc(t.title)}">${icon("profile", 14)}</button>` : ""}</article>`;
 }
 
 function tasks() {
@@ -731,7 +736,7 @@ function profile() {
       ["yellow", "Vainilla"],
     ],
     S.me.color,
-  )}<div class="form-field full"><label for="profile-bio">Un poquito sobre mí</label><textarea id="profile-bio" name="bio" maxlength="1000">${esc(S.me.bio)}</textarea></div></div><div class="form-actions"><button class="btn primary">Guardar mi perfil ${icon("check", 14)}</button></div></form><div style="border-top:1px solid var(--line);margin-top:25px;padding-top:22px;display:flex;justify-content:space-between;align-items:center"><div><h3 style="font-size:12px">Seguridad de tu cuenta</h3><p class="muted" style="font-size:10px;margin-top:5px">Actualiza tu contraseña cuando lo necesites.</p></div><button class="btn small" data-action="password">Cambiar contraseña</button></div><button class="link-btn" data-action="logout" style="margin-top:25px">${icon("logout", 14)} Cerrar sesión</button></section></div>`;
+  )}<div class="form-field full"><label for="profile-bio">Un poquito sobre mí</label><textarea id="profile-bio" name="bio" maxlength="1000">${esc(S.me.bio)}</textarea></div></div><div class="form-actions"><button class="btn primary">Guardar mi perfil ${icon("check", 14)}</button></div></form>${profileOptions()}<div style="border-top:1px solid var(--line);margin-top:25px;padding-top:22px;display:flex;justify-content:space-between;align-items:center"><div><h3 style="font-size:12px">Seguridad de tu cuenta</h3><p class="muted" style="font-size:10px;margin-top:5px">Actualiza tu contraseña cuando lo necesites.</p></div><button class="btn small" data-action="password">Cambiar contraseña</button></div><button class="link-btn" data-action="logout" style="margin-top:25px">${icon("logout", 14)} Cerrar sesión</button></section></div>`;
 }
 function admin() {
   if (S.me.role !== "admin")
@@ -785,12 +790,14 @@ function checkStudents(selected = []) {
     .join("")}</div></div>`;
 }
 let previousFocus = null;
-function modal(title, body) {
+function modal(title, body, editor = false) {
   modalBusy = false;
+  $("#toast").classList.remove("show");
   document.body.classList.add("modal-open");
+  $("#app").inert = true;
   previousFocus = document.activeElement;
   $("#modal-root").innerHTML =
-    `<div class="overlay"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><div class="modal-head"><h2 id="dialog-title">${esc(title)}</h2><button class="icon-btn" data-close aria-label="Cerrar">${icon("close", 18)}</button></div><div class="modal-error" role="alert"></div>${body}</section></div>`;
+    `<div class="overlay ${editor ? "editor-overlay" : ""}"><section class="modal ${editor ? "form-workspace" : ""}" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><div class="modal-head">${editor ? `<div class="editor-brand">${brand()}<span>Tu espacio de creación</span></div>` : ""}<h2 id="dialog-title">${esc(title)}</h2><button class="icon-btn" data-close aria-label="Cerrar">${icon("close", 18)}</button></div><div class="modal-error" role="alert"></div>${body}</section></div>`;
   bindFileDrops();
   $$("[data-close]").forEach((b) => (b.onclick = () => closeModal()));
   $(".overlay").onclick = (e) => {
@@ -806,6 +813,13 @@ function modal(title, body) {
 }
 function closeModal(force = false) {
   if (modalBusy && !force) return;
+  const editorForm = $("#modal-form");
+  if (
+    editorForm?.dataset.dirty === "true" &&
+    !force &&
+    !confirm("Tienes cambios sin guardar. ¿Quieres salir del formulario?")
+  )
+    return;
   const form = $("#submit-form");
   if (form && !force) {
     if (form.dataset.saving) {
@@ -840,6 +854,7 @@ function closeModal(force = false) {
   }
   $("#modal-root").innerHTML = "";
   document.body.classList.remove("modal-open");
+  $("#app").inert = false;
   previousFocus?.focus();
 }
 
@@ -848,6 +863,7 @@ function modalError(e) {
   if (el) {
     el.style.display = "block";
     el.textContent = e.message;
+    el.scrollIntoView({ block: "nearest", behavior: "smooth" });
   } else toast(e.message);
 }
 function formModal(
@@ -858,10 +874,32 @@ function formModal(
   success = "Guardado. Un pequeño gran paso ✦",
   multipart = false,
 ) {
+  if (!guardForm(path)) return;
+  const meta = formMeta(path);
+  const sections = body.includes("editor-section")
+    ? body
+    : editorSection(
+        "01",
+        meta.section,
+        "Completa los datos; los campos con * son obligatorios.",
+        body,
+      );
   modal(
     title,
-    `<form id="modal-form">${body}<div class="upload-status" aria-live="polite" hidden></div><div class="form-actions"><button class="btn" type="button" data-close>Cancelar</button><button class="btn primary" type="submit">Guardar ${icon("check", 14)}</button></div></form>`,
+    `<div class="editor-intro"><span class="editor-tag">${icon(meta.icon, 16)} ${meta.label}</span><span class="role-chip">${icon("shield", 14)} ${roleNames[S.me.role]}</span><p>${meta.description}</p></div><form id="modal-form" data-path="${path}"><div class="editor-grid"><div class="editor-fields">${sections}<div class="upload-status" aria-live="polite" hidden></div></div><aside class="editor-preview" aria-label="Vista previa"><span class="eyebrow">ASÍ VA TOMANDO FORMA</span><div id="form-preview"></div><div class="editor-tip">${icon("shield", 20)}<div><strong>Tu espacio tiene permisos claros</strong><p>${roleScope()}</p></div></div></aside></div><div class="form-actions editor-actions"><span class="editor-save-note">${icon("check", 14)} Revisa y guarda cuando esté listo.</span><button class="btn" type="button" data-close>Cancelar</button><button class="btn primary" type="submit" aria-label="Guardar">${meta.save} ${icon("check", 14)}</button></div></form>`,
+    true,
   );
+  const form = $("#modal-form");
+  form.addEventListener("input", () => {
+    form.dataset.dirty = "true";
+    updateFormPreview();
+  });
+  form.addEventListener("change", () => {
+    form.dataset.dirty = "true";
+    updateFormPreview();
+  });
+  bindEditorPresets();
+  updateFormPreview();
   $("#modal-form").onsubmit = async (e) => {
     e.preventDefault();
     const b = e.submitter;
@@ -881,7 +919,7 @@ function formModal(
       );
       clearDirty();
       modalPending(false);
-      closeModal();
+      closeModal(true);
       render();
       toast(success);
     } catch (error) {
@@ -905,11 +943,11 @@ function openTask(id) {
     c = course(t.course),
     sub = submission(t),
     draft = S.drafts?.find((d) => d.task_id === id);
-  const intro = `<div class="task-detail-top ${c.color}"><span class="badge">${esc(c.title)}</span><div>${icon("calendar", 14)} ${dueLabel(t.due)} <span>· ${t.points} puntos</span></div></div><p class="modal-description">${esc(t.description)}</p>`;
+  const intro = `<div class="task-detail-top ${esc(t.color || c.color)}"><span class="badge">${esc(c.title)}</span><div>${icon("calendar", 14)} ${dueLabel(t.due)} <span>· ${t.points} puntos</span></div></div><p class="modal-description">${esc(t.description)}</p><div class="activity-rules"><span>${taskKind(t.kind)}</span><span>${deliveryName(t.submission_mode)}</span><span>${t.allow_late ? "Admite entregas tardías" : "Entrega hasta la fecha indicada"}</span></div>`;
   if (!staff()) {
     modal(
       t.title,
-      `${intro}${sub ? `<section class="submission"><small>Tu entrega · ${dateFormat(sub.created)}</small><p>${esc(sub.body)}</p>${sub.file ? `<a class="btn small" href="/api/file/${sub.id}">${icon("download", 14)} ${esc(sub.file)}</a>` : ""}${sub.grade != null ? `<div class="grade-feedback"><strong>${sub.grade}<small> / ${t.points}</small></strong><p>${esc(sub.feedback || "Tu profesor ya revisó tu trabajo.")}</p></div>` : ""}</section>` : ""}${sub?.grade != null ? '<span class="badge done">Trabajo revisado. ¡Sigue creciendo!</span>' : t.closed ? '<div class="notice">Esta actividad está cerrada. Puedes consultar tu entrega; para hacer cambios, contacta a tu profesor.</div>' : `<form id="submit-form"><input type="hidden" name="task" value="${t.id}">${textarea("body", "Tu respuesta", draft?.body ?? sub?.body ?? "", 'maxlength="10000" placeholder="Comparte lo que aprendiste…"')}<div class="draft-hint" id="draft-hint">${draft ? "Borrador guardado en tu cuenta" : "Tu respuesta se guarda como borrador al hacer una pausa."}</div>${attachmentField()}<div id="file-preview" class="file-preview" hidden></div><div class="upload-status" aria-live="polite" hidden></div><div class="form-actions"><button type="button" class="btn" id="save-draft">Guardar borrador</button><button class="btn primary">${sub ? "Actualizar entrega" : "Entregar actividad"} ${icon("send", 14)}</button></div><p class="form-help">El borrador guarda el texto. El archivo se envía al entregar la actividad.</p></form>`}`,
+      `${intro}${sub ? `<section class="submission"><small>Tu entrega · ${dateFormat(sub.created)}</small><p>${esc(sub.body)}</p>${sub.file ? `<a class="btn small" href="/api/file/${sub.id}">${icon("download", 14)} ${esc(sub.file)}</a>` : ""}${sub.grade != null ? `<div class="grade-feedback"><strong>${sub.grade}<small> / ${t.points}</small></strong><p>${esc(sub.feedback || "Tu profesor ya revisó tu trabajo.")}</p></div>` : ""}</section>` : ""}${sub?.grade != null ? '<span class="badge done">Trabajo revisado. ¡Sigue creciendo!</span>' : t.closed || (!t.allow_late && t.due < todayISO()) ? '<div class="notice">Esta actividad está cerrada. Puedes consultar tu entrega; para hacer cambios, contacta a tu profesor.</div>' : `<form id="submit-form"><input type="hidden" name="task" value="${t.id}">${textarea("body", "Tu respuesta", draft?.body ?? sub?.body ?? "", 'maxlength="10000" placeholder="Comparte lo que aprendiste…"')}<div class="draft-hint" id="draft-hint">${draft ? "Borrador guardado en tu cuenta" : "Tu respuesta se guarda como borrador al hacer una pausa."}</div>${t.submission_mode === "text" ? '<input type="file" name="file" hidden><p class="form-help">Esta actividad acepta una respuesta de texto.</p>' : attachmentField(t.submission_mode === "file" ? "Archivo requerido · máximo 5 MB" : undefined)}<div id="file-preview" class="file-preview" hidden></div><div class="upload-status" aria-live="polite" hidden></div><div class="form-actions"><button type="button" class="btn" id="save-draft">Guardar borrador</button><button class="btn primary">${sub ? "Actualizar entrega" : "Entregar actividad"} ${icon("send", 14)}</button></div><p class="form-help">El borrador guarda el texto. El archivo se envía al entregar la actividad.</p></form>`}`,
     );
     const form = $("#submit-form");
     if (!form) return;
@@ -984,8 +1022,19 @@ function openTask(id) {
       }
       clearTimeout(draftTimer);
       if (
+        t.submission_mode === "file" &&
+        !form.elements.file.files.length &&
+        !sub?.file
+      ) {
+        modalError(
+          new Error("Adjunta el archivo requerido para esta actividad."),
+        );
+        return;
+      }
+      if (
         !form.elements.body.value.trim() &&
-        !form.elements.file.files.length
+        !form.elements.file.files.length &&
+        !sub?.file
       ) {
         modalError(new Error("Escribe tu respuesta o adjunta un archivo."));
         return;
@@ -1248,6 +1297,25 @@ async function saveForm(e, path, extra, msg) {
 }
 
 async function action(name) {
+  const required = {
+    "new-course": "courses.manage",
+    "new-user": "users.manage",
+    membership: "membership.manage",
+    "take-attendance": "attendance.manage",
+    "new-task": "assignments.manage",
+    "new-resource": "materials.manage",
+    "new-event": "events.manage",
+  }[name];
+  if (required && !can(required))
+    return toast("Tu perfil no tiene permiso para realizar esta acción.");
+  if (name === "appearance") {
+    openAppearance();
+    return;
+  }
+  if (name === "permissions") {
+    openPermissions();
+    return;
+  }
   if (name === "menu") {
     menuOpen = !menuOpen;
     $(".sidebar").classList.toggle("open", menuOpen);
@@ -1310,28 +1378,7 @@ async function action(name) {
     return;
   }
   if (name === "new-task") {
-    if (!S.courses.length)
-      return toast("Crea un aula antes de añadir actividades.");
-    formModal(
-      "Una nueva oportunidad de aprender",
-      courseSelect() +
-        field(
-          "title",
-          "Nombre de la actividad",
-          "text",
-          "",
-          'required maxlength="200"',
-        ) +
-        textarea(
-          "description",
-          "Instrucciones",
-          "",
-          'required maxlength="5000"',
-        ) +
-        `<div class="form-grid">${field("due", "Fecha de entrega", "date", todayISO(), "required")}${field("points", "Puntos", "number", "100", 'required min="1" max="1000"')}</div>`,
-      "task",
-      (d) => ({ ...d, course: +d.course, points: +d.points }),
-    );
+    openTaskEditor();
     return;
   }
   if (name === "new-course") {
@@ -1365,6 +1412,18 @@ async function action(name) {
           teachers.map((p) => [p.id, p.name]),
         ) +
         field("schedule", "Horario", "text", "", 'maxlength="100"') +
+        `<div class="form-grid">${field("room", "Sección / grupo", "text", "10-A", 'maxlength="60"')}${select(
+          "symbol",
+          "Ilustración",
+          [
+            ["flower", "Flor"],
+            ["orbit", "Órbita"],
+            ["leaf", "Hojas"],
+            ["sun", "Sol"],
+            ["star", "Estrella"],
+            ["spark", "Destellos"],
+          ],
+        )}</div>` +
         checkStudents(),
       "course",
       (d, f) => ({
@@ -1458,7 +1517,10 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Tab" && $(".modal")) {
     let focusables = [
       ...$(".modal").querySelectorAll("button,input,select,textarea,a[href]"),
-    ].filter((el) => !el.disabled);
+    ].filter(
+      (el) =>
+        !el.disabled && el.type !== "hidden" && el.getClientRects().length,
+    );
     let first = focusables[0],
       last = focusables.at(-1);
     if (e.shiftKey && document.activeElement === first) {
@@ -1628,14 +1690,7 @@ function confirmDelete(title, description, path, data) {
   };
 }
 function editTask(id) {
-  const t = indexMaps.tasks.get(id);
-  formModal(
-    "Dale forma a esta actividad",
-    `<input type="hidden" name="id" value="${id}">${field("title", "Nombre de la actividad", "text", t.title, 'required maxlength="200"')}${textarea("description", "Instrucciones", t.description, 'required maxlength="5000"')}<div class="form-grid">${field("due", "Fecha de entrega", "date", t.due, "required")}${field("points", "Puntos", "number", t.points, `required min="1" max="1000" ${S.submissions.some((s) => s.task === id) ? "readonly" : ""}`)}</div><p class="form-help">Si hay entregas, se conservan sus puntos y calificaciones.</p>`,
-    "task-edit",
-    (d) => ({ ...d, id: +d.id, points: +d.points }),
-    "Actividad actualizada. Las entregas se conservan.",
-  );
+  openTaskEditor(id);
 }
 function editCourse(id) {
   const c = course(id);
@@ -1989,7 +2044,7 @@ document.addEventListener("input", (e) => {
   if (e.target.closest("#profile-form,#post-form")) dirtyForm = true;
 });
 window.addEventListener("beforeunload", (e) => {
-  if (dirtyForm || modalBusy) {
+  if (dirtyForm || modalBusy || $("#modal-form")?.dataset.dirty === "true") {
     e.preventDefault();
     e.returnValue = "";
   }
@@ -2036,4 +2091,393 @@ function bindFileDrops() {
       }
     });
   });
+}
+
+function roleScope() {
+  return (
+    {
+      student:
+        "Puedes entregar tus actividades, participar en tus aulas y personalizar tu cuenta. La administración corresponde a otros perfiles.",
+      teacher:
+        "Puedes gestionar actividades, materiales, notas y asistencia de las aulas que tienes asignadas. Las materias y matrículas las gestiona administración.",
+      admin:
+        "Puedes gestionar las materias, las cuentas y las matrículas del colegio, además de acompañar el trabajo académico.",
+    }[S.me.role] || "Consulta a administración sobre tu acceso."
+  );
+}
+function guardForm(path) {
+  const permission = {
+    task: "assignments.manage",
+    "task-edit": "assignments.manage",
+    course: "courses.manage",
+    "course-edit": "courses.manage",
+    user: "users.manage",
+    "user-edit": "users.manage",
+    membership: "membership.manage",
+    attendance: "attendance.manage",
+    resource: "materials.manage",
+    "resource-edit": "materials.manage",
+    event: "events.manage",
+    "event-edit": "events.manage",
+    appearance: "appearance.edit",
+    password: "profile.edit",
+    "post-edit": "wall.participate",
+  }[path];
+  if (!permission || !can(permission)) {
+    toast("Tu perfil no tiene permiso para abrir este formulario.");
+    return false;
+  }
+  return true;
+}
+function editorSection(number, title, description, fields) {
+  return `<section class="editor-section"><div class="editor-section-head"><span>${number}</span><div><h3>${title}</h3><p>${description}</p></div></div><div class="editor-section-body">${fields}</div></section>`;
+}
+function formMeta(path) {
+  const type = path.split("-")[0];
+  const map = {
+    task: [
+      "Actividad",
+      "file",
+      "Una actividad clara empieza con una buena idea. Define qué aprenderán, cómo entregarán y dale tu estilo.",
+      "Contenido y propósito",
+      "Publicar actividad",
+    ],
+    course: [
+      "Materia / aula",
+      "class",
+      "Crea un espacio para aprender. Organiza su identidad, su profesor y las personas que lo acompañan.",
+      "Identidad del aula",
+      "Crear aula",
+    ],
+    user: [
+      "Persona",
+      "users",
+      "Una cuenta, un rol y los permisos que le corresponden. Elige el acceso con cuidado.",
+      "Datos de la cuenta",
+      "Crear cuenta",
+    ],
+    membership: [
+      "Matrículas",
+      "users",
+      "Selecciona a los estudiantes que participarán en esta aula.",
+      "Personas del aula",
+      "Guardar matrículas",
+    ],
+    attendance: [
+      "Asistencia",
+      "check",
+      "Registra quién estuvo presente en la fecha seleccionada.",
+      "Encuentro del día",
+      "Guardar asistencia",
+    ],
+    resource: [
+      "Material",
+      "book",
+      "Comparte apuntes, un enlace o un archivo para acompañar el aprendizaje.",
+      "Tu material de estudio",
+      "Publicar material",
+    ],
+    event: [
+      "Evento",
+      "calendar",
+      "Organiza el próximo encuentro de tu comunidad.",
+      "Detalles del encuentro",
+      "Crear evento",
+    ],
+    password: [
+      "Seguridad",
+      "shield",
+      "Elige una contraseña de al menos diez caracteres para proteger tu cuenta.",
+      "Acceso seguro",
+      "Actualizar contraseña",
+    ],
+    appearance: [
+      "Personalización",
+      "flower",
+      "Haz que Luma se sienta más tuyo. Estos ajustes se guardan en tu cuenta.",
+      "Tu estilo en el campus",
+      "Guardar mi estilo",
+    ],
+    post: [
+      "Publicación",
+      "message",
+      "Comparte tu idea con las personas de tu aula.",
+      "Tu publicación",
+      "Guardar publicación",
+    ],
+  };
+  const [label, icon, description, section, save] = map[type] || map.post;
+  return {
+    label,
+    icon,
+    description,
+    section,
+    save: path.endsWith("-edit") ? "Guardar cambios" : save,
+  };
+}
+function paletteField(name, value = "purple", label = "Elige una paleta") {
+  const labels = {
+    pink: "Rosa flor",
+    purple: "Lavanda",
+    green: "Salvia",
+    peach: "Durazno",
+    blue: "Cielo",
+    yellow: "Vainilla",
+  };
+  return `<fieldset class="palette-field"><legend>${label}</legend><div class="palette-options">${Object.entries(
+    labels,
+  )
+    .map(
+      ([id, title]) =>
+        `<label class="palette-option"><input type="radio" name="${name}" value="${id}" ${id === value ? "checked" : ""}><span class="palette-swatch ${id}">${icon("check", 16)}</span><small>${title}</small></label>`,
+    )
+    .join("")}</div></fieldset>`;
+}
+function taskKind(kind) {
+  return (
+    {
+      assignment: "Actividad",
+      project: "Proyecto",
+      quiz: "Cuestionario",
+      reading: "Lectura",
+    }[kind] || "Actividad"
+  );
+}
+function deliveryName(mode) {
+  return (
+    { both: "Texto o archivo", text: "Solo texto", file: "Archivo requerido" }[
+      mode
+    ] || "Texto o archivo"
+  );
+}
+function openTaskEditor(id) {
+  if (!can("assignments.manage"))
+    return toast(
+      "La creación de actividades corresponde al profesor y a administración.",
+    );
+  if (!S.courses.length)
+    return toast("Necesitas un aula asignada para crear una actividad.");
+  const t = id ? indexMaps.tasks.get(id) : null;
+  if (id && !t) return;
+  const hasSubmissions = t && S.submissions.some((s) => s.task === id);
+  const preset = !t
+    ? `<div class="editor-presets" aria-label="Ideas para empezar"><span>Empieza con una idea</span><button type="button" data-preset="assignment">${icon("file", 16)} Actividad</button><button type="button" data-preset="project">${icon("star", 16)} Proyecto</button><button type="button" data-preset="reading">${icon("book", 16)} Lectura</button></div>`
+    : "";
+  const body =
+    `${t ? `<input type="hidden" name="id" value="${id}">` : ""}${preset}` +
+    editorSection(
+      "01",
+      "La idea y su propósito",
+      "Dales a tus estudiantes un título claro y las instrucciones que necesitan.",
+      `${t ? `<div class="editor-course-context">${icon("class", 18)} ${esc(course(t.course)?.title)}</div>` : courseSelect()}${field("title", "Nombre de la actividad *", "text", t?.title || "", 'required maxlength="200" placeholder="Por ejemplo: Mi jardín de ideas"')}${textarea("description", "Instrucciones *", t?.description || "", 'required maxlength="5000" placeholder="¿Qué van a hacer? ¿Qué deben incluir? ¿Cómo lo revisarás?"')}`,
+    ) +
+    editorSection(
+      "02",
+      "Cómo y cuándo entregar",
+      "Define las condiciones que verá el estudiante antes de empezar.",
+      `<div class="form-grid">${field("due", "Fecha de entrega *", "date", t?.due || todayISO(), "required")}${field("points", "Puntos *", "number", t?.points ?? 100, `required min="1" max="1000" ${hasSubmissions ? "readonly" : ""}`)}${select(
+        "kind",
+        "Tipo de actividad",
+        [
+          ["assignment", "Actividad"],
+          ["project", "Proyecto"],
+          ["quiz", "Cuestionario"],
+          ["reading", "Lectura"],
+        ],
+        t?.kind || "assignment",
+      )}${
+        hasSubmissions
+          ? `<input type="hidden" name="submission_mode" value="${t.submission_mode}"><div class="form-field"><label>Formato de entrega</label><p class="locked-field">${icon("shield", 15)} ${deliveryName(t.submission_mode)}</p></div>`
+          : select(
+              "submission_mode",
+              "Formato de entrega",
+              [
+                ["both", "Texto o archivo"],
+                ["text", "Solo texto"],
+                ["file", "Archivo requerido"],
+              ],
+              t?.submission_mode || "both",
+            )
+      }</div><label class="setting-toggle"><input type="checkbox" name="allow_late" ${(t?.allow_late ?? true) ? "checked" : ""}><span><strong>Permitir entregas después de la fecha</strong><small>El cierre manual de la actividad siempre bloquea nuevas entregas.</small></span></label>${hasSubmissions ? '<p class="form-help">Los puntos y el formato se conservan porque ya hay entregas.</p>' : ""}`,
+    ) +
+    editorSection(
+      "03",
+      "Un toque de tu estilo",
+      "Elige el color que acompañará a esta actividad.",
+      paletteField("color", t?.color || "purple"),
+    );
+  formModal(
+    t ? "Renueva tu actividad" : "Crea algo que inspire",
+    body,
+    t ? "task-edit" : "task",
+    (d, f) => ({
+      ...d,
+      ...(t ? { id: +d.id } : { course: +d.course }),
+      points: +d.points,
+      allow_late: f.has("allow_late"),
+    }),
+    t
+      ? "Actividad actualizada. Sus entregas se conservan."
+      : "Actividad publicada en el aula.",
+  );
+}
+function bindEditorPresets() {
+  const presets = {
+    assignment: {
+      title: "Mi jardín de ideas",
+      description:
+        "Explora el tema visto en clase. Explica tres ideas que te llamaron la atención y acompaña cada una con un ejemplo propio.",
+      mode: "both",
+    },
+    project: {
+      title: "Un proyecto que transforma",
+      description:
+        "Investiga una situación de tu comunidad. Propón una solución, documenta tu proceso y entrega un archivo con tus hallazgos y conclusiones.",
+      mode: "file",
+    },
+    reading: {
+      title: "Leer, descubrir y compartir",
+      description:
+        "Lee el material de la clase. Escribe una reflexión sobre la idea principal e incluye una pregunta para conversar en el aula.",
+      mode: "text",
+    },
+  };
+  $$("[data-preset]").forEach(
+    (b) =>
+      (b.onclick = () => {
+        const f = $("#modal-form"),
+          v = presets[b.dataset.preset];
+        if (
+          (f.elements.title.value || f.elements.description.value) &&
+          !confirm(
+            "¿Quieres reemplazar el título y las instrucciones con esta idea?",
+          )
+        )
+          return;
+        f.elements.title.value = v.title;
+        f.elements.description.value = v.description;
+        f.elements.kind.value = b.dataset.preset;
+        f.elements.submission_mode.value = v.mode;
+        f.dataset.dirty = "true";
+        updateFormPreview();
+      }),
+  );
+}
+function updateFormPreview() {
+  const f = $("#modal-form"),
+    el = $("#form-preview");
+  if (!f || !el) return;
+  const d = Object.fromEntries(new FormData(f)),
+    type = f.dataset.path.split("-")[0],
+    c = course(+d.course) || course(currentCourse),
+    color = d.color || d.accent || c?.color || "purple";
+  const name =
+    d.title ||
+    d.name ||
+    (type === "appearance" ? "Mi Luma, a mi manera" : "Tu próxima gran idea");
+  const desc =
+    d.description ||
+    d.summary ||
+    d.body ||
+    (type === "appearance"
+      ? "Un campus cómodo, colorido y con tu esencia."
+      : "Tus palabras darán vida a este espacio. Aquí puedes ver cómo va quedando.");
+  el.innerHTML = `<div class="preview-card ${esc(color)}"><div class="preview-art">${art(c?.symbol || "flower")}<span>✧</span></div><span class="preview-badge">${type === "task" ? taskKind(d.kind) : formMeta(f.dataset.path).label}</span><h3>${esc(name)}</h3><p>${esc(desc)}</p>${type === "task" ? `<div class="preview-details"><span>${icon("calendar", 14)} ${d.due ? dateFormat(d.due) : "Elige una fecha"}</span><span>${d.points || 100} puntos</span><span>${deliveryName(d.submission_mode)}</span></div>` : type === "user" ? `<div class="preview-details">${roleNames[d.role] || roleNames[person(+d.id)?.role] || "Estudiante"}</div>` : ""}</div>${type === "user" ? `<div class="preview-role"><strong>Permisos de ${roleNames[d.role] || roleNames[person(+d.id)?.role] || "Estudiante"}</strong><p>${scopeForRole(d.role || person(+d.id)?.role || "student")}</p></div>` : ""}`;
+  f.querySelectorAll("[required]").forEach((input) => {
+    const label = f.querySelector(`label[for="${input.id}"]`);
+    if (label && !label.textContent.includes("*")) label.textContent += " *";
+  });
+  f.querySelectorAll("textarea[maxlength]").forEach((input) => {
+    let counter = input.parentElement.querySelector(".character-count");
+    if (!counter) {
+      counter = document.createElement("small");
+      counter.className = "character-count";
+      input.after(counter);
+    }
+    counter.textContent = `${input.value.length} / ${input.maxLength}`;
+  });
+}
+function scopeForRole(role) {
+  return (
+    {
+      student:
+        "Sus aulas matriculadas, sus propias entregas y notas, sus conversaciones y su perfil. No crea materias, actividades ni cuentas.",
+      teacher:
+        "Actividades, materiales, calificaciones y asistencia de sus aulas asignadas; sus propios eventos. No crea materias, cuentas ni matrículas.",
+      admin:
+        "Materias, cuentas y matrículas de todo el colegio, y gestión académica. Las conversaciones privadas pertenecen a sus participantes.",
+    }[role] || "Sin permisos asignados."
+  );
+}
+function profileOptions() {
+  return `<div class="profile-options"><div><span class="option-icon purple">${icon("flower", 22)}</span><h3>Tu Luma, a tu manera</h3><p>Colores, comodidad y movimiento. Tu estilo se guarda en tu cuenta.</p><button class="btn small" data-action="appearance">Personalizar mi campus</button></div><div><span class="option-icon green">${icon("shield", 22)}</span><h3>Mi perfil y sus permisos</h3><p>${scopeForRole(S.me.role)}</p><button class="btn small" data-action="permissions">Ver permisos por perfil</button></div></div>`;
+}
+function openAppearance() {
+  const a = S.me.preferences?.appearance || {};
+  formModal(
+    "Tu Luma, a tu manera",
+    editorSection(
+      "01",
+      "Un color que te represente",
+      "Acentos de botones y navegación para tu cuenta.",
+      paletteField("accent", a.accent || "purple", "Mi color favorito"),
+    ) +
+      editorSection(
+        "02",
+        "Encuentra tu comodidad",
+        "Estos ajustes solo cambian cómo tú ves el campus.",
+        `${select(
+          "density",
+          "Espacio entre elementos",
+          [
+            ["comfortable", "Cómodo y espacioso"],
+            ["compact", "Más compacto"],
+          ],
+          a.density || "comfortable",
+        )}<label class="setting-toggle"><input type="checkbox" name="reduce_motion" ${a.reduce_motion ? "checked" : ""}><span><strong>Reducir animaciones</strong><small>Prefiere transiciones suaves y menos movimiento.</small></span></label>`,
+      ),
+    "appearance",
+    (d, f) => ({ ...d, reduce_motion: f.has("reduce_motion") }),
+    "Tu estilo quedó guardado en tu cuenta.",
+  );
+}
+function applyAppearance() {
+  const a = S?.me.preferences?.appearance || {};
+  document.body.dataset.accent = a.accent || "purple";
+  document.body.dataset.density = a.density || "comfortable";
+  document.body.classList.toggle("reduce-motion", !!a.reduce_motion);
+}
+function openPermissions() {
+  const rows = [
+    ["Crear y editar materias", "No", "No", "Sí"],
+    ["Crear cuentas y matricular", "No", "No", "Sí"],
+    [
+      "Actividades, materiales y asistencia",
+      "Consultar",
+      "Sus aulas",
+      "Todas las aulas",
+    ],
+    ["Calificar entregas", "No", "Sus aulas", "Todas las aulas"],
+    ["Entregar actividades", "Sus entregas", "No", "No"],
+    ["Ver notas y asistencia", "Sus registros", "Sus aulas", "Todo el colegio"],
+    ["Publicar en el muro", "Sus aulas", "Sus aulas", "Todas las aulas"],
+    [
+      "Editar / eliminar publicaciones",
+      "Las propias",
+      "Sus aulas",
+      "Todas las aulas",
+    ],
+    ["Crear / editar eventos", "No", "Los propios", "Todos"],
+    ["Perfil y apariencia", "Su cuenta", "Su cuenta", "Su cuenta"],
+    [
+      "Mensajes privados",
+      "Sus conversaciones",
+      "Sus conversaciones",
+      "Sus conversaciones",
+    ],
+  ];
+  modal(
+    "Cada perfil, su espacio",
+    `<p class="modal-description">Tu perfil actual: <strong>${roleNames[S.me.role]}</strong>. ${roleScope()}</p><div class="table-wrap permissions-table"><table><thead><tr><th>Acción</th><th>Estudiante</th><th>Profesor</th><th>Administrador</th></tr></thead><tbody>${rows.map((row) => `<tr>${row.map((v, i) => (i ? `<td class="${v === "No" ? "permission-no" : "permission-yes"}">${esc(v)}</td>` : `<th scope="row">${esc(v)}</th>`)).join("")}</tr>`).join("")}</tbody></table></div>`,
+  );
 }

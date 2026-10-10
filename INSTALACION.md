@@ -108,7 +108,7 @@ macOS/Linux:
 .venv/bin/python manage.py test
 ```
 
-Se incluyen **28 pruebas** del servidor. No necesitas Node.js para ejecutar la aplicación ni sus pruebas de Python.
+Se incluyen **38 pruebas** del servidor. No necesitas Node.js para ejecutar la aplicación ni sus pruebas de Python.
 
 ## 7. Problemas habituales
 
@@ -126,15 +126,15 @@ Se incluyen **28 pruebas** del servidor. No necesitas Node.js para ejecutar la a
 
 Este paquete permite ejecutar y probar el campus localmente. Para ponerlo en Internet, consulta la sección Publicación del README y configura un servidor Python con HTTPS. Las cuentas de prueba son para demostración.
 
-## 9. Actualizar a Luma Campus 2 conservando tus datos (Linux / Chromebook)
+## 9. Actualizar Luma Campus conservando tus datos (Linux / Chromebook)
 
 Detén el servidor con **Ctrl+C**. Ejecuta estos comandos en la terminal; respeta las mayúsculas de `LumaCampus`:
 
 ```bash
 cd ~
 cp -a LumaCampus "LumaCampus-respaldo-$(date +%Y%m%d-%H%M%S)"
-wget -O LumaCampus-v2.zip https://raw.githubusercontent.com/gabo899s/educanMEP/luma-campus/downloads/LumaCampus.zip
-unzip -o LumaCampus-v2.zip
+wget -O LumaCampus-actualizacion.zip https://raw.githubusercontent.com/gabo899s/educanMEP/luma-campus/downloads/LumaCampus.zip
+unzip -o LumaCampus-actualizacion.zip
 cd LumaCampus
 python3 install.py
 python3 run.py
@@ -153,3 +153,13 @@ unzip LumaCampus.zip
 cd LumaCampus
 python3 run.py
 ```
+
+## 10. Personalización y permisos
+
+En **Mi perfil → Personalizar mi campus**, elige un acento de color, el espacio entre elementos y si prefieres menos animaciones. Los ajustes se guardan en tu cuenta.
+
+El profesor crea actividades desde **Actividades → Nueva actividad**. El editor muestra una vista previa y permite configurar categoría, color, puntos, fecha, formato de entrega y entregas tardías. El formato «Archivo requerido» exige un archivo real en el servidor; «Solo texto» no acepta archivos. El formato y los puntos quedan protegidos cuando ya hay entregas.
+
+Solo administración crea o edita materias, cuentas y matrículas. El profesor gestiona el trabajo académico únicamente en sus aulas asignadas. El estudiante gestiona sus propias entregas y consulta sus propias notas. Los mensajes son privados entre sus participantes, también frente a administración.
+
+Consulta la tabla completa en **Mi perfil → Ver permisos por perfil**. El rol no se puede cambiar desde el perfil ni desde la personalización.

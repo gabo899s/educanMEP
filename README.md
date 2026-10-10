@@ -20,6 +20,18 @@ El primer arranque instala automáticamente las dependencias incluidas, prepara 
 
 No necesitas Node.js ni una base de datos externa. Los paquetes de instalación están en `vendor/wheels/`; no se descargan de Internet. Las instrucciones completas, las cuentas y la solución de problemas están en **INSTALACION.md**.
 
+## Formularios y permisos — Luma Campus 3
+
+- Los formularios de creación y edición usan un editor con secciones, vista previa en vivo, campos obligatorios identificados y protección al salir con cambios sin guardar.
+- Las actividades permiten elegir categoría, paleta, formato de entrega (texto, archivo o ambos) y entregas tardías. Se conservan el formato y los puntos cuando ya existen entregas.
+- Perfil → Personalizar mi campus guarda acento de color, densidad y reducción de animaciones por cuenta.
+- Perfil → Ver permisos por perfil muestra las reglas de acceso. La política central está en `campus/permissions.py`; cada aula también valida su alcance en el servidor.
+- **Estudiante:** sus aulas matriculadas, sus entregas, notas y asistencia; su perfil y sus conversaciones. No crea materias, actividades, cuentas, eventos ni matrículas.
+- **Profesor:** actividades, materiales, notas y asistencia de sus aulas asignadas, y eventos propios. No crea materias, cuentas ni matrículas.
+- **Administrador:** materias, cuentas, matrículas y gestión académica de todo el colegio. Las conversaciones privadas solo las consultan sus participantes.
+- Los tres perfiles pueden participar en el muro, gestionar sus propias publicaciones y personalizar su cuenta. Los profesores moderan sus aulas y administración puede moderar todas.
+- Las opciones visuales no cambian el rol ni los permisos. La migración 0003 agrega las opciones sin eliminar datos.
+
 ## Novedades de Luma Campus 2
 
 - Diseño mejorado conservando la paleta, las flores y la estética original: tarjetas con progreso, favoritas, enfoque del día, navegación móvil y formularios más legibles.
@@ -67,7 +79,7 @@ python3 manage.py test
 node --check public/app.js
 ```
 
-Las 28 pruebas del servidor verifican acceso autenticado, CSRF, permisos por rol/aula, entregas, calificaciones, conversaciones privadas, matrícula, asistencia, validación de enlaces, perfil y acceso a archivos.
+Las 38 pruebas del servidor verifican acceso autenticado, CSRF, permisos por rol/aula, entregas, calificaciones, conversaciones privadas, matrícula, asistencia, validación de enlaces, perfil y acceso a archivos.
 
 ## Publicación
 

@@ -36,6 +36,10 @@ class Task(models.Model):
     due=models.DateField()
     points=models.PositiveIntegerField(default=100)
     closed=models.BooleanField(default=False)
+    kind=models.CharField(max_length=20,default='assignment')
+    submission_mode=models.CharField(max_length=10,default='both')
+    allow_late=models.BooleanField(default=True)
+    color=models.CharField(max_length=20,default='purple')
 
 class Submission(models.Model):
     task=models.ForeignKey(Task,on_delete=models.CASCADE)
