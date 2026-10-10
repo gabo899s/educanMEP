@@ -2,10 +2,11 @@
 COMMON = {'profile.edit', 'appearance.edit', 'messages.use', 'wall.participate', 'courses.favorite'}
 ROLE_PERMISSIONS = {
     'student': COMMON | {'assignments.submit'},
-    'teacher': COMMON | {'assignments.manage', 'grades.manage', 'materials.manage', 'attendance.manage', 'events.manage'},
-    'admin': COMMON | {'assignments.manage', 'grades.manage', 'materials.manage', 'attendance.manage', 'events.manage', 'courses.manage', 'users.manage', 'membership.manage'},
+    'teacher': COMMON | {'assignments.manage', 'grades.manage', 'materials.manage', 'attendance.manage', 'events.manage', 'teaching.customize'},
+    'admin': COMMON | {'assignments.manage', 'grades.manage', 'materials.manage', 'attendance.manage', 'events.manage', 'courses.manage', 'users.manage', 'membership.manage', 'teaching.customize'},
 }
 ACTION_PERMISSIONS = {
+    'teaching-preferences': 'teaching.customize', 'teaching-template': 'teaching.customize', 'teaching-template-edit': 'teaching.customize', 'teaching-template-delete': 'teaching.customize',
     'profile': 'profile.edit', 'password': 'profile.edit', 'appearance': 'appearance.edit',
     'favorite': 'courses.favorite', 'message': 'messages.use', 'read': 'messages.use',
     'post': 'wall.participate', 'post-edit': 'wall.participate', 'post-delete': 'wall.participate',

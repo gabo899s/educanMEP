@@ -1,14 +1,14 @@
-LUMA CAMPUS 3 — VERIFICACIÓN
+LUMA CAMPUS 4 — VERIFICACIÓN
 
 Entorno: Linux, Python 3.12, Chromium.
-- 38 pruebas del servidor correctas; incluye migración con datos existentes.
+- 52 pruebas del servidor correctas; incluye migración con datos existentes.
 - Permisos, CSRF, borradores, cierre de tareas, archivos, favoritos,
   edición, asistencia atómica, privacidad, CSV y ETag/GZip comprobados.
 - Ensayo con 46 aulas: 55 consultas SQL antes, 11 después (80 % menos).
 - Instalación offline desde las cuatro dependencias incluidas.
 - ZIP excluye bases locales, archivos subidos, .venv y secretos.
 - ZIP extraído en una carpeta independiente: instalación, migraciones,
-  pip check y arranque con run.py --port 8014 correctos.
+  pip check y arranque con run.py --port 8016 correctos.
 - Navegador: favoritos, borradores, entregas con archivos, mensajería,
   perfil, calificación, cierre/reapertura, materiales y filtros.
 - Dos cuentas simultáneas: recepción de mensajes mientras se escribe,
@@ -24,7 +24,23 @@ Formularios y permisos:
 - Profesor: catálogo/cuentas/matrículas y aulas ajenas rechazados.
 - La personalización conserva favoritas y no cambia el rol.
 - Formato de entrega, validación de opciones y plazos comprobados.
-- Migración desde 0001 a 0003 conserva los datos de prueba.
+- Migración desde 0001 a 0004 conserva los datos de prueba.
 - ZIP nuevo: profesor crea/edita opciones; estudiante entrega el archivo
   requerido; personalización persiste; administrador crea un aula.
 - Editor móvil 390 px: sin errores JS ni desbordamiento horizontal.
+
+Estudio docente:
+- Biblioteca privada, permisos y aislamiento entre cuentas.
+- Copias de plantillas independientes de las actividades.
+- Validación de rúbricas y cálculo en servidor con redondeo comprobado.
+- Campos con tipos, límites, condiciones y respuestas obligatorias.
+- Borradores estructurados y protección de esquemas con respuestas existentes.
+- Preferencias docentes sin perder personalización visual.
+- ZIP extraído: preferencias, creación y asociación de plantillas,
+  borrador recuperado, campos condicionales y entrega estructurada.
+- Rúbrica real: 6/12 convertido a 38/75; banco de comentarios y
+  desglose para el estudiante comprobados en Chromium.
+- Escritorio 1440 px y móvil 390 px sin errores JS ni desbordamiento.
+- Creación manual de un campo numérico con límites y condición.
+- Duplicación, edición y eliminación de plantillas comprobadas en navegador.
+- La vista previa de prueba no bloquea el guardado de la configuración.

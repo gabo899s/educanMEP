@@ -40,6 +40,8 @@ class Task(models.Model):
     submission_mode=models.CharField(max_length=10,default='both')
     allow_late=models.BooleanField(default=True)
     color=models.CharField(max_length=20,default='purple')
+    rubric=models.JSONField(default=dict,blank=True)
+    fields=models.JSONField(default=list,blank=True)
 
 class Submission(models.Model):
     task=models.ForeignKey(Task,on_delete=models.CASCADE)
@@ -49,6 +51,8 @@ class Submission(models.Model):
     original_name=models.CharField(max_length=255,blank=True)
     grade=models.PositiveIntegerField(null=True,blank=True)
     feedback=models.TextField(blank=True)
+    answers=models.JSONField(default=dict,blank=True)
+    rubric_assessment=models.JSONField(default=dict,blank=True)
     created=models.DateTimeField(auto_now=True)
     class Meta:
         unique_together=[('task','student')]
@@ -89,5 +93,13 @@ class Draft(models.Model):
     student=models.ForeignKey(User,on_delete=models.CASCADE)
     body=models.TextField(blank=True)
     updated=models.DateTimeField(auto_now=True)
+    answers=models.JSONField(default=dict,blank=True)
     class Meta:
         unique_together=[('task','student')]
+
+class TeachingTemplate(models.Model):
+    author=models.ForeignKey(User,on_delete=models.CASCADE,related_name='teaching_templates')
+    kind=models.CharField(max_length=10,choices=[('rubric','Rúbrica'),('fields','Campos')])
+    title=models.CharField(max_length=120)
+    definition=models.JSONField(default=dict)
+    updated=models.DateTimeField(auto_now=True)

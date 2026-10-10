@@ -108,7 +108,7 @@ macOS/Linux:
 .venv/bin/python manage.py test
 ```
 
-Se incluyen **38 pruebas** del servidor. No necesitas Node.js para ejecutar la aplicación ni sus pruebas de Python.
+Se incluyen **52 pruebas** del servidor. No necesitas Node.js para ejecutar la aplicación ni sus pruebas de Python.
 
 ## 7. Problemas habituales
 
@@ -163,3 +163,19 @@ El profesor crea actividades desde **Actividades → Nueva actividad**. El edito
 Solo administración crea o edita materias, cuentas y matrículas. El profesor gestiona el trabajo académico únicamente en sus aulas asignadas. El estudiante gestiona sus propias entregas y consulta sus propias notas. Los mensajes son privados entre sus participantes, también frente a administración.
 
 Consulta la tabla completa en **Mi perfil → Ver permisos por perfil**. El rol no se puede cambiar desde el perfil ni desde la personalización.
+
+## 11. Trabajar con el perfil del profesor
+
+1. Entra como profesor y abre **Mi perfil → Abrir mi estudio**, o **Mi estudio** en el menú.
+2. Abre **Mi estilo de enseñanza** para guardar los valores habituales de tus actividades y hasta diez comentarios frecuentes. Separa los comentarios con una línea en blanco.
+3. En **Mi biblioteca de rúbricas**, crea una rúbrica. Define criterios, niveles, descripciones y puntos. Cada criterio necesita un nivel de 0 puntos y al menos otro de puntuación positiva. Puedes partir del ejemplo editable.
+4. En **Mis campos inteligentes**, crea un formulario. El ejemplo «Reflexión individual o en equipo» muestra una pregunta de integrantes solo si el estudiante elige trabajo en equipo. Configura tipos, ayudas, obligatoriedad y límites numéricos.
+5. Crea una actividad y elige las plantillas en **Evalúa con criterios claros** y **Campos que acompañan el aprendizaje**. La vista previa permite probar las condiciones sin responder el formulario completo antes de publicar.
+6. El estudiante consulta los criterios, responde los campos visibles y guarda un borrador o entrega. Los campos ocultos no son obligatorios ni se guardan como respuestas activas.
+7. Abre **Revisar**. Selecciona un nivel por criterio, añade comentarios específicos y retroalimentación general; luego pulsa **Guardar calificación**. El servidor calcula la nota y el estudiante puede consultar el desglose.
+
+Ejemplo de cálculo: una rúbrica de 12 puntos con un resultado de 6 se convierte a **38/75** en una actividad de 75 puntos: `6 ÷ 12 × 75 = 37,5`, redondeado a 38. La calificación directa se mantiene en las actividades sin rúbrica.
+
+Las plantillas pertenecen a su autor, incluso frente a otras cuentas administrativas. Cada actividad guarda su propia copia: editar o borrar la plantilla no cambia evaluaciones existentes. Una vez que hay borradores o entregas, los campos y la rúbrica de la actividad se conservan. El estudiante no administra estas herramientas.
+
+La actualización se realiza con los comandos de la sección 9. La migración 0004 conserva usuarios, aulas, entregas y notas anteriores.

@@ -20,6 +20,15 @@ El primer arranque instala automáticamente las dependencias incluidas, prepara 
 
 No necesitas Node.js ni una base de datos externa. Los paquetes de instalación están en `vendor/wheels/`; no se descargan de Internet. Las instrucciones completas, las cuentas y la solución de problemas están en **INSTALACION.md**.
 
+## Espacio docente — Luma Campus 4
+
+- **Mi perfil → Abrir mi estudio** y **Mi estudio** reúnen aulas, revisiones pendientes y biblioteca privada de herramientas.
+- Rúbricas reutilizables: hasta 10 criterios, con 2 a 5 niveles de logro, descripciones y puntos distintos. Cada criterio incluye 0 puntos. La nota se calcula en el servidor y se ajusta a los puntos de la actividad; incluye comentarios por criterio y desglose visible para el estudiante.
+- Campos inteligentes: texto corto/largo, números con límites, opciones y casillas. Las preguntas pueden depender de una opción o casilla anterior. Solo se exigen las preguntas visibles. Los borradores guardan también las respuestas estructuradas.
+- Plantillas privadas: crear, editar, duplicar y eliminar rúbricas o formularios. Las actividades conservan una copia independiente. Las rúbricas y los campos de una actividad quedan protegidos al existir borradores o entregas.
+- Preferencias docentes: puntos, plazo, categoría, formato, color y entregas tardías habituales. Banco personal de comentarios para acompañar la evaluación.
+- Implementación original en Django y JavaScript, sin servicios externos. Se revisaron los patrones de Moodle, Canvas y JSON Forms; consulta **REFERENTES_DOCENTES.md**.
+
 ## Formularios y permisos — Luma Campus 3
 
 - Los formularios de creación y edición usan un editor con secciones, vista previa en vivo, campos obligatorios identificados y protección al salir con cambios sin guardar.
@@ -79,7 +88,7 @@ python3 manage.py test
 node --check public/app.js
 ```
 
-Las 38 pruebas del servidor verifican acceso autenticado, CSRF, permisos por rol/aula, entregas, calificaciones, conversaciones privadas, matrícula, asistencia, validación de enlaces, perfil y acceso a archivos.
+Las 52 pruebas del servidor verifican acceso autenticado, CSRF, permisos por rol/aula, entregas, calificaciones, conversaciones privadas, matrícula, asistencia, validación de enlaces, perfil y acceso a archivos.
 
 ## Publicación
 

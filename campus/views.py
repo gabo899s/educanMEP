@@ -15,9 +15,10 @@ from django.http import FileResponse, HttpResponse, JsonResponse
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 
-from .models import Attendance, Course, Draft, Event, Message, Post, Profile, Resource, Submission, Task
+from .models import Attendance, Course, Draft, Event, Message, Post, Profile, Resource, Submission, Task, TeachingTemplate
 from .settings import BASE_DIR
 from .permissions import authorize, permissions
+from .teaching import rubric_schema, fields_schema, field_answers, rubric_assessment
 
 COLORS = {'pink', 'purple', 'green', 'peach', 'blue', 'yellow'}
 SYMBOLS = {'flower', 'orbit', 'leaf', 'sun', 'star', 'spark'}
@@ -108,6 +109,7 @@ def state(u):
     if u.profile.role == 'student':
         submissions = submissions.filter(student=u)
         attendance = attendance.filter(student=u)
+    locked_tasks = set(submissions.values_list('task_id', flat=True)) | set(Draft.objects.filter(task__course_id__in=ids).values_list('task_id', flat=True))
     people = User.objects.filter(is_active=True, profile__isnull=False).select_related('profile').order_by('first_name', 'id')
     return {
         'me': person(u, private=True), 'people': [person(p) for p in people],
@@ -116,9 +118,10 @@ def state(u):
                      'schedule': c.schedule, 'room': c.room} for c in cs],
         'tasks': [{'id': t.id, 'course': t.course_id, 'title': t.title, 'description': t.description,
                    'due': str(t.due), 'points': t.points, 'closed': t.closed,
-                   'kind': t.kind, 'submission_mode': t.submission_mode, 'allow_late': t.allow_late, 'color': t.color} for t in tasks],
+                   'kind': t.kind, 'submission_mode': t.submission_mode, 'allow_late': t.allow_late, 'color': t.color, 'rubric': t.rubric, 'fields': t.fields,
+                   'configuration_locked': t.id in locked_tasks} for t in tasks],
         'submissions': [{'id': s.id, 'task': s.task_id, 'student': s.student_id, 'body': s.body, 'file': s.original_name,
-                         'grade': s.grade, 'feedback': s.feedback, 'created': s.created.isoformat()} for s in submissions],
+                         'grade': s.grade, 'feedback': s.feedback, 'answers': s.answers, 'rubric_assessment': s.rubric_assessment, 'created': s.created.isoformat()} for s in submissions],
         'posts': [{'id': p.id, 'course': p.course_id, 'author': p.author_id, 'body': p.body,
                    'pinned': p.pinned, 'created': p.created.isoformat()}
                   for p in Post.objects.filter(course_id__in=ids).order_by('-pinned', '-created', '-id')],
@@ -129,7 +132,8 @@ def state(u):
         'resources': [{'id': r.id, 'course_id': r.course_id, 'title': r.title, 'url': r.url, 'body': r.body,
                        'file': r.original_name} for r in Resource.objects.filter(course_id__in=ids).order_by('-id')],
         'attendance': list(attendance.values('id', 'course_id', 'student_id', 'date', 'present')),
-        'drafts': list(Draft.objects.filter(student=u, task__course_id__in=ids).order_by('id').values('task_id', 'body', 'updated')),
+        'teaching_templates': list(TeachingTemplate.objects.filter(author=u).order_by('-updated','id').values('id','kind','title','definition','updated')) if 'teaching.customize' in permissions(u) else [],
+        'drafts': list(Draft.objects.filter(student=u, task__course_id__in=ids).order_by('id').values('task_id', 'body', 'answers', 'updated')),
     }
 
 def state_response(request, u):
@@ -149,7 +153,7 @@ def index(request):
     return response
 
 def asset(request, name):
-    if name not in ['app.js', 'style.css', 'manrope.ttf', 'dmsans.ttf', 'favicon.svg']:
+    if name not in ['app.js', 'teaching.js', 'style.css', 'manrope.ttf', 'dmsans.ttf', 'favicon.svg']:
         return HttpResponse(status=404)
     path = BASE_DIR / 'public' / name
     etag = f'"{path.stat().st_mtime_ns:x}-{path.stat().st_size:x}"'
@@ -198,7 +202,36 @@ def task_options(d, task=None):
 
 def mutate(request, u, path, d):
     authorize(u, path)
-    if path == 'profile':
+    if path == 'teaching-preferences':
+        options = task_options(d)
+        points, days = integer(d.get('points',100),1,1000), integer(d.get('due_days',7),1,60)
+        bank = d.get('feedback_bank',[])
+        if not isinstance(bank,list) or len(bank)>10:
+            raise ValueError('Guarda hasta 10 comentarios frecuentes.')
+        bank=[text({'comment':comment},'comment',1000) for comment in bank]
+        p=u.profile
+        p.preferences={**p.preferences,'teaching':{**options,'points':points,'due_days':days,'feedback_bank':bank}}
+        p.save(update_fields=['preferences'])
+    elif path in ['teaching-template','teaching-template-edit','teaching-template-delete']:
+        if path == 'teaching-template':
+            template=TeachingTemplate(author=u)
+        else:
+            template=TeachingTemplate.objects.get(id=d['id'])
+            if template.author_id != u.id:
+                raise PermissionError('Esta plantilla pertenece a otro docente.')
+        if path == 'teaching-template-delete':
+            template.delete()
+        else:
+            kind=d.get('kind',template.kind)
+            if kind not in ['rubric','fields'] or template.pk and kind != template.kind:
+                raise ValueError('El tipo de plantilla no es válido.')
+            definition=rubric_schema(d.get('definition')) if kind=='rubric' else fields_schema(d.get('definition'))
+            if not definition:
+                raise ValueError('Añade al menos un criterio o campo a la plantilla.')
+            template.title=text(d,'title',120)
+            template.kind,template.definition=kind,definition
+            template.save()
+    elif path == 'profile':
         name = text(d, 'name', 100).split(' ', 1)
         bio = text(d, 'bio', 1000, False)
         phone = text(d, 'phone', 40, False)
@@ -266,7 +299,7 @@ def mutate(request, u, path, d):
             c = getcourse(u, d['course'])
             staff(u, c)
             Task.objects.create(course=c, title=text(d, 'title'), description=text(d, 'description', 5000),
-                                due=date.fromisoformat(d['due']), points=integer(d.get('points', 100), 1, 1000), **task_options(d))
+                                due=date.fromisoformat(d['due']), points=integer(d.get('points', 100), 1, 1000), **task_options(d), rubric=rubric_schema(d.get('rubric',{})), fields=fields_schema(d.get('fields',[])))
         else:
             t = Task.objects.get(id=d['id'])
             c = getcourse(u, t.course_id)
@@ -282,6 +315,10 @@ def mutate(request, u, path, d):
                 options = task_options(d, t)
                 if options['submission_mode'] != t.submission_mode and t.submission_set.exists():
                     raise ValueError('Con entregas existentes, conserva el formato de entrega.')
+                rubric=rubric_schema(d.get('rubric',t.rubric)); fields=fields_schema(d.get('fields',t.fields))
+                if (rubric != rubric_schema(t.rubric) or fields != fields_schema(t.fields)) and (t.submission_set.exists() or t.draft_set.exists()):
+                    raise ValueError('La rúbrica y los campos están protegidos porque ya hay entregas o borradores.')
+                t.rubric,t.fields=rubric,fields
                 for key, value in options.items():
                     setattr(t, key, value)
             t.save()
@@ -295,23 +332,27 @@ def mutate(request, u, path, d):
         if Submission.objects.filter(task=t, student=u, grade__isnull=False).exists():
             raise ValueError('La entrega ya fue calificada.')
         body = text(d, 'body', 10000, False)
+        answers = d.get('answers',{})
+        if isinstance(answers,str):
+            answers=json.loads(answers)
+        answers=field_answers(t.fields,answers,complete=path=='submit')
         if path == 'draft':
-            Draft.objects.update_or_create(task=t, student=u, defaults={'body': body})
+            Draft.objects.update_or_create(task=t, student=u, defaults={'body': body,'answers':answers})
         else:
             f = upload(request)
             if not t.allow_late and timezone.localdate() > t.due:
                 raise ValueError('La fecha de entrega terminó y esta actividad no admite entregas tardías.')
             if t.submission_mode == 'text' and f:
                 raise ValueError('Esta actividad solo acepta una respuesta de texto.')
-            if t.submission_mode == 'text' and not body:
+            if t.submission_mode == 'text' and not body and not answers:
                 raise ValueError('Escribe la respuesta de texto requerida.')
             existing_file = Submission.objects.filter(task=t, student=u).exclude(file='').exists()
             if t.submission_mode == 'file' and not f and not existing_file:
                 raise ValueError('Adjunta el archivo requerido para esta actividad.')
-            if not body and not f and not existing_file:
+            if not body and not f and not existing_file and not answers:
                 raise ValueError('Escribe tu respuesta o adjunta un archivo.')
             s, _ = Submission.objects.get_or_create(task=t, student=u)
-            s.body = body
+            s.body, s.answers = body, answers
             s.save()
             if f:
                 replace_file(s, f)
@@ -319,8 +360,14 @@ def mutate(request, u, path, d):
     elif path == 'grade':
         s = Submission.objects.select_related('task').get(id=d['submission'])
         staff(u, getcourse(u, s.task.course_id))
-        s.grade, s.feedback = integer(d['grade'], 0, s.task.points), text(d, 'feedback', 2000, False)
-        s.save(update_fields=['grade', 'feedback'])
+        if s.task.rubric:
+            assessment=rubric_assessment(s.task.rubric,d.get('rubric_selections'),d.get('criterion_feedback',{}),s.task.points)
+            s.grade,s.rubric_assessment=assessment['grade'],assessment
+        else:
+            s.grade=integer(d['grade'],0,s.task.points)
+            s.rubric_assessment={}
+        s.feedback=text(d,'feedback',2000,False)
+        s.save(update_fields=['grade','feedback','rubric_assessment'])
     elif path in ['course', 'course-edit']:
         admin(u)
         teacher = User.objects.get(id=d['teacher'], profile__role='teacher', is_active=True)
