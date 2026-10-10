@@ -1,14 +1,14 @@
-LUMA CAMPUS 6 — VERIFICACIÓN
+LUMA CAMPUS 7 — VERIFICACIÓN
 
 Entorno verificado: Linux, Python 3.12, Django 5.2.18, Chromium.
-- 98 pruebas del servidor correctas, incluidas 20 del centro administrativo.
-- Migración desde 0001 hasta 0006 con usuarios, aulas, matrículas,
+- 141 pruebas del servidor correctas, incluidas 20 del centro administrativo.
+- Migración desde 0001 hasta 0007 con usuarios, aulas, matrículas,
   entregas y nota original conservados.
 - Permisos por perfil y aula, CSRF, privacidad de conversaciones,
   archivos, borradores, validaciones, asistencia atómica y ETag/GZip.
 - Número de consultas constante al ampliar el catálogo: regresión sin N+1.
 - ZIP extraído en carpeta independiente; instalación offline desde las
-  cuatro dependencias incluidas; pip check y run.py --port 8019 correctos.
+  doce dependencias incluidas; pip check y run.py --port 8022 correctos.
 - ZIP sin bases locales, uploads, .venv, .git ni secretos.
 
 Administración comprobada en servidor y navegador:
@@ -67,3 +67,42 @@ Espacio del estudiante:
   sin errores JavaScript ni desbordamiento horizontal.
 - Regresión docente de esta versión: rúbrica, campos condicionales, borrador,
   entrega estructurada, nota 38/75 y desglose en móvil correctos.
+
+Luma AI:
+- 43 pruebas nuevas del espacio exclusivo de estudiantes, incluidas privacidad,
+  archivos, CSRF, importación por matrícula, extracción y referencias.
+- Sesiones/fuentes/historial fuera del estado compartido; profesor,
+  administración y otros estudiantes no acceden ni a exportaciones ni archivos.
+- PDF real leído por pypdf y PNG real leído por Tesseract en Chromium.
+- Biblioteca de sesiones, selección de fuentes, copia de Classroom,
+  texto pegado escapado, edición, persistencia y exportación Markdown.
+- Tutoría persistente y revisión independiente; casos de distracción,
+  solución indebida, respuesta no revisable y referencia inventada.
+- Enlaces públicos: bloqueo de IP privadas, IPv6 y DNS mixto; conexión
+  a IP validada y nueva validación en redirecciones; scripts HTML retirados.
+- YouTube: variantes de URL, subtítulos con marcas de tiempo, fuente sin
+  subtítulos pendiente de transcripción y edición posterior.
+- Preguntas idempotentes, reintentos de fallo, bloqueo simultáneo,
+  recuperación de reserva vencida y límites por cuenta/sesión.
+- Contrato NVIDIA: endpoint chat/completions, Kimi K2, autorización del
+  servidor y mensajes solo de texto, comprobados con respuesta controlada.
+- Navegador Chromium, escritorio 1440 px y móvil 390 px: chat con referencias,
+  tutoría, editor de fuentes e importación directa desde Classroom;
+  sin errores JavaScript ni desbordamiento tras las correcciones.
+- Las respuestas del proveedor se simulan exclusivamente en las pruebas.
+  El producto no incluye un modo de respuestas ficticias.
+- No se comprobó una respuesta real de NVIDIA: esta sesión no dispone de
+  clave y el entorno de ejecución restringe el acceso a ese endpoint.
+  El operador activa la conexión real con configure_ai.py y una clave válida.
+- Los controles académicos son defensas de IA; no se garantiza detección
+  perfecta de todas las tareas ni resistencia absoluta a todo engaño.
+- Configuración local de clave comprobada: .env conserva otros ajustes,
+  sustituye la clave anterior, usa permisos 0600 en Linux y no imprime la clave.
+- Actualización real desde v6 con .venv existente: run.py detecta e instala
+  offline las dependencias nuevas, aplica 0007 y conserva todos los registros.
+- Regresión docente de v7 correcta: plantillas, borrador, rúbrica 38/75,
+  retroalimentación y desglose móvil.
+- Sin clave: sesiones y fuentes guardadas, estudio sin materia permitido,
+  chat desactivado con explicación y sin respuestas ficticias.
+- Luma AI en móvil con letra extra, alto contraste y movimiento reducido:
+  sesión y editor adaptables, sin desbordamiento tras completar el diseño.

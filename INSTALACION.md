@@ -8,7 +8,7 @@ Instala **Python 3.10 o superior**. Se recomienda **Python 3.12**.
 - macOS: instala Python 3 desde python.org o con tu gestor habitual.
 - Ubuntu/Debian: `sudo apt install python3 python3-venv`.
 
-El ZIP incluye las dependencias de Python en `vendor/wheels/`: **la instalación de la aplicación no necesita Internet**, después de disponer de Python con `venv` y `pip`. SQLite viene con Python. No necesitas Node.js, MongoDB, MySQL ni claves de servicios externos.
+El ZIP incluye las dependencias de Python en `vendor/wheels/`: **la instalación de la aplicación no necesita Internet**, después de disponer de Python con `venv` y `pip`. SQLite viene con Python. No necesitas Node.js, MongoDB ni MySQL. Luma AI requiere una clave de NVIDIA para chatear; el campus y el guardado de sesiones funcionan sin ella.
 
 ## 2. Extraer el ZIP
 
@@ -200,14 +200,14 @@ Para actualizar tu instalación de Linux / Chromebook, detén primero el servido
 ```bash
 cd ~
 cp -a LumaCampus "LumaCampus-respaldo-$(date +%Y%m%d-%H%M%S)"
-wget -O LumaCampus-actualizacion.zip 'https://raw.githubusercontent.com/gabo899s/educanMEP/luma-campus/downloads/LumaCampus.zip?v=6'
+wget -O LumaCampus-actualizacion.zip 'https://raw.githubusercontent.com/gabo899s/educanMEP/luma-campus/downloads/LumaCampus.zip?v=7'
 unzip -o LumaCampus-actualizacion.zip
 cd LumaCampus
 python3 install.py
 python3 run.py
 ```
 
-Abre **http://127.0.0.1:8000**. El ZIP conserva `campus.sqlite3`, `uploads/` y `.venv/`; el instalador aplica las migraciones hasta 0006. Guarda juntos la base y `uploads/` en tus respaldos: allí se almacena también el logo institucional. El paquete continúa sin necesitar Node ni nuevas dependencias Python.
+Abre **http://127.0.0.1:8000**. El ZIP conserva `campus.sqlite3`, `uploads/` y `.venv/`; el instalador aplica las migraciones hasta 0007. Guarda juntos la base y `uploads/` en tus respaldos: allí se almacena también el logo institucional. El paquete continúa sin necesitar Node ni nuevas dependencias Python.
 
 
 ## 13. Espacio del estudiante
@@ -227,3 +227,73 @@ Entra como estudiante y abre **Mi espacio**. Las ocho pestañas reúnen Mi día,
 Los formularios avisan al cerrar con cambios sin guardar. Guarda explícitamente tus apuntes y proyectos. Retirar una matrícula conserva tus registros personales, pero cancela el acceso docente al portafolio y bloquea nuevas consultas sobre esa aula.
 
 La actualización completa está en la sección 9: detén el servidor, respalda la carpeta, extrae el ZIP encima y ejecuta `python3 install.py` seguido de `python3 run.py`. Guarda juntos `campus.sqlite3` y `uploads/`: incluyen agenda, cuaderno, metas, proyectos y archivos. El ZIP no contiene tus datos privados.
+
+
+## 14. Luma AI: sesiones privadas de estudio
+
+### Actualizar y activar en Linux / Chromebook
+
+Detén el servidor con **Ctrl+C**. Copia los comandos completos; respeta las mayúsculas:
+
+```bash
+sudo apt update
+sudo apt install -y python3 python3-venv unzip wget tesseract-ocr tesseract-ocr-spa tesseract-ocr-eng poppler-utils
+cd ~
+cp -a LumaCampus "LumaCampus-respaldo-$(date +%Y%m%d-%H%M%S)"
+wget -O LumaCampus-actualizacion.zip 'https://raw.githubusercontent.com/gabo899s/educanMEP/luma-campus/downloads/LumaCampus.zip?v=7'
+unzip -o LumaCampus-actualizacion.zip
+cd LumaCampus
+python3 install.py
+python3 configure_ai.py
+python3 run.py
+```
+
+`configure_ai.py` solicita la clave sin mostrarla ni guardarla en el historial de comandos. Obtén una clave de **NVIDIA API Catalog** en https://build.nvidia.com/moonshotai/kimi-k2-instruct. Pégala únicamente en ese asistente local; no la escribas en el código ni en mensajes del campus. La clave se guarda en `.env`, que el ZIP excluye. La actualización conserva `.env`, `campus.sqlite3`, `.venv/` y `uploads/`. La migración 0007 mantiene tus registros anteriores.
+
+Si ya tienes una clave configurada, omite `python3 configure_ai.py`. Para cambiarla, detén el campus, vuelve a ejecutar el asistente y reinicia. También se admite la variable de entorno `NVIDIA_API_KEY` o `LUMA_NVIDIA_API_KEY`. Por defecto se usa `LUMA_NVIDIA_MODEL=moonshotai/kimi-k2-instruct` y el endpoint de chat de NVIDIA. Una variable de entorno existente tiene prioridad sobre `.env`.
+
+Abre **http://127.0.0.1:8000** y entra como estudiante. Luma AI no aparece para profesores ni administración. Sin una clave válida, la interfaz explica que el chat está pendiente de activar; permite guardar sesiones y fuentes sin inventar respuestas.
+
+### Instalación nueva en Linux / Chromebook
+
+```bash
+sudo apt update
+sudo apt install -y python3 python3-venv unzip wget tesseract-ocr tesseract-ocr-spa tesseract-ocr-eng poppler-utils
+cd ~
+wget -O LumaCampus.zip 'https://raw.githubusercontent.com/gabo899s/educanMEP/luma-campus/downloads/LumaCampus.zip?v=7'
+unzip LumaCampus.zip
+cd LumaCampus
+python3 install.py
+python3 configure_ai.py
+python3 run.py
+```
+
+Si ya existe una carpeta con ese nombre, usa el procedimiento de actualización con respaldo. El OCR es opcional para el campus y los PDF que ya tienen texto. Sin OCR, puedes subir imágenes o PDF escaneados y añadir su transcripción en la fuente.
+
+### Windows y macOS
+
+El chat, los PDF con texto, enlaces y sesiones usan las dependencias Python incluidas. Ejecuta `py -3 install.py`, `py -3 configure_ai.py` y `py -3 run.py` en Windows; en macOS utiliza `python3`. Para OCR instala Tesseract y Poppler, con sus ejecutables disponibles en PATH. En macOS con Homebrew: `brew install tesseract tesseract-lang poppler`. Los lanzadores están incluidos; esta versión se ha ejecutado y probado en Linux.
+
+### Estudiar con Luma AI
+
+1. Abre **Luma AI → Nueva sesión**, define un nombre y elige opcionalmente una materia matriculada.
+2. Pulsa **Añadir** en Mis fuentes. Puedes pegar contenido, subir PDF/PNG/JPG/TXT/Markdown, usar un enlace público o YouTube, copiar un material o actividad de Classroom, o importar uno de tus apuntes privados.
+3. También puedes abrir un material en Classroom y pulsar **Estudiar con Luma AI**. En una actividad, **Pensar con Luma AI** inicia acompañamiento de tutoría.
+4. Abre cada fuente para revisar el texto extraído. Si necesita transcripción, pégala y guarda. El estudiante puede corregir errores de OCR, especialmente fórmulas y cifras.
+5. Selecciona hasta diez fuentes y escribe tu pregunta. Las referencias de la respuesta abren el texto utilizado. Sin fuentes seleccionadas, la IA ofrece orientación conceptual general.
+6. La sesión conserva conversación y fuentes. Puedes volver después, renombrarla, añadir o retirar material y exportar todo como Markdown. Eliminar una sesión retira también sus archivos locales.
+7. Si falla NVIDIA, la pregunta permanece disponible para reintentar. Si la conexión se interrumpe durante el procesamiento, actualiza la sesión; el bloqueo caduca y la pregunta vuelve a estar disponible. El identificador evita generar dos veces una pregunta ya completada.
+
+### Alcance y límites
+
+- Solo chat de texto. No genera audio, videos ni imágenes.
+- Hasta 100 sesiones por estudiante, 30 fuentes y 100 preguntas por sesión; 20 preguntas nuevas por cuenta cada diez minutos.
+- Archivos de hasta 8 MB; PDF de hasta 80 páginas; hasta 100.000 caracteres por fuente. Divide documentos mayores.
+- El OCR procesa imágenes PNG/JPG y hasta ocho páginas escaneadas por PDF; las páginas restantes necesitan texto adicional o documentos separados. No hay comprensión visual de diagramas, fotos o gráficos: Kimi K2 recibe el texto extraído.
+- YouTube necesita subtítulos accesibles. Si no existen o el servicio bloquea el acceso, la fuente queda pendiente y se puede transcribir. No se descarga el video ni se procesa su audio.
+- Los enlaces usan páginas públicas. No se leen intranets, redes privadas ni sitios que necesiten tus credenciales. Si un sitio público no se puede leer, se conserva el enlace y puedes pegar el contenido.
+- Se seleccionan fragmentos relevantes, no se envía siempre el documento completo. Revisa las fuentes y divide temas extensos cuando haga falta.
+- Agenda, apuntes y el resto del campus no se envían automáticamente a NVIDIA. Solo se copia lo que importas en Luma AI; al preguntar se envían la pregunta, historial reciente y fragmentos seleccionados.
+- Importar una actividad o detectar un entregable activa tutoría persistente. Las pistas no deben contener respuestas finales, apartados resueltos, código entregable ni proyectos completos. Los filtros incluyen un revisor independiente y respuestas seguras si la revisión falla. Son controles de IA, no una garantía absoluta de detección perfecta.
+
+Guarda juntos `campus.sqlite3`, `uploads/` y tu configuración privada en los respaldos. El ZIP nunca incluye sesiones, fuentes ni claves locales. La comprobación del contrato NVIDIA y las pruebas de interfaz usan un proveedor simulado únicamente en las pruebas; una respuesta real requiere tu clave y acceso al servicio.

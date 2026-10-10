@@ -15,7 +15,8 @@ def main():
     if not PYTHON.exists():
         install()
     else:
-        probe=subprocess.run([str(PYTHON), '-c', 'import django; assert django.VERSION[:3] == (5, 2, 18)'],cwd=ROOT,capture_output=True)
+        probe_code = "from importlib.metadata import version; from pathlib import Path; requirements=[line.strip().split('==') for line in Path('requirements.txt').read_text().splitlines() if line.strip() and not line.startswith('#')]; assert all(version(name)==expected for name,expected in requirements)"
+        probe=subprocess.run([str(PYTHON), '-c', probe_code],cwd=ROOT,capture_output=True)
         if probe.returncode:
             install()
         else:

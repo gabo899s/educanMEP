@@ -6,7 +6,7 @@ Plataforma escolar funcional con una identidad visual colorida, cálida y coquet
 
 [Descargar LumaCampus.zip](https://raw.githubusercontent.com/gabo899s/educanMEP/luma-campus/downloads/LumaCampus.zip)
 
-El ZIP incluye el código, los instaladores, las tipografías, las cuatro dependencias de Python y la guía completa. No incluye una base de datos anterior ni sesiones. Consulta `downloads/SHA256SUMS.txt` para verificar su integridad.
+El ZIP incluye el código, los instaladores, las tipografías, las dependencias de Python incluidas y la guía completa. No incluye una base de datos anterior ni sesiones. Consulta `downloads/SHA256SUMS.txt` para verificar su integridad.
 
 ## Ejecutar
 
@@ -19,6 +19,22 @@ Extrae todo el ZIP. Requiere Python 3.10 o superior (recomendado: 3.12).
 El primer arranque instala automáticamente las dependencias incluidas, prepara SQLite y crea las cuentas de demostración. Abre **http://127.0.0.1:8000**. Deja la terminal abierta y usa Ctrl+C para detener el servidor.
 
 No necesitas Node.js ni una base de datos externa. Los paquetes de instalación están en `vendor/wheels/`; no se descargan de Internet. Las instrucciones completas, las cuentas y la solución de problemas están en **INSTALACION.md**.
+
+## Luma AI · versión 7
+
+Un espacio exclusivo para estudiantes, integrado en el menú y en los materiales y actividades de Classroom. Cada estudiante crea, renombra, guarda y exporta sus sesiones privadas, vinculadas opcionalmente a una materia.
+
+- Fuentes: texto pegado, PDF, imágenes PNG/JPG con OCR, archivos TXT/Markdown, enlaces públicos, subtítulos de YouTube, materiales de Classroom y apuntes del cuaderno.
+- Chat de texto con **NVIDIA · `moonshotai/kimi-k2-instruct`**. El servicio recibe la pregunta, historial reciente y fragmentos relevantes de las fuentes seleccionadas; las respuestas muestran referencias verificadas a esas fuentes.
+- Tutoría para tareas y proyectos: detección local, clasificación independiente y revisión de la respuesta. Importar una actividad activa un modo persistente que ofrece pistas y preguntas, sin entregar la solución. Cambiar el nombre, retirar la consigna o pedir otro rol no desactiva ese modo.
+- Privacidad por propietario, incluidos archivos y exportaciones. Profesores, administración y otros estudiantes no pueden abrir estas sesiones.
+- Errores recuperables, preguntas con identificador para evitar duplicados, límites por cuenta y bloqueo de preguntas simultáneas. Sin respuestas ficticias cuando NVIDIA no está configurado.
+
+**Activar el chat:** crea una clave en [NVIDIA](https://build.nvidia.com/moonshotai/kimi-k2-instruct), ejecuta `python3 configure_ai.py` y reinicia el campus. La clave se guarda en `.env`, fuera de Git, del ZIP y del navegador. El chat requiere Internet y una clave válida. El campus y las sesiones siguen funcionando sin ella.
+
+Kimi K2 recibe texto: no ve imágenes ni escucha videos. El OCR requiere Tesseract; los PDF escaneados requieren también Poppler. YouTube aporta subtítulos disponibles; si no se pueden obtener, la fuente se conserva y admite una transcripción manual. No hay generación de audio, video ni imágenes.
+
+[Comandos completos y límites](INSTALACION.md#14-luma-ai-sesiones-privadas-de-estudio) · [Arquitectura y controles](LUMA_AI.md).
 
 ## Espacio del estudiante · Luma Campus 6
 
@@ -103,9 +119,10 @@ Las tipografías Manrope y DM Sans provienen de google/fonts y conservan sus lic
 python3 manage.py check
 python3 manage.py test
 node --check public/app.js
+node --check public/luma-ai.js
 ```
 
-Las 98 pruebas del servidor verifican acceso autenticado, CSRF, permisos por rol/aula, entregas, calificaciones, conversaciones privadas, matrícula, asistencia, validación de enlaces, perfil y acceso a archivos.
+Las 141 pruebas del servidor verifican acceso autenticado, CSRF, permisos por rol/aula, entregas, calificaciones, conversaciones privadas, matrícula, asistencia, validación de enlaces, perfil y acceso a archivos.
 
 ## Publicación
 

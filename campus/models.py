@@ -196,3 +196,40 @@ class FeedbackReceipt(models.Model):
     submission=models.OneToOneField(Submission,on_delete=models.CASCADE,related_name='feedback_receipt')
     fingerprint=models.CharField(max_length=64)
     updated=models.DateTimeField(auto_now=True)
+
+class AIStudySession(models.Model):
+    student=models.ForeignKey(User,on_delete=models.CASCADE,related_name='ai_studies')
+    course=models.ForeignKey(Course,on_delete=models.SET_NULL,null=True,blank=True)
+    title=models.CharField(max_length=160)
+    tutor_mode=models.BooleanField(default=False)
+    busy_until=models.DateTimeField(null=True,blank=True)
+    created=models.DateTimeField(auto_now_add=True)
+    updated=models.DateTimeField(auto_now=True)
+
+class AIStudySource(models.Model):
+    session=models.ForeignKey(AIStudySession,on_delete=models.CASCADE,related_name='sources')
+    kind=models.CharField(max_length=16)
+    title=models.CharField(max_length=180)
+    content=models.TextField(blank=True)
+    url=models.URLField(max_length=1000,blank=True)
+    file=models.FileField(upload_to='ai-study/',blank=True)
+    original_name=models.CharField(max_length=255,blank=True)
+    status=models.CharField(max_length=20,default='ready')
+    notice=models.CharField(max_length=500,blank=True)
+    assignment=models.BooleanField(default=False)
+    origin=models.JSONField(default=dict,blank=True)
+    created=models.DateTimeField(auto_now_add=True)
+
+class AIStudyTurn(models.Model):
+    session=models.ForeignKey(AIStudySession,on_delete=models.CASCADE,related_name='turns')
+    request_id=models.UUIDField()
+    question=models.TextField()
+    answer=models.TextField(blank=True)
+    sources=models.JSONField(default=list,blank=True)
+    citations=models.JSONField(default=list,blank=True)
+    mode=models.CharField(max_length=12,default='study')
+    status=models.CharField(max_length=12,default='pending')
+    error=models.CharField(max_length=300,blank=True)
+    created=models.DateTimeField(auto_now_add=True)
+    class Meta:
+        constraints=[models.UniqueConstraint(fields=['session','request_id'],name='ai_unique_request')]

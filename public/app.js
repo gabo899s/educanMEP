@@ -9,6 +9,7 @@ const esc = (v) =>
       ],
   );
 const paths = {
+  spark: "M12 2c1 6 4 9 10 10-6 1-9 4-10 10-1-6-4-9-10-10 6-1 9-4 10-10Z",
   home: "M3 10 12 3l9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z",
   class: "M3 4h18v14H3z M7 22h10 M12 18v4 M7 8h10 M7 12h6",
   message:
@@ -317,6 +318,7 @@ function brand() {
   return `<div class="brand">${art("flower", 38)}<div>luma<span style="font-weight:400">.</span><small>CAMPUS</small></div></div>`;
 }
 function loginPage() {
+  resetAI();
   clearTimeout(pollTimer);
   pollingView = null;
   S = null;
@@ -363,6 +365,7 @@ async function signIn(data, b) {
     S = await api("login", data);
     view = "home";
     resetStudentUi();
+    resetAI();
     thread = null;
     clearDirty();
     render();
@@ -407,6 +410,7 @@ function render(options = {}) {
       !oldChat ||
       oldChat.scrollHeight - oldChat.scrollTop - oldChat.clientHeight < 70;
   let labels = {
+    ai: "Luma AI",
     student: "Mi espacio",
     support: "Acompañamiento",
     studio: "Mi estudio docente",
@@ -421,12 +425,13 @@ function render(options = {}) {
     search: "Buscar",
   };
   $("#app").innerHTML =
-    `<div class="shell"><button class="sidebar-scrim ${menuOpen ? "open" : ""}" aria-label="Cerrar menú" data-action="menu"></button><aside class="sidebar ${menuOpen ? "open" : ""}">${brand()}<div class="school-pill">${icon("class", 20)}<div>${esc(institutionData().name)}<span>Curso lectivo · ${esc(institutionData().year)}</span></div></div><div class="nav-label">MI CAMPUS</div><nav class="nav">${navButton("home", "Mi inicio", "home")}${S.me.role === "student" ? navButton("student", "Mi espacio", "flower") : ""}${S.me.role === "teacher" ? navButton("support", "Acompañamiento", "heart") : ""}${navButton("classroom", "Classroom", "class")}${can("teaching.customize") ? navButton("studio", "Mi estudio", "flower") : ""}${navButton("tasks", staff() ? "Actividades" : "Mis tareas", "task")}${navButton("messages", "Mensajería", "message")}${navButton("calendar", "Calendario", "calendar")}${navButton("grades", "Calificaciones", "chart")}${S.me.role === "admin" ? navButton("admin", "Administración", "users") : ""}</nav><div class="sidebar-bottom"><div class="little-note"><span class="sparkle">✧</span>${art("flower", 32)}<strong>A tu ritmo, a tu manera.</strong>Cada pequeño paso también<br>cuenta. Sigue floreciendo.</div><button class="side-profile" data-view="profile" style="background:none;width:100%;text-align:left">${avatar(S.me)}<div><strong>${esc(S.me.name)}</strong><small>${roleNames[S.me.role]} · Luma Campus</small></div>${icon("chevron", 13)}</button></div></aside><main class="main"><header class="topbar"><button class="icon-btn mobile-toggle" data-action="menu" aria-label="Abrir menú">${icon("menu")}</button><div class="breadcrumb">Mi campus ${icon("chevron", 11)} <strong>${labels[view] || "Mi inicio"}</strong></div><div class="top-actions"><form class="search" id="search-form">${icon("search", 15)}<input name="q" placeholder="Busca en tu campus..." aria-label="Buscar" value="${esc(searchQuery)}"><span style="font-size:9px">↵</span></form><button class="icon-btn" data-action="notifications" aria-label="Notificaciones">${icon("bell", 17)}${notificationItems().length ? '<span class="dot"></span>' : ""}</button><button class="icon-btn" data-view="profile" aria-label="Mi perfil" style="border:0">${avatar(S.me)}</button></div></header>${S.me.email.endsWith("@luma.demo") ? `<div class="demo-banner"><span>✦ Campus de demostración · ${roleNames[S.me.role]} · Datos de ejemplo</span><button data-action="logout">Cambiar de cuenta</button></div>` : ""}<div class="content" id="main-content" tabindex="-1">${renderContent()}<footer class="footer"><span>Un lugar para aprender, conectar y crecer. ✦</span><span class="sync-state ${syncStatus}">${syncStatus === "offline" ? "Sin conexión" : "Campus al día"}</span><span>Luma Campus · ${new Date().getFullYear()}</span></footer></div></main></div>`;
+    `<div class="shell"><button class="sidebar-scrim ${menuOpen ? "open" : ""}" aria-label="Cerrar menú" data-action="menu"></button><aside class="sidebar ${menuOpen ? "open" : ""}">${brand()}<div class="school-pill">${icon("class", 20)}<div>${esc(institutionData().name)}<span>Curso lectivo · ${esc(institutionData().year)}</span></div></div><div class="nav-label">MI CAMPUS</div><nav class="nav">${navButton("home", "Mi inicio", "home")}${S.me.role === "student" ? navButton("student", "Mi espacio", "flower") + navButton("ai", "Luma AI", "spark") : ""}${S.me.role === "teacher" ? navButton("support", "Acompañamiento", "heart") : ""}${navButton("classroom", "Classroom", "class")}${can("teaching.customize") ? navButton("studio", "Mi estudio", "flower") : ""}${navButton("tasks", staff() ? "Actividades" : "Mis tareas", "task")}${navButton("messages", "Mensajería", "message")}${navButton("calendar", "Calendario", "calendar")}${navButton("grades", "Calificaciones", "chart")}${S.me.role === "admin" ? navButton("admin", "Administración", "users") : ""}</nav><div class="sidebar-bottom"><div class="little-note"><span class="sparkle">✧</span>${art("flower", 32)}<strong>A tu ritmo, a tu manera.</strong>Cada pequeño paso también<br>cuenta. Sigue floreciendo.</div><button class="side-profile" data-view="profile" style="background:none;width:100%;text-align:left">${avatar(S.me)}<div><strong>${esc(S.me.name)}</strong><small>${roleNames[S.me.role]} · Luma Campus</small></div>${icon("chevron", 13)}</button></div></aside><main class="main"><header class="topbar"><button class="icon-btn mobile-toggle" data-action="menu" aria-label="Abrir menú">${icon("menu")}</button><div class="breadcrumb">Mi campus ${icon("chevron", 11)} <strong>${labels[view] || "Mi inicio"}</strong></div><div class="top-actions"><form class="search" id="search-form">${icon("search", 15)}<input name="q" placeholder="Busca en tu campus..." aria-label="Buscar" value="${esc(searchQuery)}"><span style="font-size:9px">↵</span></form><button class="icon-btn" data-action="notifications" aria-label="Notificaciones">${icon("bell", 17)}${notificationItems().length ? '<span class="dot"></span>' : ""}</button><button class="icon-btn" data-view="profile" aria-label="Mi perfil" style="border:0">${avatar(S.me)}</button></div></header>${S.me.email.endsWith("@luma.demo") ? `<div class="demo-banner"><span>✦ Campus de demostración · ${roleNames[S.me.role]} · Datos de ejemplo</span><button data-action="logout">Cambiar de cuenta</button></div>` : ""}<div class="content" id="main-content" tabindex="-1">${renderContent()}<footer class="footer"><span>Un lugar para aprender, conectar y crecer. ✦</span><span class="sync-state ${syncStatus}">${syncStatus === "offline" ? "Sin conexión" : "Campus al día"}</span><span>Luma Campus · ${new Date().getFullYear()}</span></footer></div></main></div>`;
   bind();
   bindEnhanced();
   bindTeaching();
   bindAdministration();
   bindStudent();
+  bindAI();
   document.title =
     (labels[view] || "Mi inicio") + " · " + institutionData().name;
   syncRoute();
@@ -457,6 +462,7 @@ function heading(title, subtitle, action = "") {
 function renderContent() {
   return (
     {
+      ai: aiWorkspace,
       student: studentWorkspace,
       support: teacherLearningInbox,
       studio: teacherStudio,
@@ -1002,10 +1008,13 @@ function openTask(id) {
   if (!staff()) {
     modal(
       t.title,
-      `${intro}<div class="student-row-actions">${moduleEnabled("messages") ? `<button class="btn small" data-task-help="${id}">Pedir ayuda al profesor ${icon("heart", 14)}</button>` : ""}<button class="btn small" data-task-plan="${id}">Planear mi estudio</button>${sub ? `<button class="btn small" data-task-portfolio="${sub.id}">Guardar en mi portafolio</button>` : ""}</div>${sub ? `<section class="submission"><small>Tu entrega · ${dateFormat(sub.created)}</small><p>${esc(sub.body)}</p>${submissionFieldsView(t, sub.answers)}${sub.file ? `<a class="btn small" href="/api/file/${sub.id}">${icon("download", 14)} ${esc(sub.file)}</a>` : ""}${sub.grade != null ? `<div class="grade-feedback"><strong>${sub.grade}<small> / ${t.points}</small></strong><p>${esc(sub.feedback || "Tu profesor ya revisó tu trabajo.")}</p></div>` : ""}</section>` : ""}${sub?.grade != null ? '<span class="badge done">Trabajo revisado. ¡Sigue creciendo!</span>' : t.closed || (!t.allow_late && t.due < todayISO()) ? '<div class="notice">Esta actividad está cerrada. Puedes consultar tu entrega; para hacer cambios, contacta a tu profesor.</div>' : `<form id="submit-form"><input type="hidden" name="task" value="${t.id}">${textarea("body", "Tu respuesta", draft?.body ?? sub?.body ?? "", 'maxlength="10000" placeholder="Comparte lo que aprendiste…"')}${t.fields?.length ? `<section class="smart-submission"><h3>Tu recorrido de aprendizaje</h3>${smartFieldsHTML(t.fields, draft?.answers ?? sub?.answers ?? {})}</section>` : ""}<div class="draft-hint" id="draft-hint">${draft ? "Borrador guardado en tu cuenta" : "Tu respuesta se guarda como borrador al hacer una pausa."}</div>${t.submission_mode === "text" ? '<input type="file" name="file" hidden><p class="form-help">Esta actividad acepta una respuesta de texto.</p>' : attachmentField(t.submission_mode === "file" ? "Archivo requerido · máximo 5 MB" : undefined)}<div id="file-preview" class="file-preview" hidden></div><div class="upload-status" aria-live="polite" hidden></div><div class="form-actions"><button type="button" class="btn" id="save-draft">Guardar borrador</button><button class="btn primary">${sub ? "Actualizar entrega" : "Entregar actividad"} ${icon("send", 14)}</button></div><p class="form-help">El borrador guarda el texto. El archivo se envía al entregar la actividad.</p></form>`}`,
+      `${intro}<div class="student-row-actions"><button class="btn small" data-task-ai="${id}">Pensar con Luma AI ${icon("spark", 14)}</button>${moduleEnabled("messages") ? `<button class="btn small" data-task-help="${id}">Pedir ayuda al profesor ${icon("heart", 14)}</button>` : ""}<button class="btn small" data-task-plan="${id}">Planear mi estudio</button>${sub ? `<button class="btn small" data-task-portfolio="${sub.id}">Guardar en mi portafolio</button>` : ""}</div>${sub ? `<section class="submission"><small>Tu entrega · ${dateFormat(sub.created)}</small><p>${esc(sub.body)}</p>${submissionFieldsView(t, sub.answers)}${sub.file ? `<a class="btn small" href="/api/file/${sub.id}">${icon("download", 14)} ${esc(sub.file)}</a>` : ""}${sub.grade != null ? `<div class="grade-feedback"><strong>${sub.grade}<small> / ${t.points}</small></strong><p>${esc(sub.feedback || "Tu profesor ya revisó tu trabajo.")}</p></div>` : ""}</section>` : ""}${sub?.grade != null ? '<span class="badge done">Trabajo revisado. ¡Sigue creciendo!</span>' : t.closed || (!t.allow_late && t.due < todayISO()) ? '<div class="notice">Esta actividad está cerrada. Puedes consultar tu entrega; para hacer cambios, contacta a tu profesor.</div>' : `<form id="submit-form"><input type="hidden" name="task" value="${t.id}">${textarea("body", "Tu respuesta", draft?.body ?? sub?.body ?? "", 'maxlength="10000" placeholder="Comparte lo que aprendiste…"')}${t.fields?.length ? `<section class="smart-submission"><h3>Tu recorrido de aprendizaje</h3>${smartFieldsHTML(t.fields, draft?.answers ?? sub?.answers ?? {})}</section>` : ""}<div class="draft-hint" id="draft-hint">${draft ? "Borrador guardado en tu cuenta" : "Tu respuesta se guarda como borrador al hacer una pausa."}</div>${t.submission_mode === "text" ? '<input type="file" name="file" hidden><p class="form-help">Esta actividad acepta una respuesta de texto.</p>' : attachmentField(t.submission_mode === "file" ? "Archivo requerido · máximo 5 MB" : undefined)}<div id="file-preview" class="file-preview" hidden></div><div class="upload-status" aria-live="polite" hidden></div><div class="form-actions"><button type="button" class="btn" id="save-draft">Guardar borrador</button><button class="btn primary">${sub ? "Actualizar entrega" : "Entregar actividad"} ${icon("send", 14)}</button></div><p class="form-help">El borrador guarda el texto. El archivo se envía al entregar la actividad.</p></form>`}`,
     );
     if (t.rubric?.criteria || t.fields?.length)
       $(".modal").classList.add("rubric-review");
+    $("[data-task-ai]")?.addEventListener("click", () =>
+      aiClassroomImport(id, "task"),
+    );
     $("[data-task-help]")?.addEventListener("click", () => {
       if (closeTaskForPersonal()) openAskHelp(id);
     });
@@ -1214,7 +1223,10 @@ function openResource(id) {
   const r = S.resources.find((r) => r.id === id);
   modal(
     r.title,
-    `${r.file ? `<div class="file-preview">${icon("file", 22)}<div><strong>${esc(r.file)}</strong><small>Material de tu aula</small></div><a class="btn small" href="/api/resource-file/${r.id}">${icon("download", 14)} Descargar</a></div>` : ""}${r.body ? `<pre>${esc(r.body)}</pre>` : ""}${r.url ? `<a class="btn primary" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">Abrir enlace ${icon("link", 14)}</a>` : ""}${staff() ? `<div class="form-actions"><button class="btn" id="edit-resource">Editar material</button><button class="btn danger" id="delete-resource">Eliminar</button></div>` : ""}`,
+    `${r.file ? `<div class="file-preview">${icon("file", 22)}<div><strong>${esc(r.file)}</strong><small>Material de tu aula</small></div><a class="btn small" href="/api/resource-file/${r.id}">${icon("download", 14)} Descargar</a></div>` : ""}${r.body ? `<pre>${esc(r.body)}</pre>` : ""}${r.url ? `<a class="btn primary" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">Abrir enlace ${icon("link", 14)}</a>` : ""}${S.me.role === "student" ? `<div class="form-actions"><button class="btn primary" id="ai-import-resource">Estudiar con Luma AI ${icon("spark", 15)}</button></div>` : ""}${staff() ? `<div class="form-actions"><button class="btn" id="edit-resource">Editar material</button><button class="btn danger" id="delete-resource">Eliminar</button></div>` : ""}`,
+  );
+  $("#ai-import-resource")?.addEventListener("click", () =>
+    aiClassroomImport(id, "resource"),
   );
   if (staff()) {
     $("#edit-resource").onclick = () => editResource(id);
@@ -1999,6 +2011,7 @@ function syncRoute() {
   const parts = [view];
   if (view === "classroom" && currentCourse) parts.push(currentCourse, tab);
   if (view === "messages" && thread) parts.push(thread);
+  if (view === "ai" && aiSelected) parts.push(aiSelected);
   if (view === "student") parts.push(studentTab);
   if (view === "support") parts.push(supportTab);
   if (view === "search" && searchQuery)
@@ -2009,6 +2022,7 @@ function syncRoute() {
 function readRoute() {
   const parts = location.hash.replace(/^#\//, "").split("/");
   const allowed = [
+    "ai",
     "student",
     "support",
     "home",
@@ -2026,10 +2040,15 @@ function readRoute() {
   if (view === "studio" && !can("teaching.customize")) view = "home";
   if (view === "admin" && S.me.role !== "admin") view = "home";
   if (
-    (view === "student" && S.me.role !== "student") ||
+    (["student", "ai"].includes(view) && S.me.role !== "student") ||
     (view === "support" && S.me.role !== "teacher")
   )
     view = "home";
+  if (view === "ai") {
+    aiSelected = /^\d+$/.test(parts[1] || "") ? Number(parts[1]) : null;
+    if (aiData && aiData.session?.id !== aiSelected)
+      setTimeout(() => loadAI(aiSelected), 0);
+  }
   if (view === "student")
     studentTab = studentTabs.some(([id]) => id === parts[1]) ? parts[1] : "day";
   if (view === "support")
@@ -2719,6 +2738,7 @@ function openPermissions() {
     ["Crear / editar eventos", "No", "Los propios", "Todos"],
     ["Rúbricas y formularios docentes", "No", "Su biblioteca", "Su biblioteca"],
     ["Agenda, metas y cuaderno", "Solo su cuenta", "No", "No"],
+    ["Luma AI, fuentes y sesiones", "Solo su cuenta", "No", "No"],
     [
       "Portafolio del estudiante",
       "Sus entradas",

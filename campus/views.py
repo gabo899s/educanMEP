@@ -161,7 +161,7 @@ def index(request):
     return response
 
 def asset(request, name):
-    if name not in ['app.js', 'student.js', 'administration.js', 'teaching.js', 'style.css', 'manrope.ttf', 'dmsans.ttf', 'favicon.svg']:
+    if name not in ['app.js', 'luma-ai.js', 'student.js', 'administration.js', 'teaching.js', 'style.css', 'manrope.ttf', 'dmsans.ttf', 'favicon.svg']:
         return HttpResponse(status=404)
     path = BASE_DIR / 'public' / name
     etag = f'"{path.stat().st_mtime_ns:x}-{path.stat().st_size:x}"'
@@ -511,6 +511,12 @@ def api(request, path):
         if not request.user.is_authenticated:
             return JsonResponse({'error': 'Inicia sesión para continuar.'}, status=401)
         u = request.user
+        if path.startswith('ai/'):
+            from .ai_study import handle, AIError, private_json
+            try:
+                return handle(request,u,path,d)
+            except AIError as error:
+                return private_json({'error':str(error)},error.status)
         if path == 'state' and request.method == 'GET':
             return state_response(request, u)
         if path.startswith('file/') and request.method == 'GET':
