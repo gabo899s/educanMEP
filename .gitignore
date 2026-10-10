@@ -5,3 +5,5 @@ campus.sqlite3
 uploads/
 .env
 *.zip
+
+!downloads/LumaCampus.zip

@@ -1,0 +1,26 @@
+LUMA CAMPUS — VERIFICACIÓN DEL PAQUETE
+
+Entorno comprobado: Linux, Python 3.12.14, Chromium.
+
+Resultados:
+- ZIP íntegro (ZipFile.testzip sin errores).
+- Extracción a un directorio separado.
+- Entorno virtual nuevo, sin reutilizar el entorno de desarrollo.
+- Instalación con --no-index desde vendor/wheels, sin descargas.
+- Django 5.2.18, asgiref 3.12.1, sqlparse 0.6.0 y tzdata 2025.2.
+- Migraciones desde una base SQLite inexistente: correctas.
+- Datos de demostración creados correctamente.
+- manage.py check: sin incidencias.
+- manage.py test: 10 pruebas, todas correctas.
+- pip check: sin dependencias incompatibles.
+- run.py --port 8011: arranque correcto.
+- Acceso en navegador a estudiante, profesor y administrador.
+- Seis aulas disponibles por cada cuenta de demostración.
+- Sin errores de JavaScript en esa comprobación.
+
+El paquete incluye lanzadores e instrucciones para Windows, macOS y Linux.
+Los lanzadores de Windows/macOS no se ejecutaron en esos sistemas; el ensayo
+completo de instalación y ejecución se realizó en Linux.
+
+El ZIP no contiene entornos virtuales, bases de datos previas, sesiones,
+archivos personales ni configuración secreta. Los crea cada instalación.
