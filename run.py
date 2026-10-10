@@ -22,11 +22,12 @@ def main():
             command([PYTHON, 'manage.py', 'check'])
             command([PYTHON, 'manage.py', 'migrate', '--noinput'])
             command([PYTHON, 'seed.py'])
+    launcher = 'py -3' if os.name == 'nt' else 'python3'
     with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as sock:
         try:
             sock.bind(('127.0.0.1',args.port))
         except OSError:
-            raise RuntimeError(f'El puerto {args.port} está ocupado. Prueba: python run.py --port {args.port+1 if args.port<65535 else 8000}')
+            raise RuntimeError(f'El puerto {args.port} está ocupado. Prueba: {launcher} run.py --port {args.port+1 if args.port<65535 else 8000}')
     print(f'\nLuma Campus listo: http://127.0.0.1:{args.port}\nDeja esta ventana abierta. Para detener: Ctrl+C.\n',flush=True)
     os.execv(str(PYTHON),[str(PYTHON),str(ROOT/'manage.py'),'runserver',f'127.0.0.1:{args.port}','--noreload'])
 

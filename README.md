@@ -20,6 +20,16 @@ El primer arranque instala automáticamente las dependencias incluidas, prepara 
 
 No necesitas Node.js ni una base de datos externa. Los paquetes de instalación están en `vendor/wheels/`; no se descargan de Internet. Las instrucciones completas, las cuentas y la solución de problemas están en **INSTALACION.md**.
 
+## Novedades de Luma Campus 2
+
+- Diseño mejorado conservando la paleta, las flores y la estética original: tarjetas con progreso, favoritas, enfoque del día, navegación móvil y formularios más legibles.
+- Borradores de actividades guardados en la cuenta; carga de archivos con progreso, vista previa y arrastrar/soltar.
+- Edición de actividades, materiales, publicaciones, eventos, aulas y personas según los permisos. Cierre/reapertura de actividades y publicaciones fijadas.
+- Materiales con archivos descargables, filtros de tareas y personas, resumen de notas por aula y exportación CSV autorizada.
+- Mensajería con confirmaciones de lectura, búsqueda y conservación del texto escrito. Sincronización condicional con ETag, reconexión y estados de carga.
+- Con 46 aulas, la consulta del estado bajó de 55 a 11 consultas SQL (80 % menos) frente a la versión anterior, en el mismo ensayo local. Esta medición no equivale a una mejora global de 15 veces.
+- Migración comprobada que conserva matrículas, entregas y calificaciones. Consulta **INSTALACION.md**, sección 9, para actualizar con respaldo.
+
 ## Funciones implementadas
 
 - Sesiones autenticadas, contraseñas cifradas con hash, protección CSRF y autorización en el servidor.
@@ -28,7 +38,7 @@ No necesitas Node.js ni una base de datos externa. Los paquetes de instalación 
 - Estudiantes: entregar texto y archivos de hasta 5 MB; consultar sus calificaciones y retroalimentación.
 - Profesores: publicar actividades y materiales, revisar archivos, calificar y registrar asistencia en sus aulas.
 - Administración: crear estudiantes, profesores y administradores; crear aulas; asignar profesor y matricular estudiantes.
-- Mensajería entre cuentas reales, historial persistente y lectura. Las conversaciones se actualizan cada 15 segundos; no hay respuestas automáticas ficticias.
+- Mensajería entre cuentas reales, historial persistente y lectura. Las conversaciones se actualizan cada 6 segundos mientras la mensajería está abierta; no hay respuestas automáticas ficticias.
 - Perfil editable, cambio de contraseña y cierre de sesión.
 - Calendario mensual con creación de eventos y detalle de actividades.
 - Búsqueda de aulas, actividades y personas.
@@ -52,12 +62,12 @@ Las tipografías Manrope y DM Sans provienen de google/fonts y conservan sus lic
 ## Verificación
 
 ```sh
-python manage.py check
-python manage.py test
+python3 manage.py check
+python3 manage.py test
 node --check public/app.js
 ```
 
-Las 10 pruebas del servidor verifican acceso autenticado, CSRF, permisos por rol/aula, entregas, calificaciones, conversaciones privadas, matrícula, asistencia, validación de enlaces, perfil y acceso a archivos.
+Las 28 pruebas del servidor verifican acceso autenticado, CSRF, permisos por rol/aula, entregas, calificaciones, conversaciones privadas, matrícula, asistencia, validación de enlaces, perfil y acceso a archivos.
 
 ## Publicación
 

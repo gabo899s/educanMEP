@@ -66,7 +66,7 @@ Prueba este recorrido:
 4. Envía un mensaje al profesor; cambia a su cuenta para responder.
 5. Administrador → Administración → crea una persona o un aula. Para matricular estudiantes, abre el aula → Personas → Gestionar matrículas.
 
-Las conversaciones se actualizan cada 15 segundos. Si quieres probar dos cuentas simultáneamente, abre una en una ventana privada o en otro navegador.
+Las conversaciones se actualizan cada 6 segundos mientras esa pantalla está abierta. Si quieres probar dos cuentas simultáneamente, abre una en una ventana privada o en otro navegador.
 
 ## 5. Instalación y ejecución por separado
 
@@ -108,7 +108,7 @@ macOS/Linux:
 .venv/bin/python manage.py test
 ```
 
-Se incluyen **10 pruebas** del servidor. No necesitas Node.js para ejecutar la aplicación ni sus pruebas de Python.
+Se incluyen **28 pruebas** del servidor. No necesitas Node.js para ejecutar la aplicación ni sus pruebas de Python.
 
 ## 7. Problemas habituales
 
@@ -125,3 +125,31 @@ Se incluyen **10 pruebas** del servidor. No necesitas Node.js para ejecutar la a
 `campus.sqlite3` guarda los registros y `uploads/` guarda los archivos entregados. Ambos se crean localmente; el ZIP no incluye sesiones ni una base de datos anterior. Cierra el servidor antes de hacer una copia de seguridad de estos archivos.
 
 Este paquete permite ejecutar y probar el campus localmente. Para ponerlo en Internet, consulta la sección Publicación del README y configura un servidor Python con HTTPS. Las cuentas de prueba son para demostración.
+
+## 9. Actualizar a Luma Campus 2 conservando tus datos (Linux / Chromebook)
+
+Detén el servidor con **Ctrl+C**. Ejecuta estos comandos en la terminal; respeta las mayúsculas de `LumaCampus`:
+
+```bash
+cd ~
+cp -a LumaCampus "LumaCampus-respaldo-$(date +%Y%m%d-%H%M%S)"
+wget -O LumaCampus-v2.zip https://raw.githubusercontent.com/gabo899s/educanMEP/luma-campus/downloads/LumaCampus.zip
+unzip -o LumaCampus-v2.zip
+cd LumaCampus
+python3 install.py
+python3 run.py
+```
+
+La extracción reemplaza el código. El ZIP excluye `campus.sqlite3`, `uploads/` y `.venv/`, por lo que conserva tus datos y archivos. El instalador aplica la nueva migración sin borrar las notas, entregas ni matrículas. Abre **http://127.0.0.1:8000**. En Linux usa `python3`: `py -3` corresponde al lanzador de Windows.
+
+Para una instalación nueva en Chromebook/Linux:
+
+```bash
+sudo apt update
+sudo apt install -y python3 python3-venv unzip wget
+cd ~
+wget -O LumaCampus.zip https://raw.githubusercontent.com/gabo899s/educanMEP/luma-campus/downloads/LumaCampus.zip
+unzip LumaCampus.zip
+cd LumaCampus
+python3 run.py
+```

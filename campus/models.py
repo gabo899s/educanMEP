@@ -7,6 +7,7 @@ class Profile(models.Model):
     bio=models.TextField(blank=True)
     phone=models.CharField(max_length=40,blank=True)
     color=models.CharField(max_length=20,default='pink')
+    preferences=models.JSONField(default=dict,blank=True)
 
 # Adapted from adilmohak/django-lms Course and CourseAllocation (MIT).
 # College-focused title/code/summary retained; school membership replaces programs/semesters.
@@ -26,6 +27,7 @@ class Post(models.Model):
     author=models.ForeignKey(User,on_delete=models.CASCADE)
     body=models.TextField()
     created=models.DateTimeField(auto_now_add=True)
+    pinned=models.BooleanField(default=False)
 
 class Task(models.Model):
     course=models.ForeignKey(Course,on_delete=models.CASCADE)
@@ -33,6 +35,7 @@ class Task(models.Model):
     description=models.TextField()
     due=models.DateField()
     points=models.PositiveIntegerField(default=100)
+    closed=models.BooleanField(default=False)
 
 class Submission(models.Model):
     task=models.ForeignKey(Task,on_delete=models.CASCADE)
@@ -54,6 +57,7 @@ class Message(models.Model):
     read=models.BooleanField(default=False)
 
 class Event(models.Model):
+    author=models.ForeignKey(User,on_delete=models.SET_NULL,null=True,blank=True,related_name='campus_events')
     title=models.CharField(max_length=200)
     date=models.DateField()
     time=models.CharField(max_length=30)
@@ -65,6 +69,8 @@ class Resource(models.Model):
     title=models.CharField(max_length=200)
     url=models.URLField(blank=True)
     body=models.TextField(blank=True)
+    file=models.FileField(upload_to='materials/',blank=True)
+    original_name=models.CharField(max_length=255,blank=True)
 
 class Attendance(models.Model):
     course=models.ForeignKey(Course,on_delete=models.CASCADE)
@@ -73,3 +79,11 @@ class Attendance(models.Model):
     present=models.BooleanField(default=True)
     class Meta:
         unique_together=[('course','student','date')]
+
+class Draft(models.Model):
+    task=models.ForeignKey(Task,on_delete=models.CASCADE)
+    student=models.ForeignKey(User,on_delete=models.CASCADE)
+    body=models.TextField(blank=True)
+    updated=models.DateTimeField(auto_now=True)
+    class Meta:
+        unique_together=[('task','student')]

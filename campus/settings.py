@@ -7,7 +7,7 @@ if not DEBUG and not os.environ.get('LUMA_SECRET_KEY'):
     raise RuntimeError('Configura LUMA_SECRET_KEY antes de ejecutar en producción.')
 ALLOWED_HOSTS=os.environ.get('LUMA_ALLOWED_HOSTS','localhost,127.0.0.1,testserver').split(',')
 INSTALLED_APPS=['django.contrib.auth','django.contrib.contenttypes','django.contrib.sessions','campus']
-MIDDLEWARE=['django.middleware.security.SecurityMiddleware','django.contrib.sessions.middleware.SessionMiddleware','django.middleware.common.CommonMiddleware','django.middleware.csrf.CsrfViewMiddleware','django.contrib.auth.middleware.AuthenticationMiddleware','django.middleware.clickjacking.XFrameOptionsMiddleware']
+MIDDLEWARE=['django.middleware.security.SecurityMiddleware','django.middleware.gzip.GZipMiddleware','django.contrib.sessions.middleware.SessionMiddleware','django.middleware.common.CommonMiddleware','django.middleware.csrf.CsrfViewMiddleware','django.contrib.auth.middleware.AuthenticationMiddleware','django.middleware.clickjacking.XFrameOptionsMiddleware']
 ROOT_URLCONF='campus.urls'
 DATABASES={'default':{'ENGINE':'django.db.backends.sqlite3','NAME':BASE_DIR/'campus.sqlite3'}}
 DEFAULT_AUTO_FIELD='django.db.models.BigAutoField'

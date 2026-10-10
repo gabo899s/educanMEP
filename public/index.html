@@ -1,1 +1,52 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#faf8f3"><meta name="description" content="Luma Campus: tu escuela, tus personas y tus ideas, en un mismo lugar."><title>Luma Campus · Un lugar para crecer</title><link rel="stylesheet" href="/assets/style.css"></head><body><div id="app"></div><div id="modal-root"></div><div id="toast" role="status" aria-live="polite"></div><script src="/assets/app.js" defer></script></body></html>
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#faf8f3" />
+    <meta
+      name="description"
+      content="Luma Campus: tu escuela, tus personas y tus ideas, en un mismo lugar."
+    />
+    <title>Luma Campus · Un lugar para crecer</title>
+    <link rel="icon" href="/assets/favicon.svg" />
+    <link
+      rel="preload"
+      href="/assets/dmsans.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
+    <link rel="stylesheet" href="/assets/style.css?v=2.0" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Saltar al contenido</a>
+    <div id="network-progress" aria-hidden="true"></div>
+    <div id="app">
+      <main
+        class="boot-skeleton"
+        aria-busy="true"
+        aria-label="Abriendo tu campus"
+      >
+        <div class="skeleton-sidebar"></div>
+        <div class="skeleton-main">
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line short"></div>
+          <div class="skeleton-hero"></div>
+          <div class="skeleton-cards">
+            <div></div>
+            <div></div>
+            <div></div>
+          </div>
+          <p>Preparando un lugar para florecer…</p>
+        </div>
+      </main>
+    </div>
+    <noscript
+      >Activa JavaScript en tu navegador para usar Luma Campus.</noscript
+    >
+    <div id="modal-root"></div>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <script src="/assets/app.js?v=2.0" defer></script>
+  </body>
+</html>

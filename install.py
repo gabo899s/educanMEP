@@ -25,7 +25,7 @@ def install():
     command([PYTHON, 'manage.py', 'migrate', '--noinput'])
     print('4/4 Preparando el campus de demostración...', flush=True)
     command([PYTHON, 'seed.py'])
-    print('\nInstalación completa. Ejecuta: python run.py', flush=True)
+    print('\nInstalación completa. Ejecuta: ' + ('py -3' if os.name == 'nt' else 'python3') + ' run.py', flush=True)
 
 if __name__ == '__main__':
     try:
