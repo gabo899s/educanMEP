@@ -265,7 +265,7 @@ class CampusFlows(TestCase):
         response=self.post('appearance',{'accent':'green','density':'compact','reduce_motion':True,'role':'admin'})
         self.assertEqual(response.status_code,200)
         me=response.json()['me']
-        self.assertEqual(me['preferences']['appearance'],{'accent':'green','density':'compact','reduce_motion':True})
+        self.assertEqual(me['preferences']['appearance'],{'accent':'green','density':'compact','reduce_motion':True,'font_size':'standard','high_contrast':False})
         self.assertEqual(me['preferences']['favorites'],[self.c.id])
         self.assertEqual(me['role'],'student')
         self.assertEqual(self.post('appearance',{'accent':'evil','density':'compact'}).status_code,400)
@@ -339,7 +339,7 @@ class UpgradePreservesData(TransactionTestCase):
         t=T.objects.create(course_id=c.id,title='Trabajo existente',description='Preservar',due=date.today(),points=100)
         submitted=S.objects.create(task_id=t.id,student_id=student.id,body='Datos originales',grade=98,feedback='Conservar')
         executor=MigrationExecutor(connection)
-        executor.migrate([('campus','0005_institution_course_archived_profile_department_and_more')])
+        executor.migrate(executor.loader.graph.leaf_nodes('campus'))
         self.assertEqual(Submission.objects.get(id=submitted.id).grade,98)
         self.assertEqual(Submission.objects.get(id=submitted.id).body,'Datos originales')
         self.assertTrue(Course.objects.get(id=c.id).students.filter(id=student.id).exists())

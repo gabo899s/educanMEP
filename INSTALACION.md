@@ -200,11 +200,30 @@ Para actualizar tu instalación de Linux / Chromebook, detén primero el servido
 ```bash
 cd ~
 cp -a LumaCampus "LumaCampus-respaldo-$(date +%Y%m%d-%H%M%S)"
-wget -O LumaCampus-actualizacion.zip 'https://raw.githubusercontent.com/gabo899s/educanMEP/luma-campus/downloads/LumaCampus.zip?v=5'
+wget -O LumaCampus-actualizacion.zip 'https://raw.githubusercontent.com/gabo899s/educanMEP/luma-campus/downloads/LumaCampus.zip?v=6'
 unzip -o LumaCampus-actualizacion.zip
 cd LumaCampus
 python3 install.py
 python3 run.py
 ```
 
-Abre **http://127.0.0.1:8000**. El ZIP conserva `campus.sqlite3`, `uploads/` y `.venv/`; el instalador aplica la migración 0005. Guarda juntos la base y `uploads/` en tus respaldos: allí se almacena también el logo institucional. El paquete continúa sin necesitar Node ni nuevas dependencias Python.
+Abre **http://127.0.0.1:8000**. El ZIP conserva `campus.sqlite3`, `uploads/` y `.venv/`; el instalador aplica las migraciones hasta 0006. Guarda juntos la base y `uploads/` en tus respaldos: allí se almacena también el logo institucional. El paquete continúa sin necesitar Node ni nuevas dependencias Python.
+
+
+## 13. Espacio del estudiante
+
+Entra como estudiante y abre **Mi espacio**. Las ocho pestañas reúnen Mi día, agenda, progreso, portafolio, metas, retroalimentación, cuaderno y ayuda.
+
+1. **Mi día:** consulta clases, entregas pendientes, planes, metas y apuntes. El profesor configura los bloques reales desde su aula → Horario semanal. Las agendas usan la fecha del colegio en Costa Rica; un horario sin bloques estructurados no genera clases inventadas.
+2. **Agenda:** crea recordatorios, planes personales o sesiones de estudio, con fecha, hora, duración, prioridad y notas. Puedes relacionarlos con una actividad y completarlos o reabrirlos. Los avisos aparecen en la campana al entrar o sincronizar el campus; no se envían correos ni notificaciones fuera del navegador.
+3. **Progreso:** consulta tus entregas, asistencia y promedio calculado como suma de puntos obtenidos dividida entre los puntos evaluados. Las rúbricas muestran criterios que necesitan práctica; las metas personales no cambian calificaciones.
+4. **Portafolio:** crea un proyecto propio o parte de una entrega. Se conserva una copia del texto, respuestas y archivo original. Adjunta archivos de hasta 5 MB. Cada proyecto nace privado: compartir con el profesor es una elección explícita y exige matrícula vigente. Volver a privado revoca también el acceso al archivo. El profesor consulta los compartidos desde Acompañamiento.
+5. **Metas:** define objetivo, plazo, cantidad, unidad y reflexión. Registra tu avance con los controles del objetivo; completar una meta es un registro personal.
+6. **Retroalimentación:** lee calificaciones, comentarios y desglose de rúbricas. Marca una revisión como leída o crea una meta para mejorar. Una nueva evaluación vuelve a aparecer como revisión pendiente.
+7. **Cuaderno:** guarda apuntes, etiquetas y favoritos; busca por contenido y exporta un apunte o todos como Markdown. Son privados incluso frente a profesores y administración.
+8. **Ayuda:** elige una actividad, explica tu duda y adjunta un archivo si hace falta. El profesor responsable responde desde Acompañamiento. Puedes continuar el hilo, resolverlo o reabrirlo. No es un chat con respuestas automáticas.
+9. **Personalizar mi espacio:** cambia avatar, portada, intereses, acento y tarjetas del inicio. Puedes ordenar las seis tarjetas y ocultar hasta cinco. También ajusta letra, contraste, densidad y animaciones. Los intereses son privados; el avatar aparece en el directorio del campus.
+
+Los formularios avisan al cerrar con cambios sin guardar. Guarda explícitamente tus apuntes y proyectos. Retirar una matrícula conserva tus registros personales, pero cancela el acceso docente al portafolio y bloquea nuevas consultas sobre esa aula.
+
+La actualización completa está en la sección 9: detén el servidor, respalda la carpeta, extrae el ZIP encima y ejecuta `python3 install.py` seguido de `python3 run.py`. Guarda juntos `campus.sqlite3` y `uploads/`: incluyen agenda, cuaderno, metas, proyectos y archivos. El ZIP no contiene tus datos privados.

@@ -107,13 +107,15 @@ function reindex() {
 const person = (id) => indexMaps.people.get(id),
   course = (id) => indexMaps.courses.get(id);
 const avatar = (p, large = false) =>
-  `<span class="avatar ${esc(p?.color || "pink")}" ${large ? 'style="width:85px;height:85px;font-size:26px"' : ""}>${esc(
-    (p?.name || "?")
-      .split(" ")
-      .slice(0, 2)
-      .map((n) => n[0])
-      .join(""),
-  )}</span>`;
+  p?.avatar && p.avatar !== "initials"
+    ? `<span class="avatar ${esc(p.color || "pink")} illustrated-avatar ${large ? "large" : ""}">${art(p.avatar, large ? 65 : 27)}</span>`
+    : `<span class="avatar ${esc(p?.color || "pink")}" ${large ? 'style="width:85px;height:85px;font-size:26px"' : ""}>${esc(
+        (p?.name || "?")
+          .split(" ")
+          .slice(0, 2)
+          .map((n) => n[0])
+          .join(""),
+      )}</span>`;
 const dateFormat = (d, opts = { day: "numeric", month: "short" }) =>
   new Date(d.length === 10 ? d + "T12:00:00" : d).toLocaleDateString("es-CR", {
     timeZone: "America/Costa_Rica",
@@ -360,6 +362,7 @@ async function signIn(data, b) {
   try {
     S = await api("login", data);
     view = "home";
+    resetStudentUi();
     thread = null;
     clearDirty();
     render();
@@ -404,6 +407,8 @@ function render(options = {}) {
       !oldChat ||
       oldChat.scrollHeight - oldChat.scrollTop - oldChat.clientHeight < 70;
   let labels = {
+    student: "Mi espacio",
+    support: "Acompañamiento",
     studio: "Mi estudio docente",
     home: "Mi inicio",
     classroom: "Classroom",
@@ -416,11 +421,12 @@ function render(options = {}) {
     search: "Buscar",
   };
   $("#app").innerHTML =
-    `<div class="shell"><button class="sidebar-scrim ${menuOpen ? "open" : ""}" aria-label="Cerrar menú" data-action="menu"></button><aside class="sidebar ${menuOpen ? "open" : ""}">${brand()}<div class="school-pill">${icon("class", 20)}<div>${esc(institutionData().name)}<span>Curso lectivo · ${esc(institutionData().year)}</span></div></div><div class="nav-label">MI CAMPUS</div><nav class="nav">${navButton("home", "Mi inicio", "home")}${navButton("classroom", "Classroom", "class")}${can("teaching.customize") ? navButton("studio", "Mi estudio", "flower") : ""}${navButton("tasks", staff() ? "Actividades" : "Mis tareas", "task")}${navButton("messages", "Mensajería", "message")}${navButton("calendar", "Calendario", "calendar")}${navButton("grades", "Calificaciones", "chart")}${S.me.role === "admin" ? navButton("admin", "Administración", "users") : ""}</nav><div class="sidebar-bottom"><div class="little-note"><span class="sparkle">✧</span>${art("flower", 32)}<strong>A tu ritmo, a tu manera.</strong>Cada pequeño paso también<br>cuenta. Sigue floreciendo.</div><button class="side-profile" data-view="profile" style="background:none;width:100%;text-align:left">${avatar(S.me)}<div><strong>${esc(S.me.name)}</strong><small>${roleNames[S.me.role]} · Luma Campus</small></div>${icon("chevron", 13)}</button></div></aside><main class="main"><header class="topbar"><button class="icon-btn mobile-toggle" data-action="menu" aria-label="Abrir menú">${icon("menu")}</button><div class="breadcrumb">Mi campus ${icon("chevron", 11)} <strong>${labels[view] || "Mi inicio"}</strong></div><div class="top-actions"><form class="search" id="search-form">${icon("search", 15)}<input name="q" placeholder="Busca en tu campus..." aria-label="Buscar" value="${esc(searchQuery)}"><span style="font-size:9px">↵</span></form><button class="icon-btn" data-action="notifications" aria-label="Notificaciones">${icon("bell", 17)}${notificationItems().length ? '<span class="dot"></span>' : ""}</button><button class="icon-btn" data-view="profile" aria-label="Mi perfil" style="border:0">${avatar(S.me)}</button></div></header>${S.me.email.endsWith("@luma.demo") ? `<div class="demo-banner"><span>✦ Campus de demostración · ${roleNames[S.me.role]} · Datos de ejemplo</span><button data-action="logout">Cambiar de cuenta</button></div>` : ""}<div class="content" id="main-content" tabindex="-1">${renderContent()}<footer class="footer"><span>Un lugar para aprender, conectar y crecer. ✦</span><span class="sync-state ${syncStatus}">${syncStatus === "offline" ? "Sin conexión" : "Campus al día"}</span><span>Luma Campus · ${new Date().getFullYear()}</span></footer></div></main></div>`;
+    `<div class="shell"><button class="sidebar-scrim ${menuOpen ? "open" : ""}" aria-label="Cerrar menú" data-action="menu"></button><aside class="sidebar ${menuOpen ? "open" : ""}">${brand()}<div class="school-pill">${icon("class", 20)}<div>${esc(institutionData().name)}<span>Curso lectivo · ${esc(institutionData().year)}</span></div></div><div class="nav-label">MI CAMPUS</div><nav class="nav">${navButton("home", "Mi inicio", "home")}${S.me.role === "student" ? navButton("student", "Mi espacio", "flower") : ""}${S.me.role === "teacher" ? navButton("support", "Acompañamiento", "heart") : ""}${navButton("classroom", "Classroom", "class")}${can("teaching.customize") ? navButton("studio", "Mi estudio", "flower") : ""}${navButton("tasks", staff() ? "Actividades" : "Mis tareas", "task")}${navButton("messages", "Mensajería", "message")}${navButton("calendar", "Calendario", "calendar")}${navButton("grades", "Calificaciones", "chart")}${S.me.role === "admin" ? navButton("admin", "Administración", "users") : ""}</nav><div class="sidebar-bottom"><div class="little-note"><span class="sparkle">✧</span>${art("flower", 32)}<strong>A tu ritmo, a tu manera.</strong>Cada pequeño paso también<br>cuenta. Sigue floreciendo.</div><button class="side-profile" data-view="profile" style="background:none;width:100%;text-align:left">${avatar(S.me)}<div><strong>${esc(S.me.name)}</strong><small>${roleNames[S.me.role]} · Luma Campus</small></div>${icon("chevron", 13)}</button></div></aside><main class="main"><header class="topbar"><button class="icon-btn mobile-toggle" data-action="menu" aria-label="Abrir menú">${icon("menu")}</button><div class="breadcrumb">Mi campus ${icon("chevron", 11)} <strong>${labels[view] || "Mi inicio"}</strong></div><div class="top-actions"><form class="search" id="search-form">${icon("search", 15)}<input name="q" placeholder="Busca en tu campus..." aria-label="Buscar" value="${esc(searchQuery)}"><span style="font-size:9px">↵</span></form><button class="icon-btn" data-action="notifications" aria-label="Notificaciones">${icon("bell", 17)}${notificationItems().length ? '<span class="dot"></span>' : ""}</button><button class="icon-btn" data-view="profile" aria-label="Mi perfil" style="border:0">${avatar(S.me)}</button></div></header>${S.me.email.endsWith("@luma.demo") ? `<div class="demo-banner"><span>✦ Campus de demostración · ${roleNames[S.me.role]} · Datos de ejemplo</span><button data-action="logout">Cambiar de cuenta</button></div>` : ""}<div class="content" id="main-content" tabindex="-1">${renderContent()}<footer class="footer"><span>Un lugar para aprender, conectar y crecer. ✦</span><span class="sync-state ${syncStatus}">${syncStatus === "offline" ? "Sin conexión" : "Campus al día"}</span><span>Luma Campus · ${new Date().getFullYear()}</span></footer></div></main></div>`;
   bind();
   bindEnhanced();
   bindTeaching();
   bindAdministration();
+  bindStudent();
   document.title =
     (labels[view] || "Mi inicio") + " · " + institutionData().name;
   syncRoute();
@@ -451,6 +457,8 @@ function heading(title, subtitle, action = "") {
 function renderContent() {
   return (
     {
+      student: studentWorkspace,
+      support: teacherLearningInbox,
       studio: teacherStudio,
       home: home,
       classroom: classroom,
@@ -499,6 +507,7 @@ function courseCard(c, full = false) {
 }
 
 function home() {
+  if (S.me.role === "student") return studentHome();
   let list = staff()
     ? S.tasks.filter((t) =>
         S.submissions.some((s) => s.task === t.id && s.grade === null),
@@ -530,7 +539,7 @@ function classroom() {
       currentCourse = null;
       return classroom();
     }
-    return `<button class="link-btn" data-action="back-class" style="margin-bottom:18px">${icon("back", 12)} Todas mis aulas</button><section class="class-banner ${c.color}"><div><span class="class-code">${esc(c.code)} · ${esc(c.room)}</span><h1>${esc(c.title)}</h1><p>${esc(c.summary)}</p><p style="margin-top:12px">${icon("profile", 13)} ${esc(person(c.teacher)?.name)} &nbsp; ${icon("clock", 13)} ${esc(c.schedule)}</p></div>${art(c.symbol, 120)}</section>${S.me.role === "admin" ? `<div class="class-tools"><button class="btn small" data-edit-course="${c.id}">${icon("profile", 13)} Editar aula</button></div>` : ""}<div class="tabs" role="tablist" aria-label="Secciones del aula">${[
+    return `<button class="link-btn" data-action="back-class" style="margin-bottom:18px">${icon("back", 12)} Todas mis aulas</button><section class="class-banner ${c.color}"><div><span class="class-code">${esc(c.code)} · ${esc(c.room)}</span><h1>${esc(c.title)}</h1><p>${esc(c.summary)}</p><p style="margin-top:12px">${icon("profile", 13)} ${esc(person(c.teacher)?.name)} &nbsp; ${icon("clock", 13)} ${esc(c.schedule)}</p></div>${art(c.symbol, 120)}</section>${staff() ? `<div class="class-tools"><button class="btn small" data-timetable="${c.id}">Horario semanal</button></div>` : ""}${S.me.role === "admin" ? `<div class="class-tools"><button class="btn small" data-edit-course="${c.id}">${icon("profile", 13)} Editar aula</button></div>` : ""}<div class="tabs" role="tablist" aria-label="Secciones del aula">${[
       ["wall", "Muro del aula"],
       ["work", "Actividades"],
       ["resources", "Materiales"],
@@ -770,7 +779,7 @@ function grades() {
   }</tbody></table></div>`;
 }
 function profile() {
-  return `${heading("Tu espacio, tu esencia 🌷", "Cuéntale a tu campus un poquito más de ti.")}${adminProfileCard()}${moduleEnabled("studio") ? teacherProfileCard() : ""}<div class="profile-layout"><aside class="panel profile-card">${avatar(S.me, true)}<h2>${esc(S.me.name)}</h2><span class="badge">${roleNames[S.me.role]}</span><p>${esc(S.me.bio)}</p><p>${esc(S.me.email)}</p><div class="progress"><i style="width:100%"></i></div><p>Parte de nuestra comunidad ✦</p><button class="btn" data-action="logout">${icon("logout", 15)} Cerrar sesión</button></aside><section class="panel"><div class="section-head"><h2>Información personal</h2>${icon("profile", 20)}</div><form id="profile-form"><div class="form-grid"><div class="form-field"><label for="profile-name">Nombre completo</label><input id="profile-name" name="name" value="${esc(S.me.name)}" required maxlength="100"></div><div class="form-field"><label for="profile-email">Correo electrónico</label><input id="profile-email" value="${esc(S.me.email)}" readonly style="background:#f5f2ee"></div><div class="form-field"><label for="profile-phone">Teléfono</label><input id="profile-phone" name="phone" value="${esc(S.me.phone)}" placeholder="Tu número de contacto" maxlength="40"></div><div class="form-field"><label>Mi rol en el campus</label><input value="${roleNames[S.me.role]}" readonly style="background:#f5f2ee"></div>${select(
+  return `${heading("Tu espacio, tu esencia 🌷", "Cuéntale a tu campus un poquito más de ti.")}${studentProfileCard()}${adminProfileCard()}${moduleEnabled("studio") ? teacherProfileCard() : ""}<div class="profile-layout"><aside class="panel profile-card">${avatar(S.me, true)}<h2>${esc(S.me.name)}</h2><span class="badge">${roleNames[S.me.role]}</span><p>${esc(S.me.bio)}</p><p>${esc(S.me.email)}</p><div class="progress"><i style="width:100%"></i></div><p>Parte de nuestra comunidad ✦</p><button class="btn" data-action="logout">${icon("logout", 15)} Cerrar sesión</button></aside><section class="panel"><div class="section-head"><h2>Información personal</h2>${icon("profile", 20)}</div><form id="profile-form"><div class="form-grid"><div class="form-field"><label for="profile-name">Nombre completo</label><input id="profile-name" name="name" value="${esc(S.me.name)}" required maxlength="100"></div><div class="form-field"><label for="profile-email">Correo electrónico</label><input id="profile-email" value="${esc(S.me.email)}" readonly style="background:#f5f2ee"></div><div class="form-field"><label for="profile-phone">Teléfono</label><input id="profile-phone" name="phone" value="${esc(S.me.phone)}" placeholder="Tu número de contacto" maxlength="40"></div><div class="form-field"><label>Mi rol en el campus</label><input value="${roleNames[S.me.role]}" readonly style="background:#f5f2ee"></div>${select(
     "color",
     "Color de mi perfil",
     [
@@ -851,7 +860,7 @@ function modal(title, body, editor = false) {
 }
 function closeModal(force = false) {
   if (modalBusy && !force) return;
-  const editorForm = $("#modal-form");
+  const editorForm = $("#modal-form") || $("#help-reply-form");
   if (
     editorForm?.dataset.dirty === "true" &&
     !force &&
@@ -993,10 +1002,20 @@ function openTask(id) {
   if (!staff()) {
     modal(
       t.title,
-      `${intro}${sub ? `<section class="submission"><small>Tu entrega · ${dateFormat(sub.created)}</small><p>${esc(sub.body)}</p>${submissionFieldsView(t, sub.answers)}${sub.file ? `<a class="btn small" href="/api/file/${sub.id}">${icon("download", 14)} ${esc(sub.file)}</a>` : ""}${sub.grade != null ? `<div class="grade-feedback"><strong>${sub.grade}<small> / ${t.points}</small></strong><p>${esc(sub.feedback || "Tu profesor ya revisó tu trabajo.")}</p></div>` : ""}</section>` : ""}${sub?.grade != null ? '<span class="badge done">Trabajo revisado. ¡Sigue creciendo!</span>' : t.closed || (!t.allow_late && t.due < todayISO()) ? '<div class="notice">Esta actividad está cerrada. Puedes consultar tu entrega; para hacer cambios, contacta a tu profesor.</div>' : `<form id="submit-form"><input type="hidden" name="task" value="${t.id}">${textarea("body", "Tu respuesta", draft?.body ?? sub?.body ?? "", 'maxlength="10000" placeholder="Comparte lo que aprendiste…"')}${t.fields?.length ? `<section class="smart-submission"><h3>Tu recorrido de aprendizaje</h3>${smartFieldsHTML(t.fields, draft?.answers ?? sub?.answers ?? {})}</section>` : ""}<div class="draft-hint" id="draft-hint">${draft ? "Borrador guardado en tu cuenta" : "Tu respuesta se guarda como borrador al hacer una pausa."}</div>${t.submission_mode === "text" ? '<input type="file" name="file" hidden><p class="form-help">Esta actividad acepta una respuesta de texto.</p>' : attachmentField(t.submission_mode === "file" ? "Archivo requerido · máximo 5 MB" : undefined)}<div id="file-preview" class="file-preview" hidden></div><div class="upload-status" aria-live="polite" hidden></div><div class="form-actions"><button type="button" class="btn" id="save-draft">Guardar borrador</button><button class="btn primary">${sub ? "Actualizar entrega" : "Entregar actividad"} ${icon("send", 14)}</button></div><p class="form-help">El borrador guarda el texto. El archivo se envía al entregar la actividad.</p></form>`}`,
+      `${intro}<div class="student-row-actions">${moduleEnabled("messages") ? `<button class="btn small" data-task-help="${id}">Pedir ayuda al profesor ${icon("heart", 14)}</button>` : ""}<button class="btn small" data-task-plan="${id}">Planear mi estudio</button>${sub ? `<button class="btn small" data-task-portfolio="${sub.id}">Guardar en mi portafolio</button>` : ""}</div>${sub ? `<section class="submission"><small>Tu entrega · ${dateFormat(sub.created)}</small><p>${esc(sub.body)}</p>${submissionFieldsView(t, sub.answers)}${sub.file ? `<a class="btn small" href="/api/file/${sub.id}">${icon("download", 14)} ${esc(sub.file)}</a>` : ""}${sub.grade != null ? `<div class="grade-feedback"><strong>${sub.grade}<small> / ${t.points}</small></strong><p>${esc(sub.feedback || "Tu profesor ya revisó tu trabajo.")}</p></div>` : ""}</section>` : ""}${sub?.grade != null ? '<span class="badge done">Trabajo revisado. ¡Sigue creciendo!</span>' : t.closed || (!t.allow_late && t.due < todayISO()) ? '<div class="notice">Esta actividad está cerrada. Puedes consultar tu entrega; para hacer cambios, contacta a tu profesor.</div>' : `<form id="submit-form"><input type="hidden" name="task" value="${t.id}">${textarea("body", "Tu respuesta", draft?.body ?? sub?.body ?? "", 'maxlength="10000" placeholder="Comparte lo que aprendiste…"')}${t.fields?.length ? `<section class="smart-submission"><h3>Tu recorrido de aprendizaje</h3>${smartFieldsHTML(t.fields, draft?.answers ?? sub?.answers ?? {})}</section>` : ""}<div class="draft-hint" id="draft-hint">${draft ? "Borrador guardado en tu cuenta" : "Tu respuesta se guarda como borrador al hacer una pausa."}</div>${t.submission_mode === "text" ? '<input type="file" name="file" hidden><p class="form-help">Esta actividad acepta una respuesta de texto.</p>' : attachmentField(t.submission_mode === "file" ? "Archivo requerido · máximo 5 MB" : undefined)}<div id="file-preview" class="file-preview" hidden></div><div class="upload-status" aria-live="polite" hidden></div><div class="form-actions"><button type="button" class="btn" id="save-draft">Guardar borrador</button><button class="btn primary">${sub ? "Actualizar entrega" : "Entregar actividad"} ${icon("send", 14)}</button></div><p class="form-help">El borrador guarda el texto. El archivo se envía al entregar la actividad.</p></form>`}`,
     );
     if (t.rubric?.criteria || t.fields?.length)
       $(".modal").classList.add("rubric-review");
+    $("[data-task-help]")?.addEventListener("click", () => {
+      if (closeTaskForPersonal()) openAskHelp(id);
+    });
+    $("[data-task-plan]")?.addEventListener("click", () => {
+      if (closeTaskForPersonal()) openPlannerEditor(null, null, id);
+    });
+    $("[data-task-portfolio]")?.addEventListener(
+      "click",
+      () => closeTaskForPersonal() && openPortfolioEditor(null, sub.id),
+    );
     const form = $("#submit-form");
     if (!form) return;
     form.dataset.savedBody = form.elements.body.value;
@@ -1731,7 +1750,7 @@ function notificationItems() {
         icon: "file",
         color: "green",
       });
-  return items;
+  return [...personalNotifications(), ...items];
 }
 function openNotifications() {
   const items = notificationItems();
@@ -1746,7 +1765,12 @@ function openNotifications() {
           id = +b.dataset.noteId;
         closeModal();
         if (type === "message") selectThread(id);
-        else openTask(id);
+        else if (type === "planner") openPlannerEditor(id);
+        else if (type === "help") openHelp(id);
+        else if (type === "feedback") {
+          const sub = S.submissions.find((s) => s.id === id);
+          if (sub) openTask(sub.task);
+        } else openTask(id);
       }),
   );
 }
@@ -1975,6 +1999,8 @@ function syncRoute() {
   const parts = [view];
   if (view === "classroom" && currentCourse) parts.push(currentCourse, tab);
   if (view === "messages" && thread) parts.push(thread);
+  if (view === "student") parts.push(studentTab);
+  if (view === "support") parts.push(supportTab);
   if (view === "search" && searchQuery)
     parts.push(encodeURIComponent(searchQuery));
   const hash = "#/" + parts.join("/");
@@ -1983,6 +2009,8 @@ function syncRoute() {
 function readRoute() {
   const parts = location.hash.replace(/^#\//, "").split("/");
   const allowed = [
+    "student",
+    "support",
     "home",
     "studio",
     "classroom",
@@ -1997,6 +2025,15 @@ function readRoute() {
   view = allowed.includes(parts[0]) ? parts[0] : "home";
   if (view === "studio" && !can("teaching.customize")) view = "home";
   if (view === "admin" && S.me.role !== "admin") view = "home";
+  if (
+    (view === "student" && S.me.role !== "student") ||
+    (view === "support" && S.me.role !== "teacher")
+  )
+    view = "home";
+  if (view === "student")
+    studentTab = studentTabs.some(([id]) => id === parts[1]) ? parts[1] : "day";
+  if (view === "support")
+    supportTab = parts[1] === "portfolio" ? "portfolio" : "help";
   currentCourse = view === "classroom" && course(+parts[1]) ? +parts[1] : null;
   tab = ["wall", "work", "resources", "people", "attendance"].includes(parts[2])
     ? parts[2]
@@ -2131,7 +2168,12 @@ document.addEventListener("input", (e) => {
   if (e.target.closest("#profile-form,#post-form")) dirtyForm = true;
 });
 window.addEventListener("beforeunload", (e) => {
-  if (dirtyForm || modalBusy || $("#modal-form")?.dataset.dirty === "true") {
+  if (
+    dirtyForm ||
+    modalBusy ||
+    $("#modal-form")?.dataset.dirty === "true" ||
+    $("#help-reply-form")?.dataset.dirty === "true"
+  ) {
     e.preventDefault();
     e.returnValue = "";
   }
@@ -2194,6 +2236,21 @@ function roleScope() {
 }
 function guardForm(path) {
   const permission = {
+    ...Object.fromEntries(
+      [
+        "planner",
+        "planner-edit",
+        "goal",
+        "goal-edit",
+        "note",
+        "note-edit",
+        "portfolio",
+        "portfolio-edit",
+        "student-settings",
+      ].map((k) => [k, "learning.manage"]),
+    ),
+    "help-ask": "help.ask",
+    "course-timetable": "assignments.manage",
     institution: "institution.manage",
     "institution-logo": "institution.manage",
     "membership-bulk": "membership.manage",
@@ -2231,6 +2288,48 @@ function editorSection(number, title, description, fields) {
 function formMeta(path) {
   const type = path.split("-")[0];
   const map = {
+    planner: [
+      "Agenda privada",
+      "calendar",
+      "Organiza tu tiempo. Tus planes personales solo los ves tú.",
+      "Mi tiempo",
+      "Guardar plan",
+    ],
+    goal: [
+      "Meta personal",
+      "leaf",
+      "Practica, cuenta tus avances y date espacio para reflexionar.",
+      "Mi próximo paso",
+      "Guardar meta",
+    ],
+    note: [
+      "Cuaderno privado",
+      "book",
+      "Guarda tus ideas por materia, con etiquetas y texto propio.",
+      "Mi apunte",
+      "Guardar apunte",
+    ],
+    portfolio: [
+      "Portafolio",
+      "star",
+      "Tu aprendizaje, con la privacidad que tú eliges.",
+      "Mi proyecto",
+      "Guardar proyecto",
+    ],
+    student: [
+      "Mi espacio",
+      "flower",
+      "Personaliza tu imagen, tus tarjetas y tu comodidad al leer.",
+      "Mi propia esencia",
+      "Guardar mi espacio",
+    ],
+    help: [
+      "Acompañamiento",
+      "heart",
+      "Una consulta privada entre tú y el profesor de esta actividad.",
+      "Mi pregunta",
+      "Enviar consulta",
+    ],
     institution: [
       "Institución",
       "flower",
@@ -2500,6 +2599,9 @@ function updateFormPreview() {
     d.description ||
     d.summary ||
     d.body ||
+    d.reflection ||
+    d.question ||
+    d.notes ||
     (type === "appearance"
       ? "Un campus cómodo, colorido y con tu esencia."
       : "Tus palabras darán vida a este espacio. Aquí puedes ver cómo va quedando.");
@@ -2541,7 +2643,8 @@ function openAppearance() {
       "01",
       "Un color que te represente",
       "Acentos de botones y navegación para tu cuenta.",
-      paletteField("accent", a.accent || "purple", "Mi color favorito"),
+      paletteField("accent", a.accent || "institution", "Mi color favorito") +
+        `<label class="setting-toggle"><input type="radio" name="accent" value="institution" ${!a.accent || a.accent === "institution" ? "checked" : ""}><span><strong>Usar los colores de mi institución</strong><small>El acento sigue la identidad del colegio.</small></span></label>`,
     ) +
       editorSection(
         "02",
@@ -2555,10 +2658,23 @@ function openAppearance() {
             ["compact", "Más compacto"],
           ],
           a.density || "comfortable",
-        )}<label class="setting-toggle"><input type="checkbox" name="reduce_motion" ${a.reduce_motion ? "checked" : ""}><span><strong>Reducir animaciones</strong><small>Prefiere transiciones suaves y menos movimiento.</small></span></label>`,
+        )} ${select(
+          "font_size",
+          "Tamaño de letra",
+          [
+            ["standard", "Estándar"],
+            ["large", "Más grande"],
+            ["extra", "Grande extra"],
+          ],
+          a.font_size || "standard",
+        )}<label class="setting-toggle"><input type="checkbox" name="high_contrast" ${a.high_contrast ? "checked" : ""}><span><strong>Mayor contraste</strong><small>Textos y bordes más definidos.</small></span></label><label class="setting-toggle"><input type="checkbox" name="reduce_motion" ${a.reduce_motion ? "checked" : ""}><span><strong>Reducir animaciones</strong><small>Prefiere transiciones suaves y menos movimiento.</small></span></label>`,
       ),
     "appearance",
-    (d, f) => ({ ...d, reduce_motion: f.has("reduce_motion") }),
+    (d, f) => ({
+      ...d,
+      reduce_motion: f.has("reduce_motion"),
+      high_contrast: f.has("high_contrast"),
+    }),
     "Tu estilo quedó guardado en tu cuenta.",
   );
 }
@@ -2575,6 +2691,8 @@ function applyAppearance() {
   );
   document.body.dataset.density = a.density || "comfortable";
   document.body.classList.toggle("reduce-motion", !!a.reduce_motion);
+  document.body.dataset.fontSize = a.font_size || "standard";
+  document.body.classList.toggle("high-contrast", !!a.high_contrast);
 }
 function openPermissions() {
   const rows = [
@@ -2600,6 +2718,14 @@ function openPermissions() {
     ],
     ["Crear / editar eventos", "No", "Los propios", "Todos"],
     ["Rúbricas y formularios docentes", "No", "Su biblioteca", "Su biblioteca"],
+    ["Agenda, metas y cuaderno", "Solo su cuenta", "No", "No"],
+    [
+      "Portafolio del estudiante",
+      "Sus entradas",
+      "Compartido de sus aulas",
+      "No",
+    ],
+    ["Consultas de actividades", "Las propias", "Sus aulas", "No"],
     ["Perfil y apariencia", "Su cuenta", "Su cuenta", "Su cuenta"],
     [
       "Mensajes privados",

@@ -20,7 +20,24 @@ El primer arranque instala automáticamente las dependencias incluidas, prepara 
 
 No necesitas Node.js ni una base de datos externa. Los paquetes de instalación están en `vendor/wheels/`; no se descargan de Internet. Las instrucciones completas, las cuentas y la solución de problemas están en **INSTALACION.md**.
 
-## Espacio docente — Luma Campus 5
+## Espacio del estudiante · Luma Campus 6
+
+- **Mi día:** clases con horarios semanales reales, pendientes, planes y accesos a sus herramientas.
+- **Agenda privada:** recordatorios dentro del campus, sesiones de estudio, prioridades y planes completados.
+- **Mi progreso:** entregas, promedio por puntos evaluados, asistencia y oportunidades de mejora basadas en rúbricas.
+- **Portafolio:** proyectos, archivos y copia independiente de entregas; compartir voluntariamente con el profesor responsable y revocar el acceso.
+- **Metas:** objetivos personales con plazo, cantidad, avance y reflexión.
+- **Retroalimentación:** calificaciones, criterios de evaluación, revisiones leídas y creación de metas de mejora.
+- **Cuaderno privado:** apuntes, etiquetas, búsqueda, destacados y exportación Markdown.
+- **Mi estilo:** avatar, portada, intereses y orden o visibilidad de las tarjetas del inicio.
+- **Pedir ayuda:** consultas privadas sobre una actividad, archivos, respuestas del profesor y resolución del hilo.
+- **Accesibilidad:** tamaño de letra, contraste, densidad y reducción de movimiento guardados por cuenta.
+
+Administración no recibe apuntes, agenda, metas ni proyectos privados. El profesor recibe solo las consultas de sus aulas y los proyectos compartidos explícitamente. El estudiante sigue sin poder crear materias, matricular personas ni administrar cuentas. Los permisos se validan también en las descargas.
+
+[Uso y actualización](INSTALACION.md#13-espacio-del-estudiante). La migración 0006 conserva los registros anteriores; no hay nuevas dependencias.
+
+## Espacio docente
 
 - **Mi perfil → Abrir mi estudio** y **Mi estudio** reúnen aulas, revisiones pendientes y biblioteca privada de herramientas.
 - Rúbricas reutilizables: hasta 10 criterios, con 2 a 5 niveles de logro, descripciones y puntos distintos. Cada criterio incluye 0 puntos. La nota se calcula en el servidor y se ajusta a los puntos de la actividad; incluye comentarios por criterio y desglose visible para el estudiante.
@@ -88,7 +105,7 @@ python3 manage.py test
 node --check public/app.js
 ```
 
-Las 72 pruebas del servidor verifican acceso autenticado, CSRF, permisos por rol/aula, entregas, calificaciones, conversaciones privadas, matrícula, asistencia, validación de enlaces, perfil y acceso a archivos.
+Las 98 pruebas del servidor verifican acceso autenticado, CSRF, permisos por rol/aula, entregas, calificaciones, conversaciones privadas, matrícula, asistencia, validación de enlaces, perfil y acceso a archivos.
 
 ## Publicación
 

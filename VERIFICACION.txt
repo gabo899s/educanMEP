@@ -1,14 +1,14 @@
-LUMA CAMPUS 5 — VERIFICACIÓN
+LUMA CAMPUS 6 — VERIFICACIÓN
 
 Entorno verificado: Linux, Python 3.12, Django 5.2.18, Chromium.
-- 72 pruebas del servidor correctas, incluidas 20 del centro administrativo.
-- Migración desde 0001 hasta 0005 con usuarios, aulas, matrículas,
+- 98 pruebas del servidor correctas, incluidas 20 del centro administrativo.
+- Migración desde 0001 hasta 0006 con usuarios, aulas, matrículas,
   entregas y nota original conservados.
 - Permisos por perfil y aula, CSRF, privacidad de conversaciones,
   archivos, borradores, validaciones, asistencia atómica y ETag/GZip.
 - Número de consultas constante al ampliar el catálogo: regresión sin N+1.
 - ZIP extraído en carpeta independiente; instalación offline desde las
-  cuatro dependencias incluidas; pip check y run.py --port 8018 correctos.
+  cuatro dependencias incluidas; pip check y run.py --port 8019 correctos.
 - ZIP sin bases locales, uploads, .venv, .git ni secretos.
 
 Administración comprobada en servidor y navegador:
@@ -47,3 +47,23 @@ Los lanzadores de Windows y macOS están incluidos; la ejecución de esta
 versión se ha verificado en Linux. Configuración para una institución
 por instalación. El historial recoge operaciones administrativas del API,
 no cambios directos en la base ni mensajes privados.
+
+Espacio del estudiante:
+- 26 pruebas nuevas: privacidad por propietario, permisos, validaciones,
+  horario semanal, compartir/revocar archivos, ayuda y lectura de revisiones.
+- Agenda, metas, apuntes y preferencias privadas también frente a administración.
+- Portafolio compartido solo con profesor actual y matrícula vigente;
+  copia independiente de texto, respuestas estructuradas y archivo entregado.
+- Consultas con alcance de aula, respuestas, resolución y archivos autorizados.
+- Personalización conserva favoritos; preferencias tipadas y guardadas por cuenta.
+- Consultas de ayuda precargadas: número constante con 20 hilos y respuestas.
+- Ocho áreas revisadas en Chromium, escritorio y móvil; formularios adaptables.
+- Recorrido completo Chromium: agenda y aviso, completar/reabrir, metas,
+  cuaderno con búsqueda/exportación y texto HTML escapado, entrega con archivo,
+  copia al portafolio, compartir/revocar con dos sesiones, consulta con archivo,
+  respuesta docente, seguimiento y resolución, revisión leída y meta de mejora.
+- Avatar, portada, intereses, orden, accesibilidad y favoritos recuperados.
+- Las ocho áreas y editor de apuntes en móvil con letra extra y alto contraste,
+  sin errores JavaScript ni desbordamiento horizontal.
+- Regresión docente de esta versión: rúbrica, campos condicionales, borrador,
+  entrega estructurada, nota 38/75 y desglose en móvil correctos.

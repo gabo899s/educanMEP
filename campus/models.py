@@ -24,6 +24,7 @@ class Course(models.Model):
     schedule=models.CharField(max_length=100,blank=True)
     room=models.CharField(max_length=60,default='10-A')
     archived=models.BooleanField(default=False)
+    timetable=models.JSONField(default=list,blank=True)
 
 class Post(models.Model):
     course=models.ForeignKey(Course,on_delete=models.CASCADE)
@@ -56,6 +57,7 @@ class Submission(models.Model):
     feedback=models.TextField(blank=True)
     answers=models.JSONField(default=dict,blank=True)
     rubric_assessment=models.JSONField(default=dict,blank=True)
+    reviewed_at=models.DateTimeField(null=True,blank=True)
     created=models.DateTimeField(auto_now=True)
     class Meta:
         unique_together=[('task','student')]
@@ -125,3 +127,72 @@ class AdministrationLog(models.Model):
     action=models.CharField(max_length=50)
     summary=models.CharField(max_length=250)
     created=models.DateTimeField(auto_now_add=True)
+
+class PlannerEntry(models.Model):
+    student=models.ForeignKey(User,on_delete=models.CASCADE,related_name='planner_entries')
+    course=models.ForeignKey(Course,on_delete=models.SET_NULL,null=True,blank=True)
+    task=models.ForeignKey(Task,on_delete=models.SET_NULL,null=True,blank=True)
+    title=models.CharField(max_length=160)
+    kind=models.CharField(max_length=12,default='personal')
+    date=models.DateField()
+    time=models.CharField(max_length=5,blank=True)
+    duration=models.PositiveIntegerField(default=30)
+    priority=models.CharField(max_length=8,default='normal')
+    remind_minutes=models.PositiveIntegerField(default=60)
+    notes=models.TextField(blank=True)
+    completed=models.BooleanField(default=False)
+    updated=models.DateTimeField(auto_now=True)
+
+class LearningGoal(models.Model):
+    student=models.ForeignKey(User,on_delete=models.CASCADE,related_name='learning_goals')
+    course=models.ForeignKey(Course,on_delete=models.SET_NULL,null=True,blank=True)
+    title=models.CharField(max_length=160)
+    due=models.DateField()
+    target=models.PositiveIntegerField(default=5)
+    progress=models.PositiveIntegerField(default=0)
+    unit=models.CharField(max_length=30,default='pasos')
+    reflection=models.TextField(blank=True)
+    updated=models.DateTimeField(auto_now=True)
+
+class StudentNote(models.Model):
+    student=models.ForeignKey(User,on_delete=models.CASCADE,related_name='student_notes')
+    course=models.ForeignKey(Course,on_delete=models.SET_NULL,null=True,blank=True)
+    title=models.CharField(max_length=160)
+    body=models.TextField()
+    tags=models.JSONField(default=list,blank=True)
+    pinned=models.BooleanField(default=False)
+    updated=models.DateTimeField(auto_now=True)
+
+class PortfolioEntry(models.Model):
+    student=models.ForeignKey(User,on_delete=models.CASCADE,related_name='portfolio_entries')
+    course=models.ForeignKey(Course,on_delete=models.SET_NULL,null=True,blank=True)
+    submission=models.ForeignKey(Submission,on_delete=models.SET_NULL,null=True,blank=True)
+    title=models.CharField(max_length=160)
+    reflection=models.TextField(blank=True)
+    tags=models.JSONField(default=list,blank=True)
+    sharing=models.CharField(max_length=10,default='private')
+    artifact=models.JSONField(default=dict,blank=True)
+    file=models.FileField(upload_to='portfolio/',blank=True)
+    original_name=models.CharField(max_length=255,blank=True)
+    updated=models.DateTimeField(auto_now=True)
+
+class HelpRequest(models.Model):
+    student=models.ForeignKey(User,on_delete=models.CASCADE,related_name='help_requests')
+    task=models.ForeignKey(Task,on_delete=models.CASCADE,related_name='help_requests')
+    question=models.TextField()
+    status=models.CharField(max_length=10,default='open')
+    file=models.FileField(upload_to='help/',blank=True)
+    original_name=models.CharField(max_length=255,blank=True)
+    created=models.DateTimeField(auto_now_add=True)
+    updated=models.DateTimeField(auto_now=True)
+
+class HelpReply(models.Model):
+    request=models.ForeignKey(HelpRequest,on_delete=models.CASCADE,related_name='replies')
+    author=models.ForeignKey(User,on_delete=models.PROTECT)
+    body=models.TextField()
+    created=models.DateTimeField(auto_now_add=True)
+
+class FeedbackReceipt(models.Model):
+    submission=models.OneToOneField(Submission,on_delete=models.CASCADE,related_name='feedback_receipt')
+    fingerprint=models.CharField(max_length=64)
+    updated=models.DateTimeField(auto_now=True)

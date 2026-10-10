@@ -24,6 +24,9 @@ today=timezone.localdate()
 rows=[('Matemáticas','MAT-10','Encontramos patrones, resolvemos problemas y le damos sentido a los números.','purple','orbit','Lun · Mié · Vie / 08:00'),('Biología','BIO-10','Un pequeño laboratorio para descubrir la vida y cuidar nuestro planeta.','green','leaf','Mar · Jue / 09:30'),('Español y literatura','ESP-10','Historias que nos conectan. Lee, imagina y encuentra tu propia voz.','pink','flower','Lun · Mié / 10:15'),('Historia','HIS-10','Miramos al pasado para comprender el mundo que compartimos.','peach','sun','Mar · Vie / 11:00'),('Inglés','ING-10','New ideas, new words. A little more confident every day.','blue','star','Mar · Jue / 13:00'),('Arte y creatividad','ART-10','Un espacio para experimentar sin miedo y crear cosas maravillosas.','yellow','spark','Vie / 14:00')]
 for i,(title,code,summary,color,symbol,schedule) in enumerate(rows):
     c=Course.objects.create(title=title,code=code,summary=summary,teacher=teacher,color=color,symbol=symbol,schedule=schedule)
+    slots=[([0,2,4],'08:00','09:00'),([1,3],'09:30','10:15'),([0,2],'10:15','11:00'),([1,4],'11:00','11:45'),([1,3],'13:00','13:45'),([4],'14:00','15:00')][i]
+    c.timetable=[{'weekday':day,'start':slots[1],'end':slots[2],'room':c.room} for day in slots[0]]
+    c.save(update_fields=['timetable'])
     c.students.set([student,s2,s3])
     Post.objects.create(course=c,author=teacher,body='¡Bienvenidos a nuestra aula! Aquí compartiremos ideas, materiales y pequeños grandes descubrimientos. 💛')
     t=Task.objects.create(course=c,title=['El universo de las funciones','Bitácora de una célula','Una historia que vale la pena contar','Línea del tiempo: nuestra región','My dream adventure','Mi primer collage'][i],description='Explora el material de esta semana y comparte tu trabajo. Incluye tu proceso y una reflexión sobre lo que aprendiste. Puedes adjuntar un archivo o escribir tu respuesta.',due=today+timedelta(days=i+1),points=100)

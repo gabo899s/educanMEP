@@ -19,6 +19,7 @@ from .models import Attendance, Course, Draft, Event, Message, Post, Profile, Re
 from .settings import BASE_DIR
 from .permissions import authorize, permissions
 from .administration import institution_state, admin_state, admin_mutate, check_module, log_change, ADMIN_ACTIONS
+from .learning import learning_state, received_state, mutate_learning, appearance_schema, portfolio_record, help_record, notes_export
 from .teaching import rubric_schema, fields_schema, field_answers, rubric_assessment
 
 COLORS = {'pink', 'purple', 'green', 'peach', 'blue', 'yellow'}
@@ -27,7 +28,7 @@ SYMBOLS = {'flower', 'orbit', 'leaf', 'sun', 'star', 'spark'}
 def person(u, private=False):
     p = u.profile
     result = {'id': u.id, 'name': u.get_full_name() or u.username, 'email': u.email,
-              'role': p.role, 'bio': p.bio, 'color': p.color}
+              'role': p.role, 'bio': p.bio, 'color': p.color, 'avatar': p.preferences.get('student',{}).get('avatar','initials')}
     if private:
         result.update(phone=p.phone, preferences=p.preferences, permissions=permissions(u))
     return result
@@ -118,16 +119,17 @@ def state(u):
     people = User.objects.filter(is_active=True, profile__isnull=False).select_related('profile').order_by('first_name', 'id')
     return {
         'institution': institution_state(), 'administration': admin_state(u),
+        'student_space': learning_state(u), 'learning_received': received_state(u),
         'me': person(u, private=True), 'people': [person(p) for p in people],
         'courses': [{'id': c.id, 'title': c.title, 'code': c.code, 'summary': c.summary, 'teacher': c.teacher_id,
                      'students': [p.id for p in c.students.all()], 'color': c.color, 'symbol': c.symbol,
-                     'schedule': c.schedule, 'room': c.room, 'archived': c.archived} for c in cs],
+                     'schedule': c.schedule, 'room': c.room, 'archived': c.archived, 'timetable': c.timetable} for c in cs],
         'tasks': [{'id': t.id, 'course': t.course_id, 'title': t.title, 'description': t.description,
                    'due': str(t.due), 'points': t.points, 'closed': t.closed,
                    'kind': t.kind, 'submission_mode': t.submission_mode, 'allow_late': t.allow_late, 'color': t.color, 'rubric': t.rubric, 'fields': t.fields,
                    'configuration_locked': t.id in locked_tasks} for t in tasks],
         'submissions': [{'id': s.id, 'task': s.task_id, 'student': s.student_id, 'body': s.body, 'file': s.original_name,
-                         'grade': s.grade, 'feedback': s.feedback, 'answers': s.answers, 'rubric_assessment': s.rubric_assessment, 'created': s.created.isoformat()} for s in submissions],
+                         'grade': s.grade, 'feedback': s.feedback, 'answers': s.answers, 'rubric_assessment': s.rubric_assessment, 'created': s.created.isoformat(), 'reviewed_at': s.reviewed_at.isoformat() if s.reviewed_at else None} for s in submissions],
         'posts': [{'id': p.id, 'course': p.course_id, 'author': p.author_id, 'body': p.body,
                    'pinned': p.pinned, 'created': p.created.isoformat()}
                   for p in Post.objects.filter(course_id__in=ids).order_by('-pinned', '-created', '-id')],
@@ -159,7 +161,7 @@ def index(request):
     return response
 
 def asset(request, name):
-    if name not in ['app.js', 'administration.js', 'teaching.js', 'style.css', 'manrope.ttf', 'dmsans.ttf', 'favicon.svg']:
+    if name not in ['app.js', 'student.js', 'administration.js', 'teaching.js', 'style.css', 'manrope.ttf', 'dmsans.ttf', 'favicon.svg']:
         return HttpResponse(status=404)
     path = BASE_DIR / 'public' / name
     etag = f'"{path.stat().st_mtime_ns:x}-{path.stat().st_size:x}"'
@@ -209,6 +211,8 @@ def task_options(d, task=None):
 def mutate(request, u, path, d):
     authorize(u, path)
     check_module(path)
+    if mutate_learning(request, u, path, d):
+        return
     if admin_mutate(request, u, path, d):
         return
     if path == 'teaching-preferences':
@@ -253,12 +257,8 @@ def mutate(request, u, path, d):
         p.bio, p.phone, p.color = bio, phone, color
         p.save()
     elif path == 'appearance':
-        accent, density = d.get('accent', 'purple'), d.get('density', 'comfortable')
-        motion = boolean(d.get('reduce_motion', False))
-        if accent not in COLORS or density not in {'comfortable', 'compact'}:
-            raise ValueError('Selecciona una apariencia válida.')
-        p = u.profile
-        p.preferences = {**p.preferences, 'appearance': {'accent': accent, 'density': density, 'reduce_motion': motion}}
+        p=u.profile
+        p.preferences={**p.preferences,'appearance':appearance_schema(d,p.preferences.get('appearance',{}))}
         p.save(update_fields=['preferences'])
     elif path == 'favorite':
         c = getcourse(u, d['course'])
@@ -378,7 +378,8 @@ def mutate(request, u, path, d):
             s.grade=integer(d['grade'],0,s.task.points)
             s.rubric_assessment={}
         s.feedback=text(d,'feedback',2000,False)
-        s.save(update_fields=['grade','feedback','rubric_assessment'])
+        s.reviewed_at=timezone.now()
+        s.save(update_fields=['grade','feedback','rubric_assessment','reviewed_at'])
     elif path in ['course', 'course-edit']:
         admin(u)
         teacher = User.objects.get(id=d['teacher'], profile__role='teacher', is_active=True)
@@ -523,6 +524,14 @@ def api(request, path):
             r = Resource.objects.get(id=int(path.split('/')[1]))
             getcourse(u, r.course_id)
             return download(r)
+        if path.startswith('portfolio-file/') and request.method == 'GET':
+            return download(portfolio_record(u,path.split('/')[1]))
+        if path.startswith('help-file/') and request.method == 'GET':
+            return download(help_record(u,path.split('/')[1]))
+        if path == 'notes-export' and request.method == 'GET':
+            return notes_export(u)
+        if path.startswith('notes-export/') and request.method == 'GET':
+            return notes_export(u,path.split('/')[1])
         if path == 'grades-export' and request.method == 'GET':
             check_module(path)
             return export_grades(u)

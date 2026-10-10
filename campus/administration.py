@@ -13,7 +13,7 @@ from .models import Institution, AdministrationLog, Course
 MODULES = {'messages': 'Mensajería', 'calendar': 'Calendario', 'grades': 'Calificaciones',
            'attendance': 'Asistencia', 'studio': 'Estudio docente', 'materials': 'Materiales', 'wall': 'Muro del aula'}
 CORE_LABELS = {'home': 'Mi inicio', 'classroom': 'Classroom', 'tasks': 'Actividades'}
-ACTION_MODULES = {'message': 'messages', 'read': 'messages', 'event': 'calendar', 'event-edit': 'calendar',
+ACTION_MODULES = {'help-ask':'messages','help-reply':'messages', 'help-status':'messages','message': 'messages', 'read': 'messages', 'event': 'calendar', 'event-edit': 'calendar',
  'event-delete': 'calendar', 'grade': 'grades', 'grades-export': 'grades', 'attendance': 'attendance',
  'resource': 'materials', 'resource-edit': 'materials', 'resource-delete': 'materials',
  'post': 'wall', 'post-edit': 'wall', 'post-delete': 'wall', 'post-pin': 'wall',
