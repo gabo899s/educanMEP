@@ -11,6 +11,8 @@ Entorno: Linux, Python 3.12, Chromium.
   pip check y arranque con run.py --port 8012 correctos.
 - Navegador: favoritos, borradores, entregas con archivos, mensajería,
   perfil, calificación, cierre/reapertura, materiales y filtros.
+- Dos cuentas simultáneas: recepción de mensajes mientras se escribe,
+  conservación del texto y recuperación después de perder conexión.
 - Escritorio 1440 px y móvil 390 px: sin errores JS ni desbordamiento.
 
 La instalación se verifica en Linux. Windows y macOS incluyen lanzadores,

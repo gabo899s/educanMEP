@@ -294,6 +294,8 @@ function brand() {
   return `<div class="brand">${art("flower", 38)}<div>luma<span style="font-weight:400">.</span><small>CAMPUS</small></div></div>`;
 }
 function loginPage() {
+  clearTimeout(pollTimer);
+  pollingView = null;
   S = null;
   lastETag = "";
   clearDirty();
@@ -351,6 +353,11 @@ function navButton(id, label, name) {
 }
 function render(options = {}) {
   if (!S) return loginPage();
+  if (pollingView !== view) {
+    pollingView = view;
+    clearTimeout(pollTimer);
+    pollTimer = setTimeout(poll, view === "messages" ? 6000 : 20000);
+  }
   reindex();
   const oldScroll = window.scrollY,
     active = document.activeElement,
@@ -1918,7 +1925,8 @@ function patchConversation() {
   body.scrollTo(0, nearBottom ? 999999 : top);
 }
 
-let syncFailures = 0;
+let syncFailures = 0,
+  pollingView = null;
 async function poll() {
   clearTimeout(pollTimer);
   try {
