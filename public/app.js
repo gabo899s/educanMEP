@@ -62,6 +62,7 @@ function art(name, size = 90) {
   return `<svg class="illustration" width="${size}" height="${size}" viewBox="0 0 100 100" fill="none" aria-hidden="true">${shapes[name] || shapes.flower}</svg>`;
 }
 const roleNames = {
+  guardian: "Familiar / encargado",
   student: "Estudiante",
   teacher: "Profesor",
   admin: "Administrador",
@@ -132,6 +133,8 @@ const unread = () =>
   S.messages.filter((m) => m.recipient === S.me.id && !m.read).length;
 const can = (permission) => {
   const module = {
+    "families.use": "families",
+    "families.manage": "families",
     "grades.manage": "grades",
     "materials.manage": "materials",
     "attendance.manage": "attendance",
@@ -321,6 +324,9 @@ function brand() {
 }
 function loginPage() {
   resetTeacherWorkspace();
+  familyTab = "overview";
+  familyChild = "";
+  familyQuery = "";
   resetAI();
   clearTimeout(pollTimer);
   pollingView = null;
@@ -396,6 +402,7 @@ function render(options = {}) {
       !oldChat ||
       oldChat.scrollHeight - oldChat.scrollTop - oldChat.clientHeight < 70;
   let labels = {
+    families: "Hogar y colegio",
     ai: "Luma AI",
     student: "Mi espacio",
     support: "Acompañamiento",
@@ -411,13 +418,14 @@ function render(options = {}) {
     search: "Buscar",
   };
   $("#app").innerHTML =
-    `<div class="shell"><button class="sidebar-scrim ${menuOpen ? "open" : ""}" aria-label="Cerrar menú" data-action="menu"></button><aside class="sidebar ${menuOpen ? "open" : ""}">${brand()}<div class="school-pill">${icon("class", 20)}<div>${esc(institutionData().name)}<span>Curso lectivo · ${esc(institutionData().year)}</span></div></div><div class="nav-label">MI CAMPUS</div><nav class="nav">${navButton("home", "Mi inicio", "home")}${S.me.role === "student" ? navButton("student", "Mi espacio", "flower") + navButton("ai", "Luma AI", "spark") : ""}${S.me.role === "teacher" ? navButton("support", "Acompañamiento", "heart") : ""}${navButton("classroom", "Classroom", "class")}${can("teaching.customize") ? navButton("studio", "Mi estudio", "flower") : ""}${navButton("tasks", staff() ? "Actividades" : "Mis tareas", "task")}${navButton("messages", "Mensajería", "message")}${navButton("calendar", "Calendario", "calendar")}${navButton("grades", "Calificaciones", "chart")}${S.me.role === "admin" ? navButton("admin", "Administración", "users") : ""}</nav><div class="sidebar-bottom"><div class="little-note"><span class="sparkle">✧</span>${art("flower", 32)}<strong>A tu ritmo, a tu manera.</strong>Cada pequeño paso también<br>cuenta. Sigue floreciendo.</div><button class="side-profile" data-view="profile" style="background:none;width:100%;text-align:left">${avatar(S.me)}<div><strong>${esc(S.me.name)}</strong><small>${roleNames[S.me.role]} · Luma Campus</small></div>${icon("chevron", 13)}</button></div></aside><main class="main"><header class="topbar"><button class="icon-btn mobile-toggle" data-action="menu" aria-label="Abrir menú">${icon("menu")}</button><div class="breadcrumb">Mi campus ${icon("chevron", 11)} <strong>${labels[view] || "Mi inicio"}</strong></div><div class="top-actions"><form class="search" id="search-form">${icon("search", 15)}<input name="q" placeholder="Busca en tu campus..." aria-label="Buscar" value="${esc(searchQuery)}"><span style="font-size:9px">↵</span></form><button class="icon-btn" data-action="notifications" aria-label="Notificaciones">${icon("bell", 17)}${notificationItems().length ? '<span class="dot"></span>' : ""}</button><button class="icon-btn" data-view="profile" aria-label="Mi perfil" style="border:0">${avatar(S.me)}</button></div></header><div class="content" id="main-content" tabindex="-1">${renderContent()}<footer class="footer"><span>Un lugar para aprender, conectar y crecer. ✦</span><span class="sync-state ${syncStatus}">${syncStatus === "offline" ? "Sin conexión" : "Campus al día"}</span><span>Luma Campus · ${new Date().getFullYear()}</span></footer></div></main></div>`;
+    `<div class="shell"><button class="sidebar-scrim ${menuOpen ? "open" : ""}" aria-label="Cerrar menú" data-action="menu"></button><aside class="sidebar ${menuOpen ? "open" : ""}">${brand()}<div class="school-pill">${icon("class", 20)}<div>${esc(institutionData().name)}<span>Curso lectivo · ${esc(institutionData().year)}</span></div></div><div class="nav-label">MI CAMPUS</div><nav class="nav">${navButton("home", "Mi inicio", "home")}${S.me.role === "student" ? navButton("student", "Mi espacio", "flower") + navButton("ai", "Luma AI", "spark") : ""}${S.me.role === "teacher" ? navButton("support", "Acompañamiento", "heart") : ""}${can("families.use") ? navButton("families", S.me.role === "guardian" ? "Mi familia" : "Hogar y colegio", "heart") : ""}${S.me.role !== "guardian" ? navButton("classroom", "Classroom", "class") : ""}${can("teaching.customize") ? navButton("studio", "Mi estudio", "flower") : ""}${S.me.role !== "guardian" ? navButton("tasks", staff() ? "Actividades" : "Mis tareas", "task") + navButton("messages", "Mensajería", "message") + navButton("calendar", "Calendario", "calendar") + navButton("grades", "Calificaciones", "chart") : ""}${S.me.role === "admin" ? navButton("admin", "Administración", "users") : ""}</nav><div class="sidebar-bottom"><div class="little-note"><span class="sparkle">✧</span>${art("flower", 32)}<strong>A tu ritmo, a tu manera.</strong>Cada pequeño paso también<br>cuenta. Sigue floreciendo.</div><button class="side-profile" data-view="profile" style="background:none;width:100%;text-align:left">${avatar(S.me)}<div><strong>${esc(S.me.name)}</strong><small>${roleNames[S.me.role]} · Luma Campus</small></div>${icon("chevron", 13)}</button></div></aside><main class="main"><header class="topbar"><button class="icon-btn mobile-toggle" data-action="menu" aria-label="Abrir menú">${icon("menu")}</button><div class="breadcrumb">Mi campus ${icon("chevron", 11)} <strong>${labels[view] || "Mi inicio"}</strong></div><div class="top-actions"><form class="search" id="search-form">${icon("search", 15)}<input name="q" placeholder="Busca en tu campus..." aria-label="Buscar" value="${esc(searchQuery)}"><span style="font-size:9px">↵</span></form><button class="icon-btn" data-action="notifications" aria-label="Notificaciones">${icon("bell", 17)}${notificationItems().length ? '<span class="dot"></span>' : ""}</button><button class="icon-btn" data-view="profile" aria-label="Mi perfil" style="border:0">${avatar(S.me)}</button></div></header><div class="content" id="main-content" tabindex="-1">${renderContent()}<footer class="footer"><span>Un lugar para aprender, conectar y crecer. ✦</span><span class="sync-state ${syncStatus}">${syncStatus === "offline" ? "Sin conexión" : "Campus al día"}</span><span>Luma Campus · ${new Date().getFullYear()}</span></footer></div></main></div>`;
   bind();
   bindEnhanced();
   bindTeaching();
   bindAdministration();
   bindStudent();
   bindAI();
+  bindFamilies();
   document.title =
     (labels[view] || "Mi inicio") + " · " + institutionData().name;
   syncRoute();
@@ -448,6 +456,7 @@ function heading(title, subtitle, action = "") {
 function renderContent() {
   return (
     {
+      families: familyWorkspace,
       ai: aiWorkspace,
       student: studentWorkspace,
       support: teacherLearningInbox,
@@ -499,6 +508,7 @@ function courseCard(c, full = false) {
 }
 
 function home() {
+  if (S.me.role === "guardian") return familyWorkspace();
   if (S.me.role === "student") return studentHome();
   let list = staff()
     ? S.tasks.filter((t) =>
@@ -707,7 +717,7 @@ function messages() {
       counts.set(id, (counts.get(id) || 0) + 1);
   }
   const people = S.people
-    .filter((p) => p.id !== S.me.id)
+    .filter((p) => p.id !== S.me.id && p.role !== "guardian")
     .sort((a, b) => (last.get(b.id)?.id || 0) - (last.get(a.id)?.id || 0));
   if (!thread)
     thread = ms.find((m) => m.recipient === S.me.id)?.sender || people[0]?.id;
@@ -793,6 +803,7 @@ function admin() {
 }
 
 function search() {
+  if (S.me.role === "guardian") return familySearchResults();
   let q = searchQuery.toLocaleLowerCase(),
     cs = S.courses.filter((c) =>
       (c.title + " " + c.code + " " + c.summary)
@@ -802,7 +813,9 @@ function search() {
     ts = S.tasks.filter((t) =>
       (t.title + " " + t.description).toLocaleLowerCase().includes(q),
     ),
-    ps = S.people.filter((p) => p.name.toLocaleLowerCase().includes(q));
+    ps = S.people.filter(
+      (p) => p.role !== "guardian" && p.name.toLocaleLowerCase().includes(q),
+    );
   return `${heading("Lo encontramos juntos 🔎", `Resultados para «${esc(searchQuery)}».`)}<div class="search-results">${cs.length ? `<h3>Aulas</h3><div class="courses-grid">${cs.map((c) => courseCard(c)).join("")}</div>` : ""}${ts.length ? `<h3>Actividades</h3><div class="task-list">${ts.map(taskRow).join("")}</div>` : ""}${ps.length ? `<h3>Personas</h3><div class="chips">${ps.map((p) => `<button class="btn" data-message-to="${p.id}">${avatar(p)}${esc(p.name)}</button>`).join("")}</div>` : ""}${!cs.length && !ts.length && !ps.length ? empty("No encontramos coincidencias. Prueba con otra palabra.") : ""}</div>`;
 }
 function field(name, label, type = "text", value = "", extra = "") {
@@ -1428,6 +1441,7 @@ async function action(name) {
   if (name === "logout") {
     if (!canNavigate()) return;
     try {
+      if (S.me.role === "guardian") await clearFamilyPush();
       await api("logout");
       closeModal();
       loginPage();
@@ -1544,6 +1558,7 @@ async function action(name) {
         field("email", "Correo electrónico", "email", "", "required") +
         select("role", "Rol", [
           ["student", "Estudiante"],
+          ["guardian", "Familiar / encargado"],
           ["teacher", "Profesor"],
           ["admin", "Administrador"],
         ]) +
@@ -1752,7 +1767,7 @@ function notificationItems() {
         icon: "file",
         color: "green",
       });
-  return [...personalNotifications(), ...items];
+  return [...familyNotifications(), ...personalNotifications(), ...items];
 }
 function openNotifications() {
   const items = notificationItems();
@@ -1766,7 +1781,17 @@ function openNotifications() {
         const type = b.dataset.noteType,
           id = +b.dataset.noteId;
         closeModal();
-        if (type === "message") selectThread(id);
+        if (type === "family") {
+          view = "families";
+          familyTab = "publications";
+          render();
+          openFamilyPublication(id);
+        } else if (type === "family-conversation") {
+          view = "families";
+          familyTab = "conversations";
+          render();
+          openFamilyConversation(id);
+        } else if (type === "message") selectThread(id);
         else if (type === "planner") openPlannerEditor(id);
         else if (type === "help") openHelp(id);
         else if (type === "feedback") {
@@ -2015,6 +2040,7 @@ function readRoute() {
     "ai",
     "student",
     "support",
+    "families",
     "home",
     "studio",
     "classroom",
@@ -2027,6 +2053,12 @@ function readRoute() {
     "search",
   ];
   view = allowed.includes(parts[0]) ? parts[0] : "home";
+  if (
+    S.me.role === "guardian" &&
+    !["home", "families", "profile", "search"].includes(view)
+  )
+    view = "home";
+  if (view === "families" && !can("families.use")) view = "home";
   if (view === "studio" && !can("teaching.customize")) view = "home";
   if (view === "admin" && S.me.role !== "admin") view = "home";
   if (
@@ -2232,6 +2264,7 @@ function bindFileDrops() {
 }
 
 function roleScope() {
+  if (S.me.role === "guardian") return scopeForRole("guardian");
   return (
     {
       student:
@@ -2245,6 +2278,7 @@ function roleScope() {
 }
 function guardForm(path) {
   const permission = {
+    ...familyPermissions,
     ...Object.fromEntries(
       [
         "planner",
@@ -2310,6 +2344,7 @@ function editorSection(number, title, description, fields) {
   return `<section class="editor-section"><div class="editor-section-head"><span>${number}</span><div><h3>${title}</h3><p>${description}</p></div></div><div class="editor-section-body">${fields}</div></section>`;
 }
 function formMeta(path) {
+  if (path.startsWith("family-")) return familyFormMeta(path);
   const type = path.split("-")[0];
   const map = {
     lesson: [
@@ -2692,6 +2727,8 @@ function updateFormPreview() {
   });
 }
 function scopeForRole(role) {
+  if (role === "guardian")
+    return "Consulta académica autorizada de tus hijos, comunicación con el colegio, permisos, citas y trámites. Sin acceso a apuntes privados ni Luma AI.";
   return (
     {
       student:
@@ -2806,8 +2843,32 @@ function openPermissions() {
       "Sus conversaciones",
     ],
   ];
+  rows.forEach((row) =>
+    row.push(
+      row[0] === "Ver notas y asistencia"
+        ? "Sus hijos autorizados"
+        : row[0] === "Perfil y apariencia"
+          ? "Su cuenta"
+          : "No",
+    ),
+  );
+  rows.push([
+    "Comunicación hogar–colegio",
+    "No",
+    "Sus familias",
+    "Publicaciones y trámites",
+    "Sus vínculos",
+  ]);
+  rows.push(["Verificar vínculos familiares", "No", "No", "Sí", "No"]);
+  rows.push([
+    "Responder permisos y solicitar trámites",
+    "No",
+    "No",
+    "Revisar solicitudes",
+    "Sus hijos vinculados",
+  ]);
   modal(
     "Cada perfil, su espacio",
-    `<p class="modal-description">Tu perfil actual: <strong>${roleNames[S.me.role]}</strong>. ${roleScope()}</p><div class="table-wrap permissions-table"><table><thead><tr><th>Acción</th><th>Estudiante</th><th>Profesor</th><th>Administrador</th></tr></thead><tbody>${rows.map((row) => `<tr>${row.map((v, i) => (i ? `<td class="${v === "No" ? "permission-no" : "permission-yes"}">${esc(v)}</td>` : `<th scope="row">${esc(v)}</th>`)).join("")}</tr>`).join("")}</tbody></table></div>`,
+    `<p class="modal-description">Tu perfil actual: <strong>${roleNames[S.me.role]}</strong>. ${roleScope()}</p><div class="table-wrap permissions-table"><table><thead><tr><th>Acción</th><th>Estudiante</th><th>Profesor</th><th>Administrador</th><th>Familiar / encargado</th></tr></thead><tbody>${rows.map((row) => `<tr>${row.map((v, i) => (i ? `<td class="${v === "No" ? "permission-no" : "permission-yes"}">${esc(v)}</td>` : `<th scope="row">${esc(v)}</th>`)).join("")}</tr>`).join("")}</tbody></table></div>`,
   );
 }

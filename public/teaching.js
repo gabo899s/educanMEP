@@ -512,7 +512,7 @@ function bindSmartFields(root, schema) {
       const row = root.querySelector(`[data-smart-field="${f.id}"]`);
       if (!row) return;
       const input = row.querySelector("[data-answer]");
-      if (root.id !== "submit-form") {
+      if (root.id !== "submit-form" && root.dataset.path !== "family-respond") {
         input.required = false;
         input.setAttribute("form", "luma-preview-no-form");
       }

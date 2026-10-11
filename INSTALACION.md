@@ -335,3 +335,30 @@ python3 run.py
 No pegues la clave en el navegador, repositorio ni chat. No hace falta repetir la configuración si tu `.env` ya contiene una clave válida.
 
 El docente entra en **Mi estudio**. El estudiante reserva tutorías en **Mi espacio → Consultas / ayuda**. Los borradores y las actividades programadas no son visibles para estudiantes hasta la publicación. Consulta **DOCENCIA.md** para el recorrido completo y los límites de cada herramienta.
+
+## 16. Actualizar a Luma Campus 9 · Familias
+
+Detén el servidor anterior con **Ctrl+C**. En Linux/Chromebook, ejecuta los siguientes comandos desde tu terminal. El respaldo copia toda la instalación anterior; necesita espacio suficiente.
+
+```bash
+cd ~
+cp -a LumaCampus "LumaCampus-respaldo-$(date +%Y%m%d-%H%M%S)"
+wget -O LumaCampus-v9.zip 'https://raw.githubusercontent.com/gabo899s/educanMEP/luma-campus/downloads/LumaCampus.zip?v=9'
+python3 -m zipfile -t LumaCampus-v9.zip
+unzip -o LumaCampus-v9.zip
+cd LumaCampus
+python3 run.py
+```
+
+Abre **http://127.0.0.1:8000**. No uses `py -3` en Linux. El arranque verifica dependencias y aplica las migraciones hasta **0014**, conservando la base de datos, `uploads/`, `.venv/` y `.env`. No crea personas de ejemplo. Si no tienes la carpeta anterior, omite únicamente el comando de respaldo.
+
+Si falta `wget` o `unzip`, instala las herramientas en Debian/Ubuntu/Chromebook Linux:
+
+```bash
+sudo apt update
+sudo apt install -y python3 python3-venv wget unzip
+```
+
+Para activar el portal, entra como administrador, crea cuentas **Familiar / encargado** y verifica sus vínculos en **Hogar y colegio → Vínculos**. Consulta [FAMILIAS.md](FAMILIAS.md) para comunicados, permisos, citas, justificaciones, trámites, matrícula, traducciones y configuración de correo/SMS/Push.
+
+Los canales externos y NVIDIA necesitan credenciales del servidor; la gestión dentro de Luma funciona sin ellos. Web Push tiene una dependencia opcional y necesita HTTPS. Las dependencias de la instalación básica continúan incluidas para instalar sin Internet.

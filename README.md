@@ -8,6 +8,12 @@ Plataforma escolar funcional con una identidad visual colorida, cálida y coquet
 
 El ZIP incluye el código, los instaladores, las tipografías, las dependencias de Python incluidas y la guía completa. No incluye una base de datos anterior ni sesiones. Consulta `downloads/SHA256SUMS.txt` para verificar su integridad.
 
+## Luma Campus 9 · Hogar y colegio
+
+Nuevo perfil Familiar / encargado con vínculos verificados, varios hijos, información académica autorizada, comunicados y respuestas, formularios condicionales, permisos, eventos con cupos, conversaciones con archivos, justificaciones, citas, trámites con historial y matrícula real. Añade acompañamiento revisado por docentes, bienvenida guiada, resúmenes, traducciones revisadas y notificaciones opcionales por correo, SMS y Web Push.
+
+Consulta [FAMILIAS.md](FAMILIAS.md) y la [actualización completa a v9](INSTALACION.md#16-actualizar-a-luma-campus-9--familias). Los apuntes y sesiones de IA del estudiante permanecen privados.
+
 ## Ejecutar
 
 Extrae todo el ZIP. Requiere Python 3.10 o superior (recomendado: 3.12).

@@ -62,3 +62,11 @@ No se publica ni se asigna una nota automáticamente. No se accede a cuadernos p
 ## Cargas y errores
 
 El inicio muestra una estructura de carga. Las solicitudes muestran progreso, los archivos tienen progreso de subida y los formularios quedan protegidos durante el guardado. La generación de IA y el historial muestran estados de espera. Un error conserva el formulario para corregir o reintentar. Las pestañas con datos ya cargados cambian directamente, sin esperas artificiales.
+
+## Comunicación con familias · versión 9
+
+Desde **Hogar y colegio**, puedes publicar comunicados, permisos, formularios de bienvenida y eventos para las familias verificadas de tus materias. Tienes seguimiento de lecturas y respuestas, conversaciones privadas con archivos, revisión de justificaciones, horarios de reuniones y planes de acompañamiento con evidencias y acuerdos. Los planes permanecen internos hasta compartirlos explícitamente.
+
+El asistente prepara borradores de mensajes, resúmenes de conversaciones propias y traducciones de publicaciones propias con la API NVIDIA. Revisa el contenido antes de continuar; las traducciones publicadas conservan el original y respetan el idioma preferido de la familia. No se envía ni publica automáticamente.
+
+Consulta [FAMILIAS.md](FAMILIAS.md) para los recorridos completos, los permisos y la configuración de avisos externos. Los vínculos, las cuentas y la matrícula siguen bajo control de administración.

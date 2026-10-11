@@ -28,3 +28,19 @@ SESSION_COOKIE_SECURE=not DEBUG
 CSRF_COOKIE_SECURE=not DEBUG
 DATA_UPLOAD_MAX_MEMORY_SIZE=8*1024*1024
 MEDIA_ROOT=BASE_DIR/'uploads'
+
+# Notification secrets live on the server. Optional channels stay disabled until configured.
+FAMILY_ENV_KEYS={'LUMA_SMTP_HOST','LUMA_SMTP_PORT','LUMA_SMTP_USER','LUMA_SMTP_PASSWORD','LUMA_SMTP_TLS','LUMA_SMTP_SSL',
+ 'LUMA_EMAIL_FROM','LUMA_TWILIO_ACCOUNT','LUMA_TWILIO_TOKEN','LUMA_TWILIO_FROM','LUMA_VAPID_PRIVATE_KEY','LUMA_VAPID_PUBLIC_KEY',
+ 'LUMA_VAPID_SUBJECT','LUMA_PUBLIC_URL'}
+if (BASE_DIR/'.env').is_file():
+    for line in (BASE_DIR/'.env').read_text(encoding='utf-8').splitlines():
+        if '=' in line and not line.lstrip().startswith('#'):
+            key,value=line.split('=',1)
+            if key.strip() in FAMILY_ENV_KEYS:os.environ.setdefault(key.strip(),value.strip().strip('\"').strip("'"))
+for key in FAMILY_ENV_KEYS:globals()[key]=os.environ.get(key,'')
+LUMA_SMTP_PORT=int(os.environ.get('LUMA_SMTP_PORT','587'))
+LUMA_SMTP_TLS=os.environ.get('LUMA_SMTP_TLS','1')=='1'
+LUMA_SMTP_SSL=os.environ.get('LUMA_SMTP_SSL','0')=='1'
+LUMA_EMAIL_FROM=os.environ.get('LUMA_EMAIL_FROM',LUMA_SMTP_USER)
+LUMA_VAPID_SUBJECT=os.environ.get('LUMA_VAPID_SUBJECT','mailto:admin@example.com')

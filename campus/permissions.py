@@ -1,11 +1,15 @@
 """Política central de perfiles. El alcance de cada aula se verifica en views."""
+from .families import ACTIONS as FAMILY_ACTIONS
+
 COMMON = {'profile.edit', 'appearance.edit', 'messages.use', 'wall.participate', 'courses.favorite'}
 ROLE_PERMISSIONS = {
+    'guardian': {'profile.edit','appearance.edit','families.use','families.guardian'},
     'student': COMMON | {'assignments.submit', 'learning.manage', 'help.ask', 'ai.study', 'tutoring.reserve'},
-    'teacher': COMMON | {'assignments.manage', 'grades.manage', 'materials.manage', 'attendance.manage', 'events.manage', 'teaching.customize', 'help.respond', 'portfolio.review'},
-    'admin': COMMON | {'assignments.manage', 'grades.manage', 'materials.manage', 'attendance.manage', 'events.manage', 'courses.manage', 'users.manage', 'membership.manage', 'teaching.customize', 'institution.manage'},
+    'teacher': COMMON | {'families.use','families.manage','assignments.manage', 'grades.manage', 'materials.manage', 'attendance.manage', 'events.manage', 'teaching.customize', 'help.respond', 'portfolio.review'},
+    'admin': COMMON | {'families.use','families.manage','families.admin','assignments.manage', 'grades.manage', 'materials.manage', 'attendance.manage', 'events.manage', 'courses.manage', 'users.manage', 'membership.manage', 'teaching.customize', 'institution.manage'},
 }
 ACTION_PERMISSIONS = {
+    **FAMILY_ACTIONS,
     **{k:'teaching.customize' for k in ['lesson-save','lesson-delete','lesson-copy','library-save','library-delete','library-publish','competency-save','competency-delete','task-adaptation','adaptation-delete','submission-return','tutoring-save','tutoring-cancel','tutoring-agreement','teacher-ai-save','teacher-ai-delete']},
     'tutoring-book':'tutoring.reserve','tutoring-release':'tutoring.reserve',
     'ai-study':'ai.study',

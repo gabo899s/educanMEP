@@ -7,13 +7,15 @@ import zlib
 from django.contrib.auth.models import User
 from django.http import FileResponse, HttpResponse
 from django.db import transaction
+from django.db.models import Q
 from django.core.validators import URLValidator
 from .models import Institution, AdministrationLog, Course
 
-MODULES = {'messages': 'Mensajería', 'calendar': 'Calendario', 'grades': 'Calificaciones',
+MODULES = {'families':'Hogar y colegio','messages': 'Mensajería', 'calendar': 'Calendario', 'grades': 'Calificaciones',
            'attendance': 'Asistencia', 'studio': 'Estudio docente', 'materials': 'Materiales', 'wall': 'Muro del aula'}
 CORE_LABELS = {'home': 'Mi inicio', 'classroom': 'Classroom', 'tasks': 'Actividades'}
-ACTION_MODULES = {'help-ask':'messages','help-reply':'messages', 'help-status':'messages','message': 'messages', 'read': 'messages', 'event': 'calendar', 'event-edit': 'calendar',
+from .families import ACTIONS as FAMILY_ACTIONS
+ACTION_MODULES = {**{k:'families' for k in FAMILY_ACTIONS if k not in ['family-link','family-unlink','family-settings','family-push','family-push-delete']},'help-ask':'messages','help-reply':'messages', 'help-status':'messages','message': 'messages', 'read': 'messages', 'event': 'calendar', 'event-edit': 'calendar',
  'event-delete': 'calendar', 'grade': 'grades', 'grades-export': 'grades', 'attendance': 'attendance',
  'resource': 'materials', 'resource-edit': 'materials', 'resource-delete': 'materials',
  'post': 'wall', 'post-edit': 'wall', 'post-delete': 'wall', 'post-pin': 'wall',
@@ -189,13 +191,15 @@ def admin_mutate(request,u,path,d):
     elif path=='user-role':
         target=User.objects.select_related('profile').get(id=integer(d.get('id'),1,2**63-1))
         role=d.get('role')
-        if role not in ['admin','teacher','student']: raise ValueError('Perfil inválido.')
+        if role not in ['admin','teacher','student','guardian']: raise ValueError('Perfil inválido.')
         if target.profile.role != role:
             if target.id==u.id: raise ValueError('No puedes cambiar tu propio perfil administrativo.')
             if target.profile.role=='admin' and target.is_active and not User.objects.filter(is_active=True,profile__role='admin').exclude(id=target.id).exists():
                 raise ValueError('Debe permanecer un administrador activo.')
             if target.profile.role=='teacher' and target.teaching.filter(archived=False).exists():
                 raise ValueError('Reasigna sus materias activas antes de cambiar su perfil.')
+            from .models import GuardianLink
+            GuardianLink.objects.filter(Q(guardian=target)|Q(student=target)).update(active=False)
             target.profile.role=role;target.profile.save(update_fields=['role'])
     elif path=='user-details':
         target=User.objects.select_related('profile').get(id=integer(d.get('id'),1,2**63-1))

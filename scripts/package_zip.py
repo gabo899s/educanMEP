@@ -5,7 +5,7 @@ import hashlib
 
 ROOT=Path(__file__).resolve().parent.parent
 OUT=ROOT/'downloads'/'LumaCampus.zip'
-EXCLUDED={'.git','.venv','__pycache__','uploads','downloads'}
+EXCLUDED={'.git','.venv','__pycache__','uploads','downloads','private'}
 
 def main():
     OUT.parent.mkdir(exist_ok=True)
@@ -14,7 +14,7 @@ def main():
             relative=path.relative_to(ROOT)
             if not path.is_file() or any(part in EXCLUDED for part in relative.parts):
                 continue
-            if path.name.startswith('.env') or path.name.startswith('campus.sqlite3') or path.suffix in {'.sqlite3','.pyc','.zip'}:
+            if path.name=='family-delivery.log' or path.name.startswith('.env') or path.name.startswith('campus.sqlite3') or path.suffix in {'.sqlite3','.pyc','.zip'}:
                 continue
             archive.write(path,str(Path('LumaCampus')/relative))
         if archive.testzip() is not None:

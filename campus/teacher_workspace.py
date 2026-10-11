@@ -213,6 +213,10 @@ def mutate_workspace(request,u,path,d):
                 slot.minutes=integer(d.get('minutes',30),10,120);slot.location=text(d,'location',160)
                 overlap=TutoringSlot.objects.filter(teacher=u,cancelled=False,starts__lt=slot.starts+timedelta(minutes=slot.minutes)).exclude(pk=slot.pk)
                 if any(s.starts+timedelta(minutes=s.minutes)>slot.starts for s in overlap):raise ValueError('Ya tienes una tutoría que coincide con este horario.')
+                from .families import overlaps
+                from .models import FamilyAppointment
+                if any(overlaps(slot.starts,slot.minutes,a.starts,a.minutes) for a in FamilyAppointment.objects.filter(staff=u,cancelled=False)):
+                    raise ValueError('Este horario coincide con una cita familiar.')
                 slot.save()
     elif path.startswith('teacher-ai-'):
         a=own(TeacherAIDraft,u,d['id'])

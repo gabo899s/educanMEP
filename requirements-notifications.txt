@@ -1,0 +1,2 @@
+# Solo necesario para notificaciones Web Push. Correo y SMS usan la biblioteca estándar.
+pywebpush==2.0.3

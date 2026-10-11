@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 
 class Profile(models.Model):
     user=models.OneToOneField(User,on_delete=models.CASCADE)
-    role=models.CharField(max_length=15,choices=[('admin','Administrador'),('teacher','Profesor'),('student','Estudiante')])
+    role=models.CharField(max_length=15,choices=[('admin','Administrador'),('teacher','Profesor'),('student','Estudiante'),('guardian','Familiar / encargado')])
     bio=models.TextField(blank=True)
     phone=models.CharField(max_length=40,blank=True)
     color=models.CharField(max_length=20,default='pink')
@@ -317,4 +317,155 @@ class TeacherAIDraft(models.Model):
     prompt=models.TextField()
     content=models.TextField()
     status=models.CharField(max_length=12,default='draft')
+    created=models.DateTimeField(auto_now_add=True)
+
+# Family records are deliberately separate from personal student notebooks and AI.
+class GuardianLink(models.Model):
+    guardian=models.ForeignKey(User,on_delete=models.CASCADE,related_name='family_links')
+    student=models.ForeignKey(User,on_delete=models.CASCADE,related_name='guardian_links')
+    relationship=models.CharField(max_length=60,default='Encargado')
+    academic=models.BooleanField(default=True)
+    active=models.BooleanField(default=True)
+    verified_by=models.ForeignKey(User,on_delete=models.SET_NULL,null=True,related_name='+')
+    verified_at=models.DateTimeField(auto_now=True)
+    class Meta:
+        constraints=[models.UniqueConstraint(fields=['guardian','student'],name='unique_guardian_student')]
+
+class FamilyPublication(models.Model):
+    delivery_prepared=models.BooleanField(default=False)
+    translations=models.JSONField(default=dict,blank=True)
+    author=models.ForeignKey(User,on_delete=models.PROTECT,related_name="+")
+    course=models.ForeignKey(Course,on_delete=models.PROTECT,null=True,blank=True)
+    kind=models.CharField(max_length=20,default='announcement')
+    title=models.CharField(max_length=160)
+    body=models.TextField()
+    fields=models.JSONField(default=list,blank=True)
+    publish_at=models.DateTimeField()
+    deadline=models.DateTimeField(null=True,blank=True)
+    acknowledgement=models.BooleanField(default=False)
+    urgent=models.BooleanField(default=False)
+    capacity=models.PositiveIntegerField(default=0)
+    location=models.CharField(max_length=200,blank=True)
+    event_at=models.DateTimeField(null=True,blank=True)
+    file=models.FileField(upload_to='family/publications/',blank=True)
+    original_name=models.CharField(max_length=255,blank=True)
+    cancelled=models.BooleanField(default=False)
+    created=models.DateTimeField(auto_now_add=True)
+
+class FamilyReceipt(models.Model):
+    publication=models.ForeignKey(FamilyPublication,on_delete=models.CASCADE,related_name='receipts')
+    guardian=models.ForeignKey(User,on_delete=models.CASCADE,related_name="+")
+    student=models.ForeignKey(User,on_delete=models.CASCADE,related_name="+")
+    read_at=models.DateTimeField(null=True,blank=True)
+    confirmed_at=models.DateTimeField(null=True,blank=True)
+    response=models.CharField(max_length=20,blank=True)
+    answers=models.JSONField(default=dict,blank=True)
+    signature=models.CharField(max_length=100,blank=True)
+    responded_at=models.DateTimeField(null=True,blank=True)
+    class Meta:
+        constraints=[models.UniqueConstraint(fields=['publication','guardian','student'],name='unique_family_receipt')]
+
+class FamilyConversation(models.Model):
+    guardian=models.ForeignKey(User,on_delete=models.PROTECT,related_name='family_conversations')
+    student=models.ForeignKey(User,on_delete=models.PROTECT,related_name="+")
+    staff=models.ForeignKey(User,on_delete=models.PROTECT,related_name='family_staff_conversations')
+    subject=models.CharField(max_length=160)
+    category=models.CharField(max_length=20,default='academic')
+    closed=models.BooleanField(default=False)
+    updated=models.DateTimeField(auto_now=True)
+
+class FamilyReply(models.Model):
+    conversation=models.ForeignKey(FamilyConversation,on_delete=models.CASCADE,related_name='replies')
+    author=models.ForeignKey(User,on_delete=models.PROTECT,related_name="+")
+    body=models.TextField()
+    file=models.FileField(upload_to='family/messages/',blank=True)
+    original_name=models.CharField(max_length=255,blank=True)
+    read_at=models.DateTimeField(null=True,blank=True)
+    created=models.DateTimeField(auto_now_add=True)
+
+class AbsenceJustification(models.Model):
+    attendance=models.OneToOneField(Attendance,on_delete=models.CASCADE,related_name='justification')
+    guardian=models.ForeignKey(User,on_delete=models.PROTECT,related_name="+")
+    kind=models.CharField(max_length=20,default='absence')
+    reason=models.TextField()
+    status=models.CharField(max_length=20,default='received')
+    review=models.TextField(blank=True)
+    reviewer=models.ForeignKey(User,on_delete=models.SET_NULL,null=True,related_name='+')
+    file=models.FileField(upload_to='family/absence/',blank=True)
+    original_name=models.CharField(max_length=255,blank=True)
+    updated=models.DateTimeField(auto_now=True)
+
+class FamilyAppointment(models.Model):
+    staff=models.ForeignKey(User,on_delete=models.PROTECT,related_name='family_appointments')
+    course=models.ForeignKey(Course,on_delete=models.PROTECT,null=True,blank=True)
+    starts=models.DateTimeField()
+    minutes=models.PositiveIntegerField(default=30)
+    location=models.CharField(max_length=200)
+    guardian=models.ForeignKey(User,on_delete=models.PROTECT,null=True,blank=True,related_name='booked_family_appointments')
+    student=models.ForeignKey(User,on_delete=models.PROTECT,null=True,blank=True)
+    question=models.TextField(blank=True)
+    agreement=models.TextField(blank=True)
+    cancelled=models.BooleanField(default=False)
+
+class FamilyRequest(models.Model):
+    guardian=models.ForeignKey(User,on_delete=models.PROTECT,related_name="+")
+    student=models.ForeignKey(User,on_delete=models.PROTECT,related_name="+")
+    kind=models.CharField(max_length=30,default='certificate')
+    title=models.CharField(max_length=160)
+    body=models.TextField()
+    status=models.CharField(max_length=20,default='received')
+    responsible=models.ForeignKey(User,on_delete=models.SET_NULL,null=True,blank=True,related_name='+')
+    file=models.FileField(upload_to='family/requests/',blank=True)
+    original_name=models.CharField(max_length=255,blank=True)
+    created=models.DateTimeField(auto_now_add=True)
+    updated=models.DateTimeField(auto_now=True)
+
+class FamilyRequestUpdate(models.Model):
+    request=models.ForeignKey(FamilyRequest,on_delete=models.CASCADE,related_name='history')
+    author=models.ForeignKey(User,on_delete=models.PROTECT,related_name="+")
+    status=models.CharField(max_length=20)
+    body=models.TextField()
+    file=models.FileField(upload_to='family/request-updates/',blank=True)
+    original_name=models.CharField(max_length=255,blank=True)
+    created=models.DateTimeField(auto_now_add=True)
+
+class FamilySupportPlan(models.Model):
+    author=models.ForeignKey(User,on_delete=models.PROTECT,related_name="+")
+    student=models.ForeignKey(User,on_delete=models.PROTECT,related_name="+")
+    course=models.ForeignKey(Course,on_delete=models.PROTECT)
+    title=models.CharField(max_length=160)
+    evidence=models.TextField()
+    agreement=models.TextField()
+    follow_up=models.DateField()
+    shared=models.BooleanField(default=False)
+    status=models.CharField(max_length=20,default='open')
+    updated=models.DateTimeField(auto_now=True)
+
+class FamilyDelivery(models.Model):
+    guardian=models.ForeignKey(User,on_delete=models.CASCADE,related_name="+")
+    publication=models.ForeignKey(FamilyPublication,on_delete=models.CASCADE,null=True,blank=True)
+    key=models.CharField(max_length=200,unique=True)
+    channel=models.CharField(max_length=15)
+    title=models.CharField(max_length=200)
+    body=models.TextField()
+    urgent=models.BooleanField(default=False)
+    due=models.DateTimeField()
+    status=models.CharField(max_length=20,default='pending')
+    attempts=models.PositiveIntegerField(default=0)
+    error=models.CharField(max_length=300,blank=True)
+    sent_at=models.DateTimeField(null=True,blank=True)
+    claimed_at=models.DateTimeField(null=True,blank=True)
+
+class FamilyPushSubscription(models.Model):
+    guardian=models.ForeignKey(User,on_delete=models.CASCADE,related_name="+")
+    endpoint=models.URLField(max_length=1000,unique=True)
+    keys=models.JSONField(default=dict)
+    updated=models.DateTimeField(auto_now=True)
+
+class FamilyCommunicationDraft(models.Model):
+    publication=models.ForeignKey(FamilyPublication,on_delete=models.SET_NULL,null=True,blank=True)
+    language=models.CharField(max_length=5,default="es")
+    author=models.ForeignKey(User,on_delete=models.CASCADE,related_name="+")
+    title=models.CharField(max_length=160)
+    content=models.TextField()
     created=models.DateTimeField(auto_now_add=True)

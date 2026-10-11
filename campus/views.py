@@ -9,7 +9,7 @@ from django.contrib.auth import authenticate, login, logout, update_session_auth
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import URLValidator, validate_email
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, OperationalError, transaction
 from django.db.models import Q
 from django.http import FileResponse, HttpResponse, JsonResponse
 from django.utils import timezone
@@ -108,6 +108,12 @@ def replace_file(record, f):
         transaction.on_commit(lambda: storage.delete(previous))
 
 def state(u):
+    from .families import state as family_state
+    if u.profile.role=='guardian':
+        family=family_state(u)
+        return {'institution':institution_state(),'administration':{},'teacher_workspace':{},'student_space':{},'learning_received':{},
+                'me':person(u,private=True),'people':family['people'],'families':family,
+                **{k:[] for k in ['courses','tasks','submissions','posts','messages','events','resources','attendance','teaching_templates','drafts']}}
     cs = list(courses(u))
     ids = [c.id for c in cs]
     tasks = visible_tasks(u,Task.objects.filter(course_id__in=ids)).order_by('due', 'id')
@@ -120,8 +126,9 @@ def state(u):
     from .models import TaskAdaptation
     adaptations={a.task_id:a for a in TaskAdaptation.objects.filter(student=u,task__course_id__in=ids)} if u.profile.role=='student' else {}
     people = User.objects.filter(is_active=True, profile__isnull=False).select_related('profile').order_by('first_name', 'id')
+    if u.profile.role!='admin':people=people.exclude(profile__role='guardian')
     return {
-        'institution': institution_state(), 'administration': admin_state(u),
+        'institution': institution_state(), 'administration': admin_state(u), 'families':family_state(u),
         'teacher_workspace': workspace_state(u), 'student_space': learning_state(u), 'learning_received': received_state(u),
         'me': person(u, private=True), 'people': [person(p) for p in people],
         'courses': [{'id': c.id, 'title': c.title, 'code': c.code, 'summary': c.summary, 'teacher': c.teacher_id,
@@ -164,7 +171,7 @@ def index(request):
     return response
 
 def asset(request, name):
-    if name not in ['app.js', 'luma-ai.js', 'student.js', 'administration.js', 'teaching.js', 'teacher-workspace.js', 'style.css', 'manrope.ttf', 'dmsans.ttf', 'favicon.svg']:
+    if name not in ['app.js', 'luma-ai.js', 'student.js', 'administration.js', 'teaching.js', 'teacher-workspace.js', 'families.js', 'family-sw.js', 'style.css', 'manrope.ttf', 'dmsans.ttf', 'favicon.svg']:
         return HttpResponse(status=404)
     path = BASE_DIR / 'public' / name
     etag = f'"{path.stat().st_mtime_ns:x}-{path.stat().st_size:x}"'
@@ -214,6 +221,8 @@ def task_options(d, task=None):
 def mutate(request, u, path, d):
     authorize(u, path)
     check_module(path)
+    from .families import mutate as mutate_families
+    if mutate_families(request,u,path,d):return
     if mutate_workspace(request,u,path,d):
         return
     if mutate_learning(request, u, path, d):
@@ -286,6 +295,7 @@ def mutate(request, u, path, d):
         update_session_auth_hash(request, u)
     elif path == 'message':
         to = User.objects.get(id=integer(d['recipient'], 1, 2**63-1), is_active=True, profile__isnull=False)
+        if to.profile.role=='guardian':raise PermissionError('Escribe al encargado desde Hogar y colegio → Conversaciones.')
         if to.id == u.id:
             raise ValueError('Elige otro destinatario.')
         Message.objects.create(sender=u, recipient=to, body=text(d, 'body', 4000))
@@ -427,7 +437,7 @@ def mutate(request, u, path, d):
             if len(pw) < 10:
                 raise ValueError('Usa una contraseña de al menos 10 caracteres.')
             role = d['role']
-            if role not in ['teacher', 'student', 'admin']:
+            if role not in ['teacher', 'student', 'admin', 'guardian']:
                 raise ValueError('Rol inválido.')
             if User.objects.filter(email__iexact=email).exists():
                 raise ValueError('El correo ya está registrado.')
@@ -499,7 +509,11 @@ def mutate(request, u, path, d):
             if identifier not in members or identifier in seen:
                 raise ValueError('La asistencia contiene estudiantes fuera del aula o repetidos.')
             seen.add(identifier)
-            Attendance.objects.update_or_create(course=c, student_id=identifier, date=day, defaults={'present': boolean(row['present'])})
+            present=boolean(row['present'])
+            existing=Attendance.objects.filter(course=c,student_id=identifier,date=day).first()
+            if existing and existing.present!=present and hasattr(existing,'justification'):
+                raise ValueError('Este registro tiene una justificación familiar. Conserva la asistencia y revisa la solicitud en Hogar y colegio.')
+            Attendance.objects.update_or_create(course=c, student_id=identifier, date=day, defaults={'present': present})
     else:
         raise ObjectDoesNotExist('Ruta desconocida.')
 
@@ -526,6 +540,20 @@ def api(request, path):
         if not request.user.is_authenticated:
             return JsonResponse({'error': 'Inicia sesión para continuar.'}, status=401)
         u = request.user
+        if path=='family-ai/generate':
+            from .families import ai_draft
+            check_module('family-publish')
+            return ai_draft(request,u,d)
+        if path.startswith('family-file/') and request.method=='GET':
+            check_module('family-publish')
+            from .families import attachment
+            parts=path.split('/')
+            if len(parts)!=3:raise ValueError('Ruta de archivo no válida.')
+            return download(attachment(u,parts[1],int(parts[2])))
+        if path=='family-sw' and request.method=='GET':
+            response=FileResponse(open(BASE_DIR/'public'/'family-sw.js','rb'),content_type='text/javascript')
+            response['Service-Worker-Allowed']='/';response['Cache-Control']='no-cache'
+            return response
         if path=='teacher-ai/generate':
             from .teacher_workspace import teacher_ai
             return teacher_ai(request,u,d)
@@ -599,6 +627,10 @@ def api(request, path):
         return state_response(request, u)
     except PermissionError as e:
         return JsonResponse({'error': str(e)}, status=403)
+    except OperationalError as e:
+        if 'locked' in str(e).lower():
+            return JsonResponse({'error':'Otra operación está guardando cambios. Espera un momento y vuelve a intentar; tu formulario se conserva.'},status=409)
+        raise
     except IntegrityError:
         return JsonResponse({'error': 'Ya existe un registro con esos datos.'}, status=400)
     except ValidationError as e:

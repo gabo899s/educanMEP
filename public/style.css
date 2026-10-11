@@ -7562,3 +7562,280 @@ body.high-contrast .btn.primary {
     width: 100%;
   }
 }
+/* Family portal uses the same warm, colorful campus design. */
+.family-body {
+  display: grid;
+  gap: 22px;
+  min-width: 0;
+}
+.family-hero {
+  background: linear-gradient(115deg, #f3e2eb, #ece7f5 60%, #e8efde);
+}
+.family-toolbar {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 22px 0;
+}
+.family-toolbar label {
+  display: grid;
+  gap: 7px;
+  min-width: 200px;
+  font-weight: 600;
+  font-size: 13px;
+}
+.family-toolbar select,
+.family-toolbar input {
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+}
+.family-toolbar label:last-child {
+  flex: 1;
+}
+.family-tabs {
+  flex-wrap: wrap;
+}
+.family-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.family-grid .panel {
+  min-width: 0;
+  padding: 25px;
+}
+.family-grid h3 {
+  font-size: 19px;
+  margin: 14px 0 10px;
+}
+.family-child-card {
+  border-top: 5px solid #c8b5d4;
+}
+.family-child-card.pink {
+  border-color: #e9b8ca;
+}
+.family-child-card.green {
+  border-color: #adc4a0;
+}
+.family-metrics {
+  display: flex;
+  gap: 15px;
+  margin: 20px 0;
+}
+.family-metrics span {
+  flex: 1;
+  padding: 15px;
+  background: #fff9;
+  border-radius: 16px;
+  font-size: 12px;
+}
+.family-metrics strong {
+  display: block;
+  font-size: 26px;
+  margin-bottom: 6px;
+}
+.family-task-row,
+.family-pending-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+.family-pending-row {
+  width: 100%;
+  text-align: left;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  font: inherit;
+}
+.family-pending-row span {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.family-pending-row small {
+  color: var(--muted);
+  max-width: 40%;
+  text-align: right;
+}
+.family-course {
+  padding-top: 15px;
+}
+.family-result {
+  display: grid;
+  gap: 5px;
+  padding: 14px;
+  background: #fff8;
+  border-radius: 14px;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+.family-result span {
+  color: var(--muted);
+}
+.family-excerpt {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.7;
+}
+.family-urgent {
+  border-top: 5px solid #d77a85;
+}
+.family-fulltext {
+  white-space: pre-wrap;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.family-document-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+.family-receipt-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 25px;
+}
+.family-receipt-list article {
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #f5eff5;
+}
+.family-chat,
+.family-timeline {
+  display: grid;
+  gap: 15px;
+  margin: 22px 0;
+}
+.family-chat article,
+.family-timeline article {
+  padding: 18px;
+  border-radius: 18px;
+  background: #ece6f3;
+  max-width: 92%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.family-chat article.mine {
+  background: #eaf0e2;
+  justify-self: end;
+  width: 90%;
+}
+.family-chat small,
+.family-timeline small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.family-checklist {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 15px 0;
+  max-height: 300px;
+  overflow: auto;
+}
+.family-checklist label {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 13px;
+}
+.family-channel-status {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 20px 0;
+}
+.family-body details {
+  padding: 15px;
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.family-body summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.family-body .table-wrap {
+  max-width: 100%;
+}
+.family-body .stats {
+  margin: 0;
+}
+.family-body .panel {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 760px) {
+  .family-grid {
+    grid-template-columns: 1fr;
+  }
+  .family-toolbar label {
+    min-width: 0;
+    flex: 1;
+    width: 100%;
+  }
+  .family-toolbar {
+    flex-direction: column;
+  }
+  .family-body .section-head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .family-tabs {
+    flex-wrap: nowrap;
+    overflow: auto;
+    max-width: 100%;
+    padding-bottom: 8px;
+  }
+  .family-tabs button {
+    flex-shrink: 0;
+  }
+  .family-checklist {
+    grid-template-columns: 1fr;
+  }
+  .family-task-row,
+  .family-pending-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .family-pending-row small {
+    max-width: 100%;
+    text-align: left;
+  }
+  .family-grid .panel {
+    padding: 20px;
+  }
+  .family-metrics {
+    gap: 10px;
+  }
+  .family-document-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .family-body .form-actions {
+    flex-wrap: wrap;
+  }
+  .family-channel-status {
+    gap: 6px;
+  }
+}

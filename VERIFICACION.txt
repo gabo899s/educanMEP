@@ -1,136 +1,64 @@
-LUMA CAMPUS 8 — VERIFICACIÓN
+LUMA CAMPUS 9 — VERIFICACIÓN
 
-Entorno verificado: Linux, Python 3.12, Django 5.2.18, Chromium.
-- 164 pruebas del servidor correctas, incluidas 20 del centro administrativo.
-- Migración desde 0001 hasta 0011 con usuarios, aulas, matrículas,
-  entregas y nota original conservados.
-- Permisos por perfil y aula, CSRF, privacidad de conversaciones,
-  archivos, borradores, validaciones, asistencia atómica y ETag/GZip.
-- Número de consultas constante al ampliar el catálogo: regresión sin N+1.
-- ZIP extraído en carpeta independiente; instalación offline desde las
-  doce dependencias incluidas; pip check y run.py --port 8022 correctos.
-- ZIP sin bases locales, uploads, .venv, .git ni secretos.
+Entorno: Linux, Python 3.12, Django 5.2.18, SQLite y Chromium.
 
-Ampliación docente v8:
-- 23 pruebas nuevas: planificación privada y copias, permisos por materia,
-  biblioteca con archivos independientes, competencias, visibilidad programada,
-  adaptaciones privadas y fecha efectiva, devolución y versiones con notas,
-  comentarios y archivos, tutorías, cancelación y reservas, CSRF y módulos.
-- Luma AI Docente separado del estudiante: borradores privados y revisables,
-  ningún acceso a cuadernos de estudiantes ni publicación/calificación automática.
-- Pruebas del proveedor con respuesta controlada; sin clave se informa y no
-  se crean respuestas ficticias. No se verificó NVIDIA real sin una clave.
-- Instalador y arranque sin creación de usuarios, materias ni trabajos de ejemplo.
-  Dominio de demostración desactivado y fuera del directorio administrativo;
-  registros históricos conservados. Primer administrador mediante asistente.
-- Correcciones: selectores de rúbrica/campos opcionales, foco del modal que
-  respeta el campo elegido, tareas devueltas en pendientes y adaptación precargada.
-- Navegador: planes y copias, competencias, programación, adaptaciones,
-  biblioteca con archivo y publicación, tutoría/reserva, borrador docente de IA
-  revisado y reutilizado, evaluación, devolución, historial y nueva versión.
-- Escritorio 1440 px y móvil 390 px, sin desbordamiento horizontal ni errores JS.
-- ZIP extraído: 164 pruebas completas desde el entorno virtual del paquete,
-  pip check correcto y todas las migraciones hasta 0011 aplicadas.
-- Primer arranque real con run.py --port 8024: base vacía, asistente de
-  administración con contraseña oculta, acceso y centro administrativo correctos.
-- Actualización desde v7 en copia aislada: .venv existente reutilizado,
-  las 25 tablas previas conservan su número de registros (5 usuarios, 6 aulas,
-  2 entregas); cuentas antiguas de demostración desactivadas sin borrar datos.
-- Regresión docente v8 en Chromium: preferencias, rúbrica y campos condicionales,
-  borrador recuperado, entrega estructurada, nota 38/75 y desglose móvil correctos.
+- 209 pruebas del servidor correctas en el código extraído del ZIP final.
+  Incluyen las 164 anteriores y 45 de familias, comunicaciones y entregas.
+- Django check, migraciones pendientes y pip check: correctos.
+- Migraciones 0001–0014 aplicadas en una instalación independiente.
+- Instalación básica offline desde las doce dependencias incluidas.
+- Primer run.py con asistente de administración real y acceso comprobado
+  en navegador; escuela vacía y sin cuentas de demostración.
+- Actualización desde el ZIP v8 a v9, instalación y run.py comprobados.
+  Las 31 tablas campus previas y sus 27 registros de QA se conservaron
+  idénticos; también se conservaron los archivos subidos.
+- El ZIP no contiene bases locales, cuentas operativas, uploads, .venv,
+  .git, .env, claves VAPID ni la carpeta private/.
 
-Administración comprobada en servidor y navegador:
-- Nombre, marca corta, lema, período y colores persistentes.
-- Logo PNG con límite, CRC, dimensiones y datos comprimidos validados;
-  subida, lectura pública, reemplazo y retirada.
-- Profesor/estudiante no pueden utilizar las nuevas acciones administrativas.
-- Fichas administrativas sin preferencias privadas; directorio común sin teléfonos.
-- Materias: creación, colores, ilustraciones, horario y profesor responsable.
-- Asignación docente con alcance actualizado, conservando registros académicos.
-- Matrículas por lote: añadir, retirar y reemplazar; validación atómica;
-  conservación de entregas y notas; resumen de impacto en el formulario.
-- Archivo y restauración conservan datos y actualizan las aulas activas.
-- Desactivación/reactivación de cuentas; sesiones abiertas y acceso bloqueados.
-- Profesor con materias activas protegido frente a desactivación/cambio de rol.
-- Cambios de rol exclusivos de administración; sesiones actualizan permisos.
-- Protección del administrador propio y de la permanencia de administración.
-- Módulos desactivados rechazan acciones en servidor; interfaz coherente,
-  reactivación y etiquetas de navegación personalizadas.
-- Tarjetas institucionales en el inicio, enlaces validados y límites.
-- Exportación CSV administrativa con protección frente a fórmulas.
-- Historial con actor, fecha y operación; no registra contraseñas.
-- Dos sesiones: estudiante ve su colegio, sus materias y sus propios registros.
-- Escritorio 1440 px y móvil 390 px: siete áreas administrativas,
-  editor de identidad y matrículas sin errores JS ni desbordamiento horizontal.
+Recorridos comprobados en Chromium:
+- Administración verifica y revoca vínculos por hijo y encargado.
+- Docente publica autorización con archivo y campo obligatorio.
+- Familiar responde, confirma identidad y consulta el documento original.
+- Justificación con archivo y revisión del docente.
+- Conversación familiar, respuesta docente y lectura del mensaje.
+- Apertura de horario, reserva familiar y acuerdos de reunión.
+- Trámite con información adicional, historial y archivo de respuesta.
+- Plan de acompañamiento compartido y visible solo para su familia.
+- Preferencias persistentes y borrador IA con revisión antes de publicar.
+- Traducción revisada, idioma preferido y conservación del original.
+- Solicitud de matrícula con asignación real de materias.
+- Evento con cupo y lista de espera; bienvenida confirmada.
+- Búsqueda familiar, recarga de ruta y apertura de documentos autorizados.
+- Portal móvil de 390 px: sin desbordamientos ni errores JavaScript.
+- Regresión docente: rúbricas, formularios condicionales, borradores,
+  entrega, evaluación 38/75 y retroalimentación; sin errores JavaScript.
 
-Estudio docente conservado:
-- Biblioteca privada, copia independiente de plantillas y rúbricas en servidor.
-- Campos tipados, condicionales, límites y borradores estructurados.
-- Preferencias docentes sin perder personalización visual.
-- Esquemas protegidos cuando existen borradores o entregas.
-- Recorrido Chromium: preferencias, plantillas, actividad, campos condicionales,
-  borrador recuperado, entrega, nota 38/75 y desglose para el estudiante.
+Permisos y casos protegidos:
+- Familiar y estudiante no administran cuentas, materias ni calificaciones.
+- Consulta académica solo con vínculo activo y autorización explícita.
+- Los planes académicos compartidos también respetan esa autorización.
+- No se exponen apuntes, entregas privadas ni sesiones de IA a familiares.
+- Conversaciones privadas incluso frente a otros administradores.
+- Archivos protegidos por vínculo, destinatario o responsabilidad.
+- Tareas en borrador o programadas para el futuro permanecen ocultas.
+- Cupos por hijo, respuestas únicas, plazos y formularios validados.
+- Citas sin superposición y con reserva condicional atómica.
+- Asistencia justificada protegida frente a sobrescrituras.
+- Contención de SQLite devuelve una respuesta 409 recuperable.
+- Consultas académicas sin crecimiento de consultas por cada actividad.
+- Envíos con clave única, horarios de silencio, resúmenes, cancelación,
+  reintentos controlados y resultado desconocido tras interrupciones.
+- Cambiar canales no vuelve a enviar automáticamente publicaciones pasadas.
+- Procesador de avisos ejecutado en instalación independiente.
+- Dependencias opcionales Web Push instaladas y su API comprobada.
 
-Los lanzadores de Windows y macOS están incluidos; la ejecución de esta
-versión se ha verificado en Linux. Configuración para una institución
-por instalación. El historial recoge operaciones administrativas del API,
-no cambios directos en la base ni mensajes privados.
+Límites de la verificación:
+- NVIDIA, SMTP, Twilio y Web Push requieren credenciales y configuración
+  del servidor. Las respuestas y entregas se probaron con adaptadores
+  simulados; no se verificó envío real a un teléfono, correo o proveedor
+  NVIDIA con las credenciales de la institución.
+- Aceptación por proveedor no equivale a entrega al dispositivo ni lectura.
+- Se comprobaron Linux y Chromium. No se ejecutaron pruebas en Windows,
+  macOS, Safari ni dispositivos físicos.
 
-Espacio del estudiante:
-- 26 pruebas nuevas: privacidad por propietario, permisos, validaciones,
-  horario semanal, compartir/revocar archivos, ayuda y lectura de revisiones.
-- Agenda, metas, apuntes y preferencias privadas también frente a administración.
-- Portafolio compartido solo con profesor actual y matrícula vigente;
-  copia independiente de texto, respuestas estructuradas y archivo entregado.
-- Consultas con alcance de aula, respuestas, resolución y archivos autorizados.
-- Personalización conserva favoritos; preferencias tipadas y guardadas por cuenta.
-- Consultas de ayuda precargadas: número constante con 20 hilos y respuestas.
-- Ocho áreas revisadas en Chromium, escritorio y móvil; formularios adaptables.
-- Recorrido completo Chromium: agenda y aviso, completar/reabrir, metas,
-  cuaderno con búsqueda/exportación y texto HTML escapado, entrega con archivo,
-  copia al portafolio, compartir/revocar con dos sesiones, consulta con archivo,
-  respuesta docente, seguimiento y resolución, revisión leída y meta de mejora.
-- Avatar, portada, intereses, orden, accesibilidad y favoritos recuperados.
-- Las ocho áreas y editor de apuntes en móvil con letra extra y alto contraste,
-  sin errores JavaScript ni desbordamiento horizontal.
-- Regresión docente de esta versión: rúbrica, campos condicionales, borrador,
-  entrega estructurada, nota 38/75 y desglose en móvil correctos.
-
-Luma AI:
-- 43 pruebas nuevas del espacio exclusivo de estudiantes, incluidas privacidad,
-  archivos, CSRF, importación por matrícula, extracción y referencias.
-- Sesiones/fuentes/historial fuera del estado compartido; profesor,
-  administración y otros estudiantes no acceden ni a exportaciones ni archivos.
-- PDF real leído por pypdf y PNG real leído por Tesseract en Chromium.
-- Biblioteca de sesiones, selección de fuentes, copia de Classroom,
-  texto pegado escapado, edición, persistencia y exportación Markdown.
-- Tutoría persistente y revisión independiente; casos de distracción,
-  solución indebida, respuesta no revisable y referencia inventada.
-- Enlaces públicos: bloqueo de IP privadas, IPv6 y DNS mixto; conexión
-  a IP validada y nueva validación en redirecciones; scripts HTML retirados.
-- YouTube: variantes de URL, subtítulos con marcas de tiempo, fuente sin
-  subtítulos pendiente de transcripción y edición posterior.
-- Preguntas idempotentes, reintentos de fallo, bloqueo simultáneo,
-  recuperación de reserva vencida y límites por cuenta/sesión.
-- Contrato NVIDIA: endpoint chat/completions, Kimi K2, autorización del
-  servidor y mensajes solo de texto, comprobados con respuesta controlada.
-- Navegador Chromium, escritorio 1440 px y móvil 390 px: chat con referencias,
-  tutoría, editor de fuentes e importación directa desde Classroom;
-  sin errores JavaScript ni desbordamiento tras las correcciones.
-- Las respuestas del proveedor se simulan exclusivamente en las pruebas.
-  El producto no incluye un modo de respuestas ficticias.
-- No se comprobó una respuesta real de NVIDIA: esta sesión no dispone de
-  clave y el entorno de ejecución restringe el acceso a ese endpoint.
-  El operador activa la conexión real con configure_ai.py y una clave válida.
-- Los controles académicos son defensas de IA; no se garantiza detección
-  perfecta de todas las tareas ni resistencia absoluta a todo engaño.
-- Configuración local de clave comprobada: .env conserva otros ajustes,
-  sustituye la clave anterior, usa permisos 0600 en Linux y no imprime la clave.
-- Actualización real desde v6 con .venv existente: run.py detecta e instala
-  offline las dependencias nuevas, aplica 0007 y conserva todos los registros.
-- Regresión docente de v7 correcta: plantillas, borrador, rúbrica 38/75,
-  retroalimentación y desglose móvil.
-- Sin clave: sesiones y fuentes guardadas, estudio sin materia permitido,
-  chat desactivado con explicación y sin respuestas ficticias.
-- Luma AI en móvil con letra extra, alto contraste y movimiento reducido:
-  sesión y editor adaptables, sin desbordamiento tras completar el diseño.
+Consulta FAMILIAS.md e INSTALACION.md, sección 16, para activar y actualizar.

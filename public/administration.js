@@ -175,6 +175,7 @@ function adminFilter(kind) {
       ? `<select id="admin-role" aria-label="Filtrar perfil">${[
           ["all", "Todos los perfiles"],
           ["teacher", "Profesores"],
+          ["guardian", "Familiares"],
           ["student", "Estudiantes"],
           ["admin", "Administradores"],
         ]
@@ -247,6 +248,7 @@ const moduleDescriptions = {
   calendar: "Encuentros y eventos de la comunidad.",
   grades: "Revisión de entregas, calificaciones y exportación.",
   attendance: "Registro de asistencia por aula y fecha.",
+  families: "Vínculos familiares, comunicación oficial, permisos y trámites.",
   studio: "Biblioteca personal de rúbricas y campos inteligentes.",
   materials: "Apuntes, archivos y enlaces de estudio.",
   wall: "Publicaciones e ideas compartidas dentro de cada aula.",
@@ -639,6 +641,7 @@ function bindAdministration() {
               [
                 ["student", "Estudiante"],
                 ["teacher", "Profesor"],
+                ["guardian", "Familiar / encargado"],
                 ["admin", "Administrador"],
               ],
               p.role,
