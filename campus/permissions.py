@@ -1,0 +1,38 @@
+"""Política central de perfiles. El alcance de cada aula se verifica en views."""
+from .families import ACTIONS as FAMILY_ACTIONS
+
+COMMON = {'profile.edit', 'appearance.edit', 'messages.use', 'wall.participate', 'courses.favorite'}
+ROLE_PERMISSIONS = {
+    'guardian': {'profile.edit','appearance.edit','families.use','families.guardian'},
+    'student': COMMON | {'assignments.submit', 'learning.manage', 'help.ask', 'ai.study', 'tutoring.reserve'},
+    'teacher': COMMON | {'families.use','families.manage','assignments.manage', 'grades.manage', 'materials.manage', 'attendance.manage', 'events.manage', 'teaching.customize', 'help.respond', 'portfolio.review'},
+    'admin': COMMON | {'families.use','families.manage','families.admin','assignments.manage', 'grades.manage', 'materials.manage', 'attendance.manage', 'events.manage', 'courses.manage', 'users.manage', 'membership.manage', 'teaching.customize', 'institution.manage'},
+}
+ACTION_PERMISSIONS = {
+    **FAMILY_ACTIONS,
+    **{k:'teaching.customize' for k in ['lesson-save','lesson-delete','lesson-copy','library-save','library-delete','library-publish','competency-save','competency-delete','task-adaptation','adaptation-delete','submission-return','tutoring-save','tutoring-cancel','tutoring-agreement','teacher-ai-save','teacher-ai-delete']},
+    'tutoring-book':'tutoring.reserve','tutoring-release':'tutoring.reserve',
+    'ai-study':'ai.study',
+    **{k: 'learning.manage' for k in ['planner','planner-edit','planner-toggle','planner-delete','goal','goal-edit','goal-progress','goal-delete','note','note-edit','note-pin','note-delete','portfolio','portfolio-edit','portfolio-delete','student-settings','feedback-read']},
+    'help-ask':'help.ask','help-reply':'messages.use','help-status':'help.ask','course-timetable':'assignments.manage',
+    'institution': 'institution.manage', 'institution-logo': 'institution.manage', 'institution-logo-delete': 'institution.manage',
+    'user-role': 'users.manage', 'user-status': 'users.manage', 'user-details': 'users.manage', 'course-archive': 'courses.manage',
+    'teacher-assign': 'courses.manage', 'membership-bulk': 'membership.manage',
+    'teaching-preferences': 'teaching.customize', 'teaching-template': 'teaching.customize', 'teaching-template-edit': 'teaching.customize', 'teaching-template-delete': 'teaching.customize',
+    'profile': 'profile.edit', 'password': 'profile.edit', 'appearance': 'appearance.edit',
+    'favorite': 'courses.favorite', 'message': 'messages.use', 'read': 'messages.use',
+    'post': 'wall.participate', 'post-edit': 'wall.participate', 'post-delete': 'wall.participate',
+    'post-pin': 'assignments.manage', 'task': 'assignments.manage', 'task-edit': 'assignments.manage', 'task-toggle': 'assignments.manage',
+    'submit': 'assignments.submit', 'draft': 'assignments.submit', 'grade': 'grades.manage', **{k:'grades.manage' for k in ['grade-draft','grade-discard','grade-publish']},
+    'course': 'courses.manage', 'course-edit': 'courses.manage', 'user': 'users.manage', 'user-edit': 'users.manage',
+    'membership': 'membership.manage', 'event': 'events.manage', 'event-edit': 'events.manage', 'event-delete': 'events.manage',
+    'resource': 'materials.manage', 'resource-edit': 'materials.manage', 'resource-delete': 'materials.manage', 'attendance': 'attendance.manage',
+}
+
+def permissions(user):
+    return sorted(ROLE_PERMISSIONS.get(user.profile.role, set()))
+
+def authorize(user, action):
+    capability = ACTION_PERMISSIONS.get(action)
+    if capability is None or capability not in ROLE_PERMISSIONS.get(user.profile.role, set()):
+        raise PermissionError('Tu perfil no tiene permiso para realizar esta acción.')

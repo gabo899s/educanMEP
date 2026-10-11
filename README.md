@@ -1,0 +1,189 @@
+# Luma Campus 🌷
+
+Plataforma escolar funcional con una identidad visual colorida, cálida y coqueta. Interfaz en español, adaptable a móviles, con ilustraciones SVG propias y tipografías incluidas localmente.
+
+## Descargar el paquete listo para ejecutar
+
+[Descargar LumaCampus.zip](https://raw.githubusercontent.com/gabo899s/educanMEP/luma-campus/downloads/LumaCampus.zip)
+
+El ZIP incluye el código, los instaladores, las tipografías, las dependencias de Python incluidas y la guía completa. No incluye una base de datos anterior ni sesiones. Consulta `downloads/SHA256SUMS.txt` para verificar su integridad.
+
+## Luma Campus 10 · Evaluar y entregar
+
+Evaluaciones privadas completas o en progreso, publicación individual y por grupos, revisión del trabajo junto a su rúbrica, navegación entre estudiantes, protección frente a versiones desactualizadas, devoluciones con historial y comprobantes descargables de entrega. Conserva el diseño cálido y colorido y adapta la revisión a móviles.
+
+Consulta [CALIFICACIONES.md](CALIFICACIONES.md) y la [actualización completa a v10](INSTALACION.md#17-actualizar-a-luma-campus-10--evaluar-y-entregar).
+
+## Luma Campus 9 · Hogar y colegio
+
+Nuevo perfil Familiar / encargado con vínculos verificados, varios hijos, información académica autorizada, comunicados y respuestas, formularios condicionales, permisos, eventos con cupos, conversaciones con archivos, justificaciones, citas, trámites con historial y matrícula real. Añade acompañamiento revisado por docentes, bienvenida guiada, resúmenes, traducciones revisadas y notificaciones opcionales por correo, SMS y Web Push.
+
+Consulta [FAMILIAS.md](FAMILIAS.md) y la [actualización completa a v9](INSTALACION.md#16-actualizar-a-luma-campus-9--familias). Los apuntes y sesiones de IA del estudiante permanecen privados.
+
+## Ejecutar
+
+Extrae todo el ZIP. Requiere Python 3.10 o superior (recomendado: 3.12).
+
+**Windows:** doble clic en `start.bat`, o ejecuta `py -3 run.py`.
+
+**macOS/Linux:** ejecuta `python3 run.py`, o `sh start.sh`.
+
+El primer arranque instala automáticamente las dependencias incluidas, prepara SQLite y te guía para crear tu primera cuenta administrativa real. No crea cuentas de prueba. Abre **http://127.0.0.1:8000**. Deja la terminal abierta y usa Ctrl+C para detener el servidor.
+
+No necesitas Node.js ni una base de datos externa. Los paquetes de instalación están en `vendor/wheels/`; no se descargan de Internet. Las instrucciones completas, la creación de cuentas y la solución de problemas están en **INSTALACION.md**.
+
+## Estudio docente completo · versión 8
+
+Ocho áreas con permisos por materia: revisión centralizada, planificación, seguimiento, competencias, biblioteca, rúbricas y campos inteligentes, tutorías y Luma AI Docente.
+
+- Planes privados: objetivos, fecha, duración, contenidos, materiales, actividades y reflexión. Reutilización independiente entre materias asignadas.
+- Revisión con filtros por materia, estudiante y estado: pendientes, tardías, evaluadas, devueltas, sin entrega y publicación. Evaluación directa con rúbrica y banco de comentarios.
+- Seguimiento con promedio ponderado, entregas ausentes, diferencia entre las dos últimas evaluaciones y criterios con evidencia inferior al 70%. Competencias vinculadas a actividades, con metas y evidencia real.
+- Biblioteca privada con carpetas, etiquetas, búsqueda y archivos. Materiales publicados como copias; actividades copiadas como borradores revisables, conservando rúbrica y campos.
+- Actividades publicadas, borradores o programación por fecha y hora del colegio. La visibilidad se controla también en entregas, consultas e importación a Luma AI.
+- Adaptaciones por estudiante: fecha e instrucciones propias, más notas privadas del equipo responsable de la materia.
+- Devoluciones y versiones: se conservan respuestas, archivos, notas, rúbrica, comentarios y motivo de devolución; el estudiante puede corregir cuando la entrega está abierta.
+- Tutorías individuales: horarios sin superposición, reservas por matrícula, pregunta privada, cancelación y acuerdos compartidos con el estudiante.
+- Luma AI Docente usa Kimi K2 para borradores de planes, rúbricas, actividades y comentarios. El docente edita y marca su revisión antes de reutilizarlos; no califica ni publica automáticamente, y no accede a sesiones privadas de estudiantes.
+
+La instalación nueva comienza vacía. El administrador crea cuentas reales, asigna materias y matricula estudiantes. Las cuentas de prueba anteriores quedan fuera del acceso y del directorio; sus datos se conservan para evitar pérdidas. Hay cargas iniciales, progreso de archivos, estados de espera y reintentos de error.
+
+Consulta [DOCENCIA.md](DOCENCIA.md) y [INSTALACION.md](INSTALACION.md#15-actualizar-a-luma-campus-8).
+
+## Luma AI · versión 7
+
+Un espacio exclusivo para estudiantes, integrado en el menú y en los materiales y actividades de Classroom. Cada estudiante crea, renombra, guarda y exporta sus sesiones privadas, vinculadas opcionalmente a una materia.
+
+- Fuentes: texto pegado, PDF, imágenes PNG/JPG con OCR, archivos TXT/Markdown, enlaces públicos, subtítulos de YouTube, materiales de Classroom y apuntes del cuaderno.
+- Chat de texto con **NVIDIA · `moonshotai/kimi-k2-instruct`**. El servicio recibe la pregunta, historial reciente y fragmentos relevantes de las fuentes seleccionadas; las respuestas muestran referencias verificadas a esas fuentes.
+- Tutoría para tareas y proyectos: detección local, clasificación independiente y revisión de la respuesta. Importar una actividad activa un modo persistente que ofrece pistas y preguntas, sin entregar la solución. Cambiar el nombre, retirar la consigna o pedir otro rol no desactiva ese modo.
+- Privacidad por propietario, incluidos archivos y exportaciones. Profesores, administración y otros estudiantes no pueden abrir estas sesiones.
+- Errores recuperables, preguntas con identificador para evitar duplicados, límites por cuenta y bloqueo de preguntas simultáneas. Sin respuestas ficticias cuando NVIDIA no está configurado.
+
+**Activar el chat:** crea una clave en [NVIDIA](https://build.nvidia.com/moonshotai/kimi-k2-instruct), ejecuta `python3 configure_ai.py` y reinicia el campus. La clave se guarda en `.env`, fuera de Git, del ZIP y del navegador. El chat requiere Internet y una clave válida. El campus y las sesiones siguen funcionando sin ella.
+
+Kimi K2 recibe texto: no ve imágenes ni escucha videos. El OCR requiere Tesseract; los PDF escaneados requieren también Poppler. YouTube aporta subtítulos disponibles; si no se pueden obtener, la fuente se conserva y admite una transcripción manual. No hay generación de audio, video ni imágenes.
+
+[Comandos completos y límites](INSTALACION.md#14-luma-ai-sesiones-privadas-de-estudio) · [Arquitectura y controles](LUMA_AI.md).
+
+## Espacio del estudiante · Luma Campus 6
+
+- **Mi día:** clases con horarios semanales reales, pendientes, planes y accesos a sus herramientas.
+- **Agenda privada:** recordatorios dentro del campus, sesiones de estudio, prioridades y planes completados.
+- **Mi progreso:** entregas, promedio por puntos evaluados, asistencia y oportunidades de mejora basadas en rúbricas.
+- **Portafolio:** proyectos, archivos y copia independiente de entregas; compartir voluntariamente con el profesor responsable y revocar el acceso.
+- **Metas:** objetivos personales con plazo, cantidad, avance y reflexión.
+- **Retroalimentación:** calificaciones, criterios de evaluación, revisiones leídas y creación de metas de mejora.
+- **Cuaderno privado:** apuntes, etiquetas, búsqueda, destacados y exportación Markdown.
+- **Mi estilo:** avatar, portada, intereses y orden o visibilidad de las tarjetas del inicio.
+- **Pedir ayuda:** consultas privadas sobre una actividad, archivos, respuestas del profesor y resolución del hilo.
+- **Accesibilidad:** tamaño de letra, contraste, densidad y reducción de movimiento guardados por cuenta.
+
+Administración no recibe apuntes, agenda, metas ni proyectos privados. El profesor recibe solo las consultas de sus aulas y los proyectos compartidos explícitamente. El estudiante sigue sin poder crear materias, matricular personas ni administrar cuentas. Los permisos se validan también en las descargas.
+
+[Uso y actualización](INSTALACION.md#13-espacio-del-estudiante). La migración 0006 conserva los registros anteriores; no hay nuevas dependencias.
+
+## Espacio docente
+
+- **Mi perfil → Abrir mi estudio** y **Mi estudio** reúnen aulas, revisiones pendientes y biblioteca privada de herramientas.
+- Rúbricas reutilizables: hasta 10 criterios, con 2 a 5 niveles de logro, descripciones y puntos distintos. Cada criterio incluye 0 puntos. La nota se calcula en el servidor y se ajusta a los puntos de la actividad; incluye comentarios por criterio y desglose visible para el estudiante.
+- Campos inteligentes: texto corto/largo, números con límites, opciones y casillas. Las preguntas pueden depender de una opción o casilla anterior. Solo se exigen las preguntas visibles. Los borradores guardan también las respuestas estructuradas.
+- Plantillas privadas: crear, editar, duplicar y eliminar rúbricas o formularios. Las actividades conservan una copia independiente. Las rúbricas y los campos de una actividad quedan protegidos al existir borradores o entregas.
+- Preferencias docentes: puntos, plazo, categoría, formato, color y entregas tardías habituales. Banco personal de comentarios para acompañar la evaluación.
+- Implementación original en Django y JavaScript, sin servicios externos. Se revisaron los patrones de Moodle, Canvas y JSON Forms; consulta **REFERENTES_DOCENTES.md**.
+
+## Formularios y permisos — Luma Campus 3
+
+- Los formularios de creación y edición usan un editor con secciones, vista previa en vivo, campos obligatorios identificados y protección al salir con cambios sin guardar.
+- Las actividades permiten elegir categoría, paleta, formato de entrega (texto, archivo o ambos) y entregas tardías. Se conservan el formato y los puntos cuando ya existen entregas.
+- Perfil → Personalizar mi campus guarda acento de color, densidad y reducción de animaciones por cuenta.
+- Perfil → Ver permisos por perfil muestra las reglas de acceso. La política central está en `campus/permissions.py`; cada aula también valida su alcance en el servidor.
+- **Estudiante:** sus aulas matriculadas, sus entregas, notas y asistencia; su perfil y sus conversaciones. No crea materias, actividades, cuentas, eventos ni matrículas.
+- **Profesor:** actividades, materiales, notas y asistencia de sus aulas asignadas, y eventos propios. No crea materias, cuentas ni matrículas.
+- **Administrador:** materias, cuentas, matrículas y gestión académica de todo el colegio. Las conversaciones privadas solo las consultan sus participantes.
+- Los tres perfiles pueden participar en el muro, gestionar sus propias publicaciones y personalizar su cuenta. Los profesores moderan sus aulas y administración puede moderar todas.
+- Las opciones visuales no cambian el rol ni los permisos. La migración 0003 agrega las opciones sin eliminar datos.
+
+## Novedades de Luma Campus 2
+
+- Diseño mejorado conservando la paleta, las flores y la estética original: tarjetas con progreso, favoritas, enfoque del día, navegación móvil y formularios más legibles.
+- Borradores de actividades guardados en la cuenta; carga de archivos con progreso, vista previa y arrastrar/soltar.
+- Edición de actividades, materiales, publicaciones, eventos, aulas y personas según los permisos. Cierre/reapertura de actividades y publicaciones fijadas.
+- Materiales con archivos descargables, filtros de tareas y personas, resumen de notas por aula y exportación CSV autorizada.
+- Mensajería con confirmaciones de lectura, búsqueda y conservación del texto escrito. Sincronización condicional con ETag, reconexión y estados de carga.
+- Con 46 aulas, la consulta del estado bajó de 55 a 11 consultas SQL (80 % menos) frente a la versión anterior, en el mismo ensayo local. Esta medición no equivale a una mejora global de 15 veces.
+- Migración comprobada que conserva matrículas, entregas y calificaciones. Consulta **INSTALACION.md**, sección 9, para actualizar con respaldo.
+
+## Funciones implementadas
+
+- Sesiones autenticadas, contraseñas cifradas con hash, protección CSRF y autorización en el servidor.
+- Dashboard con aulas, tareas pendientes, promedio, asistencia y calendario.
+- Classroom: muro con publicaciones, tareas, materiales, personas y asistencia.
+- Estudiantes: entregar texto y archivos de hasta 5 MB; consultar sus calificaciones y retroalimentación.
+- Profesores: publicar actividades y materiales, revisar archivos, calificar y registrar asistencia en sus aulas.
+- Administración: crear estudiantes, profesores y administradores; crear aulas; asignar profesor y matricular estudiantes.
+- Mensajería entre cuentas reales, historial persistente y lectura. Las conversaciones se actualizan cada 6 segundos mientras la mensajería está abierta; no hay respuestas automáticas ficticias.
+- Perfil editable, cambio de contraseña y cierre de sesión.
+- Calendario mensual con creación de eventos y detalle de actividades.
+- Búsqueda de aulas, actividades y personas.
+- SQLite guarda los registros; los archivos se guardan en `uploads/` y se descargan mediante una ruta autorizada.
+
+Las pruebas de navegador verificaron también entrega, mensajería, perfil, calificación y creación de usuario. Se revisaron escritorio (1440 px) y móvil (390 px), sin errores de JavaScript ni desbordamiento horizontal.
+
+## Base de GitHub y adaptación
+
+Se revisaron:
+
+1. https://github.com/adilmohak/django-lms — seleccionado; licencia MIT.
+2. https://github.com/Yogndrr/MERN-School-Management-System — referencia de módulos; no se incorporó su código al no encontrarse licencia en el checkout revisado.
+
+Esta es una adaptación parcial, no un cambio de apariencia del sistema completo. El modelo `Course` de django-lms y su asignación de profesores sirvieron para adaptar `title`, `code`, `summary` y las relaciones académicas a un colegio. Los módulos de campus, permisos, mensajería y la interfaz son implementación nueva. El código de referencia y la licencia MIT se conservan en `third_party/`.
+
+Referencia exacta de django-lms: commit `2f1baf17511d654190fd5b161648f4e8d426965d`.
+
+Las tipografías Manrope y DM Sans provienen de google/fonts y conservan sus licencias OFL en `third_party/`.
+
+## Verificación
+
+```sh
+python3 manage.py check
+python3 manage.py test
+node --check public/app.js
+node --check public/luma-ai.js
+```
+
+Las 164 pruebas del servidor verifican acceso autenticado, CSRF, permisos por rol/aula, entregas, calificaciones, conversaciones privadas, matrícula, asistencia, validación de enlaces, perfil y acceso a archivos.
+
+## Publicación
+
+El proyecto se ejecuta localmente con Django. Para publicarlo en un dominio, necesitas un alojamiento compatible con Python.
+
+Para desplegar en un servidor compatible con Python, instala `requirements-production.txt`, usa WSGI (`campus.wsgi:application`) con Gunicorn, ejecuta las migraciones y configura:
+
+- `LUMA_DEBUG=0`
+- `LUMA_SECRET_KEY`: clave aleatoria privada.
+- `LUMA_ALLOWED_HOSTS`: dominios separados por comas.
+- HTTPS y almacenamiento persistente para la base SQLite y `uploads/`.
+
+No se crean cuentas de demostración. En una instalación nueva crea tu primera cuenta con `python3 bootstrap_admin.py` después de instalar y migrar. El arranque local también te guía para hacerlo. Las cuentas antiguas del dominio de demostración quedan desactivadas, conservando los registros académicos.
+
+Alcance actual: un colegio por instalación. No se incorporaron facturación, integración oficial con Google Classroom, videollamadas, correo de recuperación ni aplicación móvil nativa.
+
+## Regenerar el ZIP
+
+```sh
+python scripts/package_zip.py
+```
+
+Genera `downloads/LumaCampus.zip` y su suma SHA-256. El empaquetador excluye Git, entornos virtuales, bases SQLite, archivos personales y paquetes ZIP anteriores.
+
+
+## Centro de administración institucional · versión 5
+
+Administración dispone de siete áreas: vista general, identidad, materias, personas, matrículas, módulos y apartados, e historial. La identidad admite nombre, marca corta, lema, período, colores y logo PNG; las materias conservan su color, ilustración, horario, grupo y responsable. Se pueden archivar y restaurar sin borrar sus registros.
+
+Las fichas incluyen departamento, identificador y contacto. La administración crea/edita cuentas, cambia perfiles con salvaguardas y activa/desactiva el acceso. La reasignación docente y la matrícula por lote conservan actividades, entregas y notas. La vista previa de matrículas muestra altas y bajas antes de guardar.
+
+Los módulos opcionales se pueden desactivar; el servidor bloquea sus acciones mientras conserva sus datos. Los nombres de apartados y hasta seis tarjetas institucionales de inicio son personalizables. El historial guarda las operaciones administrativas y el directorio se puede exportar como CSV.
+
+[Guía de uso e instalación](INSTALACION.md#12-centro-de-administración-institucional) · [Análisis de Moodle y Canvas](REFERENTES_ADMINISTRACION.md). La migración 0005 conserva los datos existentes. Una institución por instalación; el historial no incluye mensajes privados ni contraseñas.

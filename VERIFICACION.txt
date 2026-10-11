@@ -1,0 +1,55 @@
+LUMA CAMPUS 10 — VERIFICACIÓN
+
+Entorno: Linux, Python 3.12, Django 5.2.18, SQLite y Chromium.
+
+- 229 pruebas del servidor correctas sobre el código extraído del ZIP.
+  Suite completa: 141.424 segundos. Incluye las 213 anteriores y 16
+  de evaluaciones privadas, publicaciones, permisos y entregas.
+- Django check, comprobación de migraciones y pip check: correctos.
+- Migraciones 0001–0016 aplicadas en una instalación independiente.
+- Instalación básica offline desde las doce dependencias incluidas.
+- Primer run.py: asistente de administración real, colegio vacío,
+  acceso a administración comprobado en navegador, sin cuentas demo.
+- Actualización v9 → v10: se conservaron las 44 tablas campus previas,
+  sus 60 registros de QA y los ocho archivos subidos, byte por byte.
+- ZIP íntegro, 96 archivos. Excluye bases, uploads, .venv, .git, .env,
+  sesiones locales, credenciales y private/.
+
+Recorridos nuevos comprobados en Chromium:
+- Guardar un comentario sin nota y retomarlo como evaluación privada.
+- Guardar evaluación completa sin compartirla con el estudiante.
+- Avanzar entre estudiantes y recuperar notas y comentarios guardados.
+- Revisar el resumen y publicar dos evaluaciones en una operación.
+- El estudiante ve únicamente el resultado publicado.
+- Devolver para corregir, enviar versión 2 y descargar comprobante.
+- Navegación correcta al consultar trabajos devueltos.
+- Guardar una rúbrica incompleta y retomar sus selecciones.
+- Crear rúbrica y formulario condicional reutilizables.
+- Recuperar borrador de respuestas y ocultar campos condicionales.
+- Entrega mediante campos inteligentes, cálculo 38/75 de tres criterios,
+  banco de comentarios, bloqueo de configuración y resultados por criterio.
+- Revisión docente y entrega estudiantil a 390 px: sin desbordamiento.
+- Sin errores JavaScript en los recorridos comprobados.
+
+Pruebas nuevas del servidor:
+- Privacidad de borradores en estado, historial y CSV.
+- Publicación, descarte, cero puntos, comentarios sin nota y rúbrica parcial.
+- Rechazo de evaluaciones y entregas de versiones desactualizadas (409).
+- Reenvío invalida la evaluación privada de la versión anterior.
+- Reintento desactualizado no crea una versión adicional.
+- Publicación en grupo atómica; un conflicto conserva todos los borradores.
+- Permisos de estudiante, familiar, docente ajeno y administración.
+- Respeto al módulo desactivado y materias archivadas.
+- Puntajes y comentarios validados, cálculo de rúbricas en el servidor.
+- Exportación de notas con protección contra fórmulas CSV.
+
+Se corrigió una prueba antigua de actividades programadas: su fecha
+límite ahora admite que una programación a dos horas cruce medianoche.
+La validación de fechas del sistema se conserva.
+
+Límites de entrega: un archivo por versión, máximo 5 MB. El borrador
+conserva texto y respuestas; el archivo se envía al entregar.
+No hay calificación automática por IA ni cuentas compartidas de prueba.
+NVIDIA, SMTP, SMS y Web Push requieren configuración propia; las pruebas
+anteriores de proveedores utilizan respuestas simuladas y no verifican
+credenciales externas reales.
