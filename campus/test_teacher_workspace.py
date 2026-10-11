@@ -40,6 +40,8 @@ class TeacherWorkspaceTests(TestCase):
         self.assertEqual(self.lesson(course=self.other.id).status_code,403)
         self.as_user('student');self.assertEqual(self.lesson().status_code,403)
     def test_draft_and_scheduled_visibility_all_student_entrypoints(self):
+        # A two-hour schedule may cross local midnight; keep the due date valid.
+        self.t.due=timezone.localdate()+timedelta(days=1);self.t.save(update_fields=["due"])
         for mode in ['draft','scheduled']:
             self.as_user('teacher');self.assertEqual(self.post('task-edit',self.task_data(publication=mode,publish_at=(timezone.now()+timedelta(hours=2)).isoformat())).status_code,200)
             self.as_user('student');self.assertEqual(self.client.get('/api/state').json()['tasks'],[])

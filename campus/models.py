@@ -69,6 +69,7 @@ class Submission(models.Model):
     returned=models.BooleanField(default=False)
     return_message=models.TextField(blank=True)
     version=models.PositiveIntegerField(default=1)
+    review_revision=models.PositiveIntegerField(default=0)
 
 class Message(models.Model):
     sender=models.ForeignKey(User,on_delete=models.CASCADE,related_name='sent_messages')
@@ -469,3 +470,14 @@ class FamilyCommunicationDraft(models.Model):
     title=models.CharField(max_length=160)
     content=models.TextField()
     created=models.DateTimeField(auto_now_add=True)
+
+
+class GradeReview(models.Model):
+    """Private evaluation, bound to the exact submitted version."""
+    submission=models.OneToOneField(Submission,on_delete=models.CASCADE,related_name='pending_review')
+    author=models.ForeignKey(User,on_delete=models.CASCADE)
+    version=models.PositiveIntegerField()
+    grade=models.PositiveIntegerField(null=True,blank=True)
+    feedback=models.TextField(blank=True)
+    assessment=models.JSONField(default=dict)
+    updated=models.DateTimeField(auto_now=True)

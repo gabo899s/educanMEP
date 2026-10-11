@@ -1,70 +1,55 @@
-LUMA CAMPUS 9 — VERIFICACIÓN
+LUMA CAMPUS 10 — VERIFICACIÓN
 
 Entorno: Linux, Python 3.12, Django 5.2.18, SQLite y Chromium.
 
-- 213 pruebas del servidor correctas en el código extraído del ZIP final.
-  Incluyen las 164 anteriores y 49 de familias, comunicaciones y entregas.
-- Django check, migraciones pendientes y pip check: correctos.
-- Migraciones 0001–0014 aplicadas en una instalación independiente.
+- 229 pruebas del servidor correctas sobre el código extraído del ZIP.
+  Suite completa: 141.424 segundos. Incluye las 213 anteriores y 16
+  de evaluaciones privadas, publicaciones, permisos y entregas.
+- Django check, comprobación de migraciones y pip check: correctos.
+- Migraciones 0001–0016 aplicadas en una instalación independiente.
 - Instalación básica offline desde las doce dependencias incluidas.
-- Primer run.py con asistente de administración real y acceso comprobado
-  en navegador; escuela vacía y sin cuentas de demostración.
-- Actualización desde el ZIP v8 a v9, instalación y run.py comprobados.
-  Las 31 tablas campus previas y sus 27 registros de QA se conservaron
-  idénticos; también se conservaron los archivos subidos.
-- El ZIP no contiene bases locales, cuentas operativas, uploads, .venv,
-  .git, .env, claves VAPID ni la carpeta private/.
+- Primer run.py: asistente de administración real, colegio vacío,
+  acceso a administración comprobado en navegador, sin cuentas demo.
+- Actualización v9 → v10: se conservaron las 44 tablas campus previas,
+  sus 60 registros de QA y los ocho archivos subidos, byte por byte.
+- ZIP íntegro, 96 archivos. Excluye bases, uploads, .venv, .git, .env,
+  sesiones locales, credenciales y private/.
 
-Recorridos comprobados en Chromium:
-- Administración verifica y revoca vínculos por hijo y encargado.
-- Docente publica autorización con archivo y campo obligatorio.
-- Familiar responde, confirma identidad y consulta el documento original.
-- Justificación con archivo y revisión del docente.
-- Conversación familiar, respuesta docente y lectura del mensaje.
-- Apertura de horario, reserva familiar y acuerdos de reunión.
-- Trámite con información adicional, historial y archivo de respuesta.
-- Plan de acompañamiento compartido y visible solo para su familia.
-- Preferencias persistentes y borrador IA con revisión antes de publicar.
-- Traducción revisada, idioma preferido y conservación del original.
-- Solicitud de matrícula con asignación real de materias.
-- Evento con cupo y lista de espera; bienvenida confirmada.
-- Recordatorio de cita, navegación a la reserva y desactivación persistente.
-- Búsqueda familiar, recarga de ruta y apertura de documentos autorizados.
-- Portal móvil de 390 px: sin desbordamientos ni errores JavaScript.
-- Regresión docente: rúbricas, formularios condicionales, borradores,
-  entrega, evaluación 38/75 y retroalimentación; sin errores JavaScript.
+Recorridos nuevos comprobados en Chromium:
+- Guardar un comentario sin nota y retomarlo como evaluación privada.
+- Guardar evaluación completa sin compartirla con el estudiante.
+- Avanzar entre estudiantes y recuperar notas y comentarios guardados.
+- Revisar el resumen y publicar dos evaluaciones en una operación.
+- El estudiante ve únicamente el resultado publicado.
+- Devolver para corregir, enviar versión 2 y descargar comprobante.
+- Navegación correcta al consultar trabajos devueltos.
+- Guardar una rúbrica incompleta y retomar sus selecciones.
+- Crear rúbrica y formulario condicional reutilizables.
+- Recuperar borrador de respuestas y ocultar campos condicionales.
+- Entrega mediante campos inteligentes, cálculo 38/75 de tres criterios,
+  banco de comentarios, bloqueo de configuración y resultados por criterio.
+- Revisión docente y entrega estudiantil a 390 px: sin desbordamiento.
+- Sin errores JavaScript en los recorridos comprobados.
 
-Permisos y casos protegidos:
-- Familiar y estudiante no administran cuentas, materias ni calificaciones.
-- Consulta académica solo con vínculo activo y autorización explícita.
-- Los planes académicos compartidos también respetan esa autorización.
-- No se exponen apuntes, entregas privadas ni sesiones de IA a familiares.
-- Conversaciones privadas incluso frente a otros administradores.
-- Archivos protegidos por vínculo, destinatario o responsabilidad.
-- Tareas en borrador o programadas para el futuro permanecen ocultas.
-- Cupos por hijo, respuestas únicas, plazos y formularios validados.
-- Citas sin superposición y con reserva condicional atómica.
-- Asistencia justificada protegida frente a sobrescrituras.
-- Contención de SQLite devuelve una respuesta 409 recuperable.
-- Consultas académicas sin crecimiento de consultas por cada actividad.
-- Envíos con clave única, horarios de silencio, resúmenes, cancelación,
-  reintentos controlados y resultado desconocido tras interrupciones.
-- Los resúmenes vuelven a comprobar cada vínculo antes de enviarse,
-  incluso al revocar solamente uno de varios hijos.
-- Avisos de respuestas y trámites con contenido externo genérico.
-- Recordatorios únicos de cita, cancelados al liberar la reserva,
-  retirar la matrícula o desactivar la preferencia.
-- Cambiar canales no vuelve a enviar automáticamente publicaciones pasadas.
-- Procesador de avisos ejecutado en instalación independiente.
-- Dependencias opcionales Web Push instaladas y su API comprobada.
+Pruebas nuevas del servidor:
+- Privacidad de borradores en estado, historial y CSV.
+- Publicación, descarte, cero puntos, comentarios sin nota y rúbrica parcial.
+- Rechazo de evaluaciones y entregas de versiones desactualizadas (409).
+- Reenvío invalida la evaluación privada de la versión anterior.
+- Reintento desactualizado no crea una versión adicional.
+- Publicación en grupo atómica; un conflicto conserva todos los borradores.
+- Permisos de estudiante, familiar, docente ajeno y administración.
+- Respeto al módulo desactivado y materias archivadas.
+- Puntajes y comentarios validados, cálculo de rúbricas en el servidor.
+- Exportación de notas con protección contra fórmulas CSV.
 
-Límites de la verificación:
-- NVIDIA, SMTP, Twilio y Web Push requieren credenciales y configuración
-  del servidor. Las respuestas y entregas se probaron con adaptadores
-  simulados; no se verificó envío real a un teléfono, correo o proveedor
-  NVIDIA con las credenciales de la institución.
-- Aceptación por proveedor no equivale a entrega al dispositivo ni lectura.
-- Se comprobaron Linux y Chromium. No se ejecutaron pruebas en Windows,
-  macOS, Safari ni dispositivos físicos.
+Se corrigió una prueba antigua de actividades programadas: su fecha
+límite ahora admite que una programación a dos horas cruce medianoche.
+La validación de fechas del sistema se conserva.
 
-Consulta FAMILIAS.md e INSTALACION.md, sección 16, para activar y actualizar.
+Límites de entrega: un archivo por versión, máximo 5 MB. El borrador
+conserva texto y respuestas; el archivo se envía al entregar.
+No hay calificación automática por IA ni cuentas compartidas de prueba.
+NVIDIA, SMTP, SMS y Web Push requieren configuración propia; las pruebas
+anteriores de proveedores utilizan respuestas simuladas y no verifican
+credenciales externas reales.

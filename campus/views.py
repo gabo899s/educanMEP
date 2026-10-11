@@ -17,6 +17,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 
 from .models import Attendance, Course, Draft, Event, Message, Post, Profile, Resource, Submission, Task, TeachingTemplate
 from .teacher_workspace import workspace_state, mutate_workspace, visible_tasks, assert_task_visible, task_settings, effective_due, adaptation_for, save_version
+from .grading import mutate_review, review_state, ReviewConflict
 from .settings import BASE_DIR
 from .permissions import authorize, permissions
 from .administration import institution_state, admin_state, admin_mutate, check_module, log_change, ADMIN_ACTIONS
@@ -122,6 +123,7 @@ def state(u):
     if u.profile.role == 'student':
         submissions = submissions.filter(student=u)
         attendance = attendance.filter(student=u)
+    reviews = review_state(u, ids)
     locked_tasks = set(submissions.values_list('task_id', flat=True)) | set(Draft.objects.filter(task__course_id__in=ids).values_list('task_id', flat=True))
     from .models import TaskAdaptation
     adaptations={a.task_id:a for a in TaskAdaptation.objects.filter(student=u,task__course_id__in=ids)} if u.profile.role=='student' else {}
@@ -139,7 +141,7 @@ def state(u):
                    'kind': t.kind, 'submission_mode': t.submission_mode, 'allow_late': t.allow_late, 'color': t.color, 'rubric': t.rubric, 'fields': t.fields,
                    'configuration_locked': t.id in locked_tasks} for t in tasks],
         'submissions': [{'id': s.id, 'task': s.task_id, 'student': s.student_id, 'body': s.body, 'file': s.original_name,
-                         'returned':s.returned, 'return_message':s.return_message, 'version':s.version, 'grade': s.grade, 'feedback': s.feedback, 'answers': s.answers, 'rubric_assessment': s.rubric_assessment, 'created': s.created.isoformat(), 'reviewed_at': s.reviewed_at.isoformat() if s.reviewed_at else None} for s in submissions],
+                         'returned':s.returned, 'return_message':s.return_message, 'version':s.version, 'review_revision':s.review_revision, **({'review_draft':reviews.get(s.id)} if u.profile.role in ['teacher','admin'] else {}), 'grade': s.grade, 'feedback': s.feedback, 'answers': s.answers, 'rubric_assessment': s.rubric_assessment, 'created': s.created.isoformat(), 'reviewed_at': s.reviewed_at.isoformat() if s.reviewed_at else None} for s in submissions],
         'posts': [{'id': p.id, 'course': p.course_id, 'author': p.author_id, 'body': p.body,
                    'pinned': p.pinned, 'created': p.created.isoformat()}
                   for p in Post.objects.filter(course_id__in=ids).order_by('-pinned', '-created', '-id')],
@@ -200,10 +202,10 @@ def export_grades(u):
     def safe(value):
         value = str(value)
         return "'" + value if value.lstrip().startswith(('=', '+', '-', '@')) else value
-    writer.writerow(['Estudiante', 'Aula', 'Actividad', 'Calificación', 'Puntos', 'Porcentaje', 'Retroalimentación'])
+    writer.writerow(['Estudiante', 'Aula', 'Actividad', 'Calificación', 'Puntos', 'Porcentaje', 'Retroalimentación', 'Versión', 'Fecha de entrega', 'Fecha límite individual', 'Estado de puntualidad', 'Fecha de evaluación'])
     for s in records.order_by('task__course__title', 'student__first_name', 'id'):
         writer.writerow([safe(s.student.get_full_name()), safe(s.task.course.title), safe(s.task.title), s.grade,
-                         s.task.points, round(s.grade / s.task.points * 100, 2), safe(s.feedback)])
+                         s.task.points, round(s.grade / s.task.points * 100, 2), safe(s.feedback), s.version, s.created.isoformat(), str(effective_due(s.student,s.task)), 'Tardía' if timezone.localtime(s.created).date()>effective_due(s.student,s.task) else 'Dentro del plazo', s.reviewed_at.isoformat() if s.reviewed_at else ''])
     response = HttpResponse('\ufeff' + output.getvalue(), content_type='text/csv; charset=utf-8')
     response['Content-Disposition'] = 'attachment; filename="luma-calificaciones.csv"'
     response['Cache-Control'] = 'private, no-store'
@@ -379,10 +381,16 @@ def mutate(request, u, path, d):
                 raise ValueError('Adjunta el archivo requerido para esta actividad.')
             if not body and not f and not existing_file and not answers:
                 raise ValueError('Escribe tu respuesta o adjunta un archivo.')
+            previous=Submission.objects.filter(task=t,student=u).first()
+            if 'expected_version' in d and integer(d['expected_version'],0,2**31-1)!=(previous.version if previous else 0):
+                raise ReviewConflict('La entrega cambió en otra ventana o ya se recibió. Actualiza antes de enviar otra versión; tu respuesta sigue aquí.')
             s, created = Submission.objects.get_or_create(task=t, student=u)
             if not created:
                 save_version(s)
                 s.version+=1
+            from .models import GradeReview
+            GradeReview.objects.filter(submission=s).delete()
+            s.review_revision+=1
             s.returned=False;s.return_message=''
             s.body, s.answers = body, answers
             s.save()
@@ -390,20 +398,8 @@ def mutate(request, u, path, d):
                 replace_file(s, f)
             save_version(s)
             Draft.objects.filter(task=t, student=u).delete()
-    elif path == 'grade':
-        s = Submission.objects.select_related('task').get(id=d['submission'])
-        staff(u, getcourse(u, s.task.course_id))
-        if s.returned:raise ValueError('Espera a que el estudiante envíe la nueva versión antes de calificar.')
-        if s.task.rubric:
-            assessment=rubric_assessment(s.task.rubric,d.get('rubric_selections'),d.get('criterion_feedback',{}),s.task.points)
-            s.grade,s.rubric_assessment=assessment['grade'],assessment
-        else:
-            s.grade=integer(d['grade'],0,s.task.points)
-            s.rubric_assessment={}
-        s.feedback=text(d,'feedback',2000,False)
-        s.reviewed_at=timezone.now()
-        s.save(update_fields=['grade','feedback','rubric_assessment','reviewed_at'])
-        save_version(s)
+    elif path in ['grade','grade-draft','grade-discard','grade-publish']:
+        mutate_review(u,path,d)
     elif path in ['course', 'course-edit']:
         admin(u)
         teacher = User.objects.get(id=d['teacher'], profile__role='teacher', is_active=True)
@@ -625,6 +621,8 @@ def api(request, path):
         # Reload own profile after admin edits and any cached relation from authorization.
         u = User.objects.select_related('profile').get(id=u.id)
         return state_response(request, u)
+    except ReviewConflict as e:
+        return JsonResponse({'error':str(e)},status=409)
     except PermissionError as e:
         return JsonResponse({'error': str(e)}, status=403)
     except OperationalError as e:

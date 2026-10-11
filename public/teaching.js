@@ -554,6 +554,8 @@ function submissionFieldsView(t, answers) {
     : "";
 }
 function gradingFields(t, s) {
+  const saved = s.review_draft;
+  if (saved) s = { ...s, ...saved };
   const assessment = s.rubric_assessment || {},
     bank = S.me.preferences?.teaching?.feedback_bank || [
       "Tu trabajo muestra un buen avance.",
@@ -569,7 +571,7 @@ function gradingFields(t, s) {
         s.grade ?? "",
         `required min="0" max="${t.points}"`,
       ).replaceAll("f-grade", "grade-" + s.id);
-  return `${rubric}${textarea("feedback", "Retroalimentación", s.feedback, 'maxlength="2000" placeholder="Acompaña el siguiente paso de tu estudiante…"').replaceAll("f-feedback", "feedback-" + s.id)}<div class="feedback-bank">${bank
+  return `<input type="hidden" name="version" value="${s.version || 1}"><input type="hidden" name="review_revision" value="${s.review_revision || 0}">${saved ? `<div class="notice">Evaluación privada guardada · ${dateFormat(saved.updated)}. El estudiante verá únicamente la evaluación publicada.</div>` : ""}${rubric}${textarea("feedback", "Retroalimentación", s.feedback, 'maxlength="2000" placeholder="Acompaña el siguiente paso de tu estudiante…"').replaceAll("f-feedback", "feedback-" + s.id)}<div class="feedback-bank">${bank
     .slice(0, 10)
     .map(
       (v, i) =>
@@ -587,12 +589,20 @@ function gradingPayload(form, t) {
     comments[c.id] = d["criterion_" + c.id] || "";
   });
   return {
+    version: d.version,
+    review_revision: d.review_revision,
     feedback: d.feedback,
     rubric_selections: selections,
     criterion_feedback: comments,
   };
 }
 function bindGrading(form, t) {
+  form.addEventListener("input", () => {
+    form.dataset.dirty = "true";
+  });
+  form.addEventListener("change", () => {
+    form.dataset.dirty = "true";
+  });
   const update = () => {
     const out = form.querySelector(".rubric-live-score");
     if (!out) return;
@@ -620,6 +630,7 @@ function bindGrading(form, t) {
         if (value.length > 2000)
           return toast("El comentario puede tener hasta 2000 caracteres.");
         input.value = value;
+        form.dataset.dirty = "true";
         input.focus();
       }),
   );

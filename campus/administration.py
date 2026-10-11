@@ -16,7 +16,7 @@ MODULES = {'families':'Hogar y colegio','messages': 'Mensajería', 'calendar': '
 CORE_LABELS = {'home': 'Mi inicio', 'classroom': 'Classroom', 'tasks': 'Actividades'}
 from .families import ACTIONS as FAMILY_ACTIONS
 ACTION_MODULES = {**{k:'families' for k in FAMILY_ACTIONS if k not in ['family-link','family-unlink','family-settings','family-push','family-push-delete']},'help-ask':'messages','help-reply':'messages', 'help-status':'messages','message': 'messages', 'read': 'messages', 'event': 'calendar', 'event-edit': 'calendar',
- 'event-delete': 'calendar', 'grade': 'grades', 'grades-export': 'grades', 'attendance': 'attendance',
+ 'event-delete': 'calendar', 'grade': 'grades', **{k:'grades' for k in ['grade-draft','grade-discard','grade-publish']}, 'grades-export': 'grades', 'attendance': 'attendance',
  'resource': 'materials', 'resource-edit': 'materials', 'resource-delete': 'materials',
  'post': 'wall', 'post-edit': 'wall', 'post-delete': 'wall', 'post-pin': 'wall',
  'teaching-preferences': 'studio', 'teaching-template': 'studio', 'teaching-template-edit': 'studio', 'teaching-template-delete': 'studio'}

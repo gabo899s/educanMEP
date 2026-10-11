@@ -70,3 +70,7 @@ Desde **Hogar y colegio**, puedes publicar comunicados, permisos, formularios de
 El asistente prepara borradores de mensajes, resúmenes de conversaciones propias y traducciones de publicaciones propias con la API NVIDIA. Revisa el contenido antes de continuar; las traducciones publicadas conservan el original y respetan el idioma preferido de la familia. No se envía ni publica automáticamente.
 
 Consulta [FAMILIAS.md](FAMILIAS.md) para los recorridos completos, los permisos y la configuración de avisos externos. Los vínculos, las cuentas y la matrícula siguen bajo control de administración.
+
+## Evaluaciones privadas y entregas · v10
+
+Puedes guardar evaluaciones incompletas sin mostrarlas al estudiante, recorrer entregas y publicar resultados individualmente o en grupos. Las nuevas versiones invalidan la revisión pendiente de la anterior. Consulta [CALIFICACIONES.md](CALIFICACIONES.md) para el recorrido completo y sus límites.

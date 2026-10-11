@@ -362,3 +362,28 @@ sudo apt install -y python3 python3-venv wget unzip
 Para activar el portal, entra como administrador, crea cuentas **Familiar / encargado** y verifica sus vínculos en **Hogar y colegio → Vínculos**. Consulta [FAMILIAS.md](FAMILIAS.md) para comunicados, permisos, citas, justificaciones, trámites, matrícula, traducciones y configuración de correo/SMS/Push.
 
 Los canales externos y NVIDIA necesitan credenciales del servidor; la gestión dentro de Luma funciona sin ellos. Web Push tiene una dependencia opcional y necesita HTTPS. Las dependencias de la instalación básica continúan incluidas para instalar sin Internet.
+
+## 17. Actualizar a Luma Campus 10 · Evaluar y entregar
+
+Detén el servidor anterior con **Ctrl+C**. Estos comandos son para Linux/Chromebook y una instalación existente en `~/LumaCampus`. El respaldo copia la instalación completa y necesita espacio disponible:
+
+```bash
+cd ~
+cp -a LumaCampus "LumaCampus-respaldo-$(date +%Y%m%d-%H%M%S)"
+wget -O LumaCampus-v10.zip 'https://raw.githubusercontent.com/gabo899s/educanMEP/luma-campus/downloads/LumaCampus.zip?v=10'
+python3 -m zipfile -t LumaCampus-v10.zip
+unzip -o LumaCampus-v10.zip
+cd LumaCampus
+python3 run.py
+```
+
+Abre **http://127.0.0.1:8000** y recarga el navegador con **Ctrl+Shift+R**. El arranque aplica las migraciones hasta **0016**. La base, cuentas, matrículas, rúbricas, versiones entregadas, archivos, `.env` y `.venv` se conservan; el ZIP excluye esos datos. No uses `py -3` en Linux.
+
+Si falta alguna herramienta:
+
+```bash
+sudo apt update
+sudo apt install -y python3 python3-venv wget unzip
+```
+
+Para una instalación nueva, omite el respaldo; los demás comandos sirven igual. El primer arranque solicita crear la cuenta real de administración. Consulta [CALIFICACIONES.md](CALIFICACIONES.md) para evaluaciones privadas, publicación individual o en grupo, correcciones y comprobantes de entrega.

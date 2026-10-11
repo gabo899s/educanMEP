@@ -867,7 +867,11 @@ function modal(title, body, editor = false) {
 }
 function closeModal(force = false) {
   if (modalBusy && !force) return;
-  const editorForm = $("#modal-form") || $("#help-reply-form");
+  const editorForm =
+    $("#modal-form") ||
+    $("#help-reply-form") ||
+    $("#teacher-grade-form") ||
+    $('.grade-form[data-dirty="true"]');
   if (
     editorForm?.dataset.dirty === "true" &&
     !force &&
@@ -1009,7 +1013,7 @@ function openTask(id) {
   if (!staff()) {
     modal(
       t.title,
-      `${intro}${t.adapted_instructions ? `<div class="notice preserve-lines"><strong>Tu acompañamiento individual</strong><p>${esc(t.adapted_instructions)}</p></div>` : ""}${sub?.returned ? `<div class="notice preserve-lines"><strong>Una nueva oportunidad</strong><p>${esc(sub.return_message)}</p></div>` : ""}<div class="student-row-actions"><button class="btn small" data-task-ai="${id}">Pensar con Luma AI ${icon("spark", 14)}</button>${moduleEnabled("messages") ? `<button class="btn small" data-task-help="${id}">Pedir ayuda al profesor ${icon("heart", 14)}</button>` : ""}<button class="btn small" data-task-plan="${id}">Planear mi estudio</button>${sub ? `<button class="btn small" data-history="${sub.id}">Historial de versiones</button><button class="btn small" data-task-portfolio="${sub.id}">Guardar en mi portafolio</button>` : ""}</div>${sub ? `<section class="submission"><small>Tu entrega · ${dateFormat(sub.created)}</small><p>${esc(sub.body)}</p>${submissionFieldsView(t, sub.answers)}${sub.file ? `<a class="btn small" href="/api/file/${sub.id}">${icon("download", 14)} ${esc(sub.file)}</a>` : ""}${sub.grade != null ? `<div class="grade-feedback"><strong>${sub.grade}<small> / ${t.points}</small></strong><p>${esc(sub.feedback || "Tu profesor ya revisó tu trabajo.")}</p></div>` : ""}</section>` : ""}${sub?.grade != null ? '<span class="badge done">Trabajo revisado. ¡Sigue creciendo!</span>' : t.closed || (!t.allow_late && t.due < todayISO()) ? '<div class="notice">Esta actividad está cerrada. Puedes consultar tu entrega; para hacer cambios, contacta a tu profesor.</div>' : `<form id="submit-form"><input type="hidden" name="task" value="${t.id}">${textarea("body", "Tu respuesta", draft?.body ?? sub?.body ?? "", 'maxlength="10000" placeholder="Comparte lo que aprendiste…"')}${t.fields?.length ? `<section class="smart-submission"><h3>Tu recorrido de aprendizaje</h3>${smartFieldsHTML(t.fields, draft?.answers ?? sub?.answers ?? {})}</section>` : ""}<div class="draft-hint" id="draft-hint">${draft ? "Borrador guardado en tu cuenta" : "Tu respuesta se guarda como borrador al hacer una pausa."}</div>${t.submission_mode === "text" ? '<input type="file" name="file" hidden><p class="form-help">Esta actividad acepta una respuesta de texto.</p>' : attachmentField(t.submission_mode === "file" ? "Archivo requerido · máximo 5 MB" : undefined)}<div id="file-preview" class="file-preview" hidden></div><div class="upload-status" aria-live="polite" hidden></div><div class="form-actions"><button type="button" class="btn" id="save-draft">Guardar borrador</button><button class="btn primary">${sub ? "Actualizar entrega" : "Entregar actividad"} ${icon("send", 14)}</button></div><p class="form-help">El borrador guarda el texto. El archivo se envía al entregar la actividad.</p></form>`}`,
+      `${intro}${t.adapted_instructions ? `<div class="notice preserve-lines"><strong>Tu acompañamiento individual</strong><p>${esc(t.adapted_instructions)}</p></div>` : ""}${sub?.returned ? `<div class="notice preserve-lines"><strong>Una nueva oportunidad</strong><p>${esc(sub.return_message)}</p></div>` : ""}<div class="student-row-actions"><button class="btn small" data-task-ai="${id}">Pensar con Luma AI ${icon("spark", 14)}</button>${moduleEnabled("messages") ? `<button class="btn small" data-task-help="${id}">Pedir ayuda al profesor ${icon("heart", 14)}</button>` : ""}<button class="btn small" data-task-plan="${id}">Planear mi estudio</button>${sub ? `<button class="btn small" data-history="${sub.id}">Historial de versiones</button><button class="btn small" data-task-portfolio="${sub.id}">Guardar en mi portafolio</button>` : ""}</div>${sub ? `<section class="submission"><small>Tu entrega · ${dateFormat(sub.created)}</small><p>${esc(sub.body)}</p>${submissionFieldsView(t, sub.answers)}${sub.file ? `<a class="btn small" href="/api/file/${sub.id}">${icon("download", 14)} ${esc(sub.file)}</a>` : ""}${sub.grade != null ? `<div class="grade-feedback"><strong>${sub.grade}<small> / ${t.points}</small></strong><p>${esc(sub.feedback || "Tu profesor ya revisó tu trabajo.")}</p></div>` : ""}</section>` : ""}${sub?.grade != null ? '<span class="badge done">Trabajo revisado. ¡Sigue creciendo!</span>' : t.closed || (!t.allow_late && t.due < todayISO()) ? '<div class="notice">Esta actividad está cerrada. Puedes consultar tu entrega; para hacer cambios, contacta a tu profesor.</div>' : `<form id="submit-form"><input type="hidden" name="task" value="${t.id}"><input type="hidden" name="expected_version" value="${sub?.version || 0}"><div class="delivery-checklist"><strong>Antes de entregar</strong><p>Revisa las instrucciones, los criterios de evaluación y tu archivo. Puedes actualizar tu entrega mientras no esté calificada y la actividad admita cambios.</p><span>Versión ${sub ? sub.version + 1 : 1} · ${t.points} puntos · ${dueLabel(t.due)}</span></div>${textarea("body", "Tu respuesta", draft?.body ?? sub?.body ?? "", 'maxlength="10000" placeholder="Comparte lo que aprendiste…"')}${t.fields?.length ? `<section class="smart-submission"><h3>Tu recorrido de aprendizaje</h3>${smartFieldsHTML(t.fields, draft?.answers ?? sub?.answers ?? {})}</section>` : ""}<div class="draft-hint" id="draft-hint">${draft ? "Borrador guardado en tu cuenta" : "Tu respuesta se guarda como borrador al hacer una pausa."}</div>${t.submission_mode === "text" ? '<input type="file" name="file" hidden><p class="form-help">Esta actividad acepta una respuesta de texto.</p>' : attachmentField(t.submission_mode === "file" ? "Archivo requerido · máximo 5 MB" : undefined)}<div id="file-preview" class="file-preview" hidden></div><div class="upload-status" aria-live="polite" hidden></div><label class="delivery-confirm"><input type="checkbox" required name="confirmed"><span>Revisé mi respuesta y el archivo que voy a entregar.</span></label><div class="form-actions"><button type="button" class="btn" id="save-draft">Guardar borrador</button><button class="btn primary">${sub ? "Actualizar entrega" : "Entregar actividad"} ${icon("send", 14)}</button></div><p class="form-help">El borrador guarda el texto. El archivo se envía al entregar la actividad.</p></form>`}`,
     );
     if (t.rubric?.criteria || t.fields?.length)
       $(".modal").classList.add("rubric-review");
@@ -1071,6 +1075,15 @@ function openTask(id) {
       } finally {
         saving = false;
         delete form.dataset.saving;
+        if (
+          form.isConnected &&
+          (form.elements.body.value !== value ||
+            JSON.stringify(collectSmartAnswers(form)) !==
+              JSON.stringify(answers))
+        ) {
+          clearTimeout(draftTimer);
+          draftTimer = setTimeout(() => saveDraft(), 1800);
+        }
       }
     };
     form.addEventListener("input", (e) => {
@@ -1140,7 +1153,39 @@ function openTask(id) {
         closeModal(true);
         clearDirty();
         render();
-        toast("¡Entrega guardada! Tu esfuerzo cuenta 🌷");
+        const receipt = S.submissions.find(
+          (x) => x.task === id && x.student === S.me.id,
+        );
+        modal(
+          "¡Tu entrega está guardada!",
+          `<div class="delivery-receipt"><span class="eyebrow">COMPROBANTE DE ENTREGA</span><h3>${esc(t.title)}</h3><p>${esc(course(t.course)?.title)}</p><strong>Entrega #${receipt.id} · Versión ${receipt.version}</strong><p>${dateFormat(receipt.created)} · ${esc(receipt.file || "Respuesta de texto y campos")}</p><span class="badge done">Recibida · pendiente de revisión</span><p>Tu trabajo y cada versión quedan registrados. Puedes volver a esta actividad para consultar el historial.</p><div class="form-actions"><button class="btn" id="receipt-download">Descargar comprobante</button><button class="btn primary" id="receipt-back">Ver mi entrega</button></div></div>`,
+        );
+        $("#receipt-download").onclick = () => {
+          const content = [
+            S.institution?.name || "Luma Campus",
+            "Comprobante de entrega",
+            `Estudiante: ${S.me.name}`,
+            `Actividad: ${t.title}`,
+            `Materia: ${course(t.course)?.title}`,
+            `Entrega: #${receipt.id}`,
+            `Versión: ${receipt.version}`,
+            `Fecha: ${receipt.created}`,
+            `Archivo: ${receipt.file || "Sin archivo"}`,
+            "Estado: recibida, pendiente de revisión",
+          ].join("\n");
+          const url = URL.createObjectURL(
+            new Blob([content], { type: "text/plain;charset=utf-8" }),
+          );
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `entrega-${receipt.id}-v${receipt.version}.txt`;
+          link.click();
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        };
+        $("#receipt-back").onclick = () => {
+          closeModal(true);
+          openTask(id);
+        };
       } catch (error) {
         modalError(error);
       } finally {
@@ -1155,7 +1200,7 @@ function openTask(id) {
       missing = c.students.filter((id) => !ss.some((s) => s.student === id));
     modal(
       t.title,
-      `${intro}<div class="activity-management"><button class="btn small" data-editor-task="${id}">Editar actividad</button><button class="btn small" id="toggle-task">${t.closed ? "Reabrir entregas" : "Cerrar entregas"}</button><span class="badge ${t.closed ? "closed" : ""}">${t.closed ? "Cerrada" : "Activa"}</span></div><div class="review-summary"><strong>${ss.length}/${c.students.length}</strong> entregas <span>${ss.filter((s) => s.grade == null).length} por revisar</span></div>${ss.map((s) => `<section class="submission"><div class="post-head">${avatar(person(s.student))}<div><strong>${esc(person(s.student)?.name)}</strong><small>${dateFormat(s.created)} · ${s.grade != null ? "Calificada" : "Pendiente de revisión"}</small></div></div><p>${esc(s.body)}</p>${submissionFieldsView(t, s.answers)}${s.file ? `<a class="btn small" href="/api/file/${s.id}">${icon("download", 14)} ${esc(s.file)}</a>` : ""}<button class="btn small" data-history="${s.id}">Historial</button>${s.returned ? `<div class="notice">Devuelta para corregir: ${esc(s.return_message)}</div>` : `<button class="btn small" data-return-submission="${s.id}">Devolver para corregir</button>`}<form class="grade-form" ${s.returned ? "hidden" : ""} data-id="${s.id}">${gradingFields(t, s)}<button class="btn primary small">Guardar calificación</button></form></section>`).join("") || empty("Aún no hay entregas.")}${missing.length ? `<div class="missing-students"><h3>Por entregar · ${missing.length}</h3>${missing.map((id) => `<span>${avatar(person(id))}${esc(person(id)?.name)}</span>`).join("")}</div>` : ""}`,
+      `${intro}<div class="activity-management"><button class="btn small" data-editor-task="${id}">Editar actividad</button><button class="btn small" id="toggle-task">${t.closed ? "Reabrir entregas" : "Cerrar entregas"}</button><span class="badge ${t.closed ? "closed" : ""}">${t.closed ? "Cerrada" : "Activa"}</span></div><div class="review-summary"><strong>${ss.length}/${c.students.length}</strong> entregas <span>${ss.filter((s) => s.grade == null).length} por revisar</span></div>${ss.map((s) => `<section class="submission"><div class="post-head">${avatar(person(s.student))}<div><strong>${esc(person(s.student)?.name)}</strong><small>${dateFormat(s.created)} · ${s.grade != null ? "Calificada" : "Pendiente de revisión"}</small></div></div><p>${esc(s.body)}</p>${submissionFieldsView(t, s.answers)}${s.file ? `<a class="btn small" href="/api/file/${s.id}">${icon("download", 14)} ${esc(s.file)}</a>` : ""}<button class="btn small" data-history="${s.id}">Historial</button>${s.returned ? `<div class="notice">Devuelta para corregir: ${esc(s.return_message)}</div>` : `<button class="btn small" data-return-submission="${s.id}">Devolver para corregir</button>`}<form class="grade-form" ${s.returned ? "hidden" : ""} data-id="${s.id}">${gradingFields(t, s)}<button class="btn small" value="draft" formnovalidate>Guardar evaluación privada</button><button class="btn primary small" value="publish">Publicar calificación</button></form></section>`).join("") || empty("Aún no hay entregas.")}${missing.length ? `<div class="missing-students"><h3>Por entregar · ${missing.length}</h3>${missing.map((id) => `<span>${avatar(person(id))}${esc(person(id)?.name)}</span>`).join("")}</div>` : ""}`,
     );
     if (t.rubric?.criteria || t.fields?.length)
       $(".modal").classList.add("rubric-review");
@@ -1203,14 +1248,18 @@ function openTask(id) {
           busy(b, true);
           modalPending(true);
           try {
-            S = await api("grade", {
+            S = await api(b.value === "draft" ? "grade-draft" : "grade", {
               ...gradingPayload(form, t),
               submission: +form.dataset.id,
             });
             modalPending(false);
             render();
             openTask(id);
-            toast("Calificación guardada.");
+            toast(
+              b.value === "draft"
+                ? "Evaluación privada guardada."
+                : "Calificación publicada.",
+            );
           } catch (error) {
             modalError(error);
           } finally {

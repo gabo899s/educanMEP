@@ -179,11 +179,16 @@ def mutate_workspace(request,u,path,d):
             TaskAdaptation.objects.update_or_create(task=t,student_id=student,defaults={'due':due,'instructions':text(d,'instructions',5000,False),'private_notes':text(d,'private_notes',3000,False)})
     elif path=='submission-return':
         s=Submission.objects.select_related('task').get(pk=d['submission']);scoped_course(u,s.task.course_id)
+        from .grading import check_revision
+        from .models import GradeReview
+        check_revision(s,d)
         if s.returned:raise ValueError('Esta entrega ya está devuelta; espera la nueva versión.')
+        GradeReview.objects.filter(submission=s).delete()
+        s.review_revision+=1
         message=text(d,'message',2000)
         save_version(s);s.returned=True;s.return_message=message
         v=s.versions.get(number=s.version);v.return_message=message;v.save(update_fields=['return_message'])
-        s.grade=None;s.rubric_assessment={};s.reviewed_at=None;s.save(update_fields=['returned','return_message','grade','rubric_assessment','reviewed_at'])
+        s.grade=None;s.rubric_assessment={};s.reviewed_at=None;s.save(update_fields=['returned','return_message','grade','rubric_assessment','reviewed_at','review_revision'])
     elif path.startswith('tutoring-'):
         slot=TutoringSlot.objects.get(pk=d['id']) if d.get('id') else TutoringSlot(teacher=u)
         if path in STUDENT_ACTIONS:

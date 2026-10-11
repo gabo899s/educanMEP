@@ -8,6 +8,12 @@ Plataforma escolar funcional con una identidad visual colorida, cálida y coquet
 
 El ZIP incluye el código, los instaladores, las tipografías, las dependencias de Python incluidas y la guía completa. No incluye una base de datos anterior ni sesiones. Consulta `downloads/SHA256SUMS.txt` para verificar su integridad.
 
+## Luma Campus 10 · Evaluar y entregar
+
+Evaluaciones privadas completas o en progreso, publicación individual y por grupos, revisión del trabajo junto a su rúbrica, navegación entre estudiantes, protección frente a versiones desactualizadas, devoluciones con historial y comprobantes descargables de entrega. Conserva el diseño cálido y colorido y adapta la revisión a móviles.
+
+Consulta [CALIFICACIONES.md](CALIFICACIONES.md) y la [actualización completa a v10](INSTALACION.md#17-actualizar-a-luma-campus-10--evaluar-y-entregar).
+
 ## Luma Campus 9 · Hogar y colegio
 
 Nuevo perfil Familiar / encargado con vínculos verificados, varios hijos, información académica autorizada, comunicados y respuestas, formularios condicionales, permisos, eventos con cupos, conversaciones con archivos, justificaciones, citas, trámites con historial y matrícula real. Añade acompañamiento revisado por docentes, bienvenida guiada, resúmenes, traducciones revisadas y notificaciones opcionales por correo, SMS y Web Push.

@@ -23,7 +23,7 @@ ACTION_PERMISSIONS = {
     'favorite': 'courses.favorite', 'message': 'messages.use', 'read': 'messages.use',
     'post': 'wall.participate', 'post-edit': 'wall.participate', 'post-delete': 'wall.participate',
     'post-pin': 'assignments.manage', 'task': 'assignments.manage', 'task-edit': 'assignments.manage', 'task-toggle': 'assignments.manage',
-    'submit': 'assignments.submit', 'draft': 'assignments.submit', 'grade': 'grades.manage',
+    'submit': 'assignments.submit', 'draft': 'assignments.submit', 'grade': 'grades.manage', **{k:'grades.manage' for k in ['grade-draft','grade-discard','grade-publish']},
     'course': 'courses.manage', 'course-edit': 'courses.manage', 'user': 'users.manage', 'user-edit': 'users.manage',
     'membership': 'membership.manage', 'event': 'events.manage', 'event-edit': 'events.manage', 'event-delete': 'events.manage',
     'resource': 'materials.manage', 'resource-edit': 'materials.manage', 'resource-delete': 'materials.manage', 'attendance': 'attendance.manage',

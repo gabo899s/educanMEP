@@ -69,6 +69,9 @@ function teacherReview() {
   const matches = (s, t) =>
     teacherFilter === "all" ||
     (teacherFilter === "pending" && s.grade == null && !s.returned) ||
+    (teacherFilter === "prepared" &&
+      s.review_draft &&
+      s.review_draft.grade != null) ||
     (teacherFilter === "graded" && s.grade != null) ||
     (teacherFilter === "returned" && s.returned) ||
     (teacherFilter === "late" &&
@@ -97,9 +100,17 @@ function teacherReview() {
         )
         .map((id) => ({ t, id })),
     );
-  return `<div class="studio-stats"><div><strong>${counts.pending}</strong><small>Por evaluar</small></div><div><strong>${counts.graded}</strong><small>Evaluadas</small></div><div><strong>${counts.returned}</strong><small>Devueltas</small></div><div><strong>${missing.length}</strong><small>Sin entrega</small></div></div><section class="panel"><div class="teacher-filters">${teacherCourseFilter()}<label>Estado<select id="teacher-review-filter">${[
+  return `<div class="studio-stats"><div><strong>${counts.pending}</strong><small>Por evaluar</small></div><div><strong>${counts.graded}</strong><small>Evaluadas</small></div><div><strong>${counts.returned}</strong><small>Devueltas</small></div><div><strong>${missing.length}</strong><small>Sin entrega</small></div></div><section class="panel">${
+    submissions.some((s) => s.review_draft && s.review_draft.grade != null)
+      ? `<div class="review-publish-bar"><div><strong>${submissions.filter((s) => s.review_draft && s.review_draft.grade != null).length} evaluaciones privadas</strong><p>Revisa los borradores antes de publicar. Se notifican como resultados, sin cambiar las entregas.</p></div><button class="btn primary small" id="publish-reviewed" data-review-ids="${submissions
+          .filter((s) => s.review_draft)
+          .map((s) => s.id)
+          .join(",")}">Revisar y publicar</button></div>`
+      : ""
+  }<div class="teacher-filters">${teacherCourseFilter()}<label>Estado<select id="teacher-review-filter">${[
     ["pending", "Por evaluar"],
     ["all", "Todas"],
+    ["prepared", "Listas para publicar"],
     ["late", "Tardías"],
     ["graded", "Evaluadas"],
     ["returned", "Devueltas"],
@@ -130,7 +141,7 @@ function teacherReview() {
         : submissions
             .map((s) => {
               const t = indexMaps.tasks.get(s.task);
-              return `<article class="teacher-list-row"><div>${avatar(person(s.student))}<h3>${esc(person(s.student)?.name)}</h3><p>${esc(t.title)} · ${esc(course(t.course)?.title)} · Versión ${s.version || 1}</p><span class="badge">${s.returned ? "Esperando nueva versión" : s.grade != null ? s.grade + "/" + t.points : "Por evaluar"}</span></div><button class="btn primary small" data-review-submission="${s.id}">${s.returned ? "Consultar" : "Evaluar aquí"}</button><button class="btn small" data-history="${s.id}">Historial</button><button class="btn small" data-adapt-task="${t.id}" data-student="${s.student}">Adaptar</button></article>`;
+              return `<article class="teacher-list-row"><div>${avatar(person(s.student))}<h3>${esc(person(s.student)?.name)}</h3><p>${esc(t.title)} · ${esc(course(t.course)?.title)} · Versión ${s.version || 1}</p><span class="badge">${s.returned ? "Esperando nueva versión" : s.review_draft ? "Evaluación privada" : s.grade != null ? s.grade + "/" + t.points : "Por evaluar"}</span></div><button class="btn primary small" data-review-submission="${s.id}">${s.returned ? "Consultar" : "Evaluar aquí"}</button><button class="btn small" data-history="${s.id}">Historial</button><button class="btn small" data-adapt-task="${t.id}" data-student="${s.student}">Adaptar</button></article>`;
             })
             .join("") || empty("No hay entregas para este filtro.")
   }</section>`;
@@ -146,9 +157,13 @@ function teacherReviewSubmission(id) {
   const s = S.submissions.find((s) => s.id === id),
     t = indexMaps.tasks.get(s?.task);
   if (!t) return;
+  const queue = S.submissions
+      .filter((x) => x.task === s.task)
+      .sort((a, b) => a.id - b.id),
+    pos = queue.findIndex((x) => x.id === id);
   modal(
     "Revisar · " + person(s.student)?.name,
-    `<div class="editor-course-context">${esc(t.title)} · ${esc(course(t.course)?.title)} · Versión ${s.version || 1}</div><section class="submission"><p class="preserve-lines">${esc(s.body)}</p>${submissionFieldsView(t, s.answers)}${s.file ? `<a class="btn small" href="/api/file/${s.id}">Descargar ${esc(s.file)}</a>` : ""}</section>${s.returned ? `<div class="notice">Devuelta para corregir: ${esc(s.return_message)}</div>` : `<form id="teacher-grade-form">${gradingFields(t, s)}<div class="form-actions"><button type="button" class="btn" data-return-submission="${id}">Devolver para corregir</button><button class="btn primary">Guardar evaluación</button></div></form>`}`,
+    `<div class="review-navigation"><span>Entrega ${pos + 1} de ${queue.length} · ${esc(t.title)}</span>${pos > 0 ? `<button class="btn small" data-review-neighbor="${queue[pos - 1].id}">Anterior</button>` : ""}${pos >= 0 && pos < queue.length - 1 ? `<button class="btn small" data-review-neighbor="${queue[pos + 1].id}">Siguiente</button>` : ""}</div><div class="editor-course-context">${esc(t.title)} · ${esc(course(t.course)?.title)} · Versión ${s.version || 1}</div><div class="review-workbench"><section class="submission"><h3>Trabajo del estudiante</h3><small>${dateFormat(s.created)} · ${localSchoolDateTime(s.created).slice(0, 10) > teacherStudentDue(t, s.student) ? "Entrega tardía" : "Entrega dentro del plazo"}</small><p class="preserve-lines">${esc(s.body)}</p>${submissionFieldsView(t, s.answers)}${s.file ? `<a class="btn small" href="/api/file/${s.id}">Descargar ${esc(s.file)}</a>` : ""}</section>${s.returned ? `<div class="notice">Devuelta para corregir: ${esc(s.return_message)}</div>` : `<form id="teacher-grade-form">${gradingFields(t, s)}<div class="form-actions"><button type="button" class="btn" data-return-submission="${id}">Devolver para corregir</button><button class="btn" name="review_action" value="draft" formnovalidate>Guardar evaluación privada</button>${s.review_draft ? `<button type="button" class="btn" id="discard-review">Descartar borrador</button>` : ""}<button class="btn primary" name="review_action" value="publish">Publicar evaluación</button></div></form>`}</div>`,
     true,
   );
   const f = $("#teacher-grade-form");
@@ -157,17 +172,46 @@ function teacherReviewSubmission(id) {
     f.onsubmit = async (e) => {
       e.preventDefault();
       await teacherMutation(
-        "grade",
+        e.submitter?.value === "draft" ? "grade-draft" : "grade",
         { submission: id, ...gradingPayload(f, t) },
         e.submitter,
         () => {
           closeModal(true);
           render();
-          toast("Evaluación guardada.");
+          toast(
+            e.submitter?.value === "draft"
+              ? "Evaluación privada guardada. Aún no se comparte."
+              : "Evaluación publicada para el estudiante.",
+          );
         },
       );
     };
   }
+  document.querySelectorAll("[data-review-neighbor]").forEach(
+    (b) =>
+      (b.onclick = () => {
+        closeModal();
+        if (!$("#modal-root").children.length)
+          teacherReviewSubmission(+b.dataset.reviewNeighbor);
+      }),
+  );
+  const discard = $("#discard-review");
+  if (discard)
+    discard.onclick = () =>
+      teacherMutation(
+        "grade-discard",
+        {
+          submission: id,
+          version: s.version,
+          review_revision: s.review_revision,
+        },
+        discard,
+        () => {
+          closeModal(true);
+          render();
+          teacherReviewSubmission(id);
+        },
+      );
   bindTeacherWorkspace();
 }
 async function teacherMutation(path, data, button, success) {
@@ -477,11 +521,17 @@ function openAdaptation(taskId, studentId) {
     );
 }
 function openReturn(id) {
+  const submission = S.submissions.find((s) => s.id === id);
   formModal(
     "Devolver para una nueva oportunidad",
     `${textarea("message", "Qué debe revisar el estudiante", "", 'required maxlength="2000"')}<p class="notice">La versión y su evaluación quedan en el historial. La nota actual se retira hasta revisar la nueva entrega. Si la actividad está cerrada o vencida, reábrela o ajusta la fecha individual.</p>`,
     "submission-return",
-    (d) => ({ ...d, submission: id }),
+    (d) => ({
+      ...d,
+      submission: id,
+      version: submission.version,
+      review_revision: submission.review_revision,
+    }),
     "Trabajo devuelto para corregir.",
   );
 }
@@ -749,6 +799,42 @@ function bindTeacherPublication(t) {
     });
 }
 function bindTeacherWorkspace() {
+  const publish = $("#publish-reviewed");
+  if (publish)
+    publish.onclick = () => {
+      const ids = publish.dataset.reviewIds.split(",").map(Number);
+      const reviews = S.submissions
+        .filter(
+          (s) =>
+            s.review_draft &&
+            s.review_draft.grade != null &&
+            ids.includes(s.id),
+        )
+        .slice(0, 50);
+      modal(
+        "Publicar evaluaciones",
+        `<p class="notice">Estas ${reviews.length} evaluaciones (máximo 50 por publicación) se compartirán con los estudiantes. Si alguna entrega cambia, se detiene toda la publicación.</p>${reviews.map((s) => `<article class="teacher-list-row"><div><strong>${esc(person(s.student)?.name)}</strong><p>${esc(indexMaps.tasks.get(s.task)?.title)} · ${s.review_draft.grade ?? "Sin completar"}/${indexMaps.tasks.get(s.task)?.points}</p><p class="preserve-lines">${esc(s.review_draft.feedback || "Sin comentario general")}</p></div></article>`).join("")}<div class="form-actions"><button class="btn primary" id="confirm-publish-reviews">Publicar ${reviews.length} evaluaciones</button></div>`,
+        true,
+      );
+      $("#confirm-publish-reviews").onclick = (e) =>
+        teacherMutation(
+          "grade-publish",
+          {
+            reviews: reviews.map((s) => ({
+              submission: s.id,
+              version: s.version,
+              review_revision: s.review_revision,
+            })),
+          },
+          e.currentTarget,
+          () => {
+            closeModal(true);
+            render();
+            toast("Evaluaciones publicadas.");
+          },
+        );
+    };
+
   $("#teacher-plan-week")?.addEventListener("change", (e) => {
     teacherPlanWeek = e.target.value;
     render();
