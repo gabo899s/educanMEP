@@ -2,8 +2,8 @@ LUMA CAMPUS 9 — VERIFICACIÓN
 
 Entorno: Linux, Python 3.12, Django 5.2.18, SQLite y Chromium.
 
-- 209 pruebas del servidor correctas en el código extraído del ZIP final.
-  Incluyen las 164 anteriores y 45 de familias, comunicaciones y entregas.
+- 213 pruebas del servidor correctas en el código extraído del ZIP final.
+  Incluyen las 164 anteriores y 49 de familias, comunicaciones y entregas.
 - Django check, migraciones pendientes y pip check: correctos.
 - Migraciones 0001–0014 aplicadas en una instalación independiente.
 - Instalación básica offline desde las doce dependencias incluidas.
@@ -28,6 +28,7 @@ Recorridos comprobados en Chromium:
 - Traducción revisada, idioma preferido y conservación del original.
 - Solicitud de matrícula con asignación real de materias.
 - Evento con cupo y lista de espera; bienvenida confirmada.
+- Recordatorio de cita, navegación a la reserva y desactivación persistente.
 - Búsqueda familiar, recarga de ruta y apertura de documentos autorizados.
 - Portal móvil de 390 px: sin desbordamientos ni errores JavaScript.
 - Regresión docente: rúbricas, formularios condicionales, borradores,
@@ -48,6 +49,11 @@ Permisos y casos protegidos:
 - Consultas académicas sin crecimiento de consultas por cada actividad.
 - Envíos con clave única, horarios de silencio, resúmenes, cancelación,
   reintentos controlados y resultado desconocido tras interrupciones.
+- Los resúmenes vuelven a comprobar cada vínculo antes de enviarse,
+  incluso al revocar solamente uno de varios hijos.
+- Avisos de respuestas y trámites con contenido externo genérico.
+- Recordatorios únicos de cita, cancelados al liberar la reserva,
+  retirar la matrícula o desactivar la preferencia.
 - Cambiar canales no vuelve a enviar automáticamente publicaciones pasadas.
 - Procesador de avisos ejecutado en instalación independiente.
 - Dependencias opcionales Web Push instaladas y su API comprobada.

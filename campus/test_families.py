@@ -289,3 +289,39 @@ class FamilyTests(TestCase):
         with patch('campus.views.mutate',side_effect=OperationalError('database is locked')):
             r=self.post('teacher','family-publish',{})
         self.assertEqual(r.status_code,409);self.assertIn('formulario se conserva',r.json()['error'])
+    def test_digest_rechecks_each_child_before_email_after_partial_revocation(self):
+        from .family_delivery import transport
+        GuardianLink.objects.create(guardian=self.us['guardian'],student=self.us['student2'],verified_by=self.us['admin'])
+        profile=self.us['guardian'].profile;profile.preferences={'family':{'channels':['email'],'frequency':'daily'}};profile.save()
+        prepare_digests();d=FamilyDelivery.objects.get();self.assertIn('student: ',d.body)
+        self.link.active=False;self.link.save()
+        with override_settings(LUMA_SMTP_HOST='smtp.example.com',LUMA_EMAIL_FROM='school@example.com'),patch('campus.family_delivery.get_connection'),patch('campus.family_delivery.EmailMessage') as email:
+            email.return_value.send.return_value=1;transport(d)
+            body=email.call_args.args[1];self.assertNotIn('student: ',body);self.assertIn('student2: ',body)
+    def test_appointment_reminder_is_unique_and_cancels_after_release(self):
+        from .family_delivery import prepare_appointment_reminders
+        profile=self.us['guardian'].profile;profile.preferences={'family':{'channels':['email'],'quiet_start':'00:00','quiet_end':'00:00'}};profile.save()
+        a=FamilyAppointment.objects.create(staff=self.us['teacher'],course=self.c,guardian=self.us['guardian'],student=self.us['student'],starts=self.now+timedelta(hours=2),minutes=30,location='Sala')
+        prepare_appointment_reminders(self.now);prepare_appointment_reminders(self.now);self.assertEqual(FamilyDelivery.objects.count(),1)
+        profile.preferences['family']['remind_appointments']=False;profile.save()
+        with patch('campus.family_delivery.transport') as send:process();send.assert_not_called()
+        self.assertEqual(FamilyDelivery.objects.get().status,'cancelled')
+        profile.preferences['family']['remind_appointments']=True;profile.save()
+        FamilyDelivery.objects.update(status='pending')
+        a.guardian=None;a.student=None;a.save()
+        with patch('campus.family_delivery.transport') as send:process();send.assert_not_called()
+        self.assertEqual(FamilyDelivery.objects.get().status,'cancelled')
+    def test_private_staff_reply_queues_notice_and_revocation_cancels_it(self):
+        profile=self.us['guardian'].profile;profile.preferences={'family':{'channels':['email'],'quiet_start':'00:00','quiet_end':'00:00'}};profile.save()
+        c=FamilyConversation.objects.create(guardian=self.us['guardian'],student=self.us['student'],staff=self.us['teacher'],subject='Consulta')
+        self.assertEqual(self.post('teacher','family-reply',{'id':c.id,'body':'Contenido privado de la conversación'}).status_code,200)
+        d=FamilyDelivery.objects.get();self.assertNotIn('Contenido privado',d.body)
+        self.link.active=False;self.link.save()
+        with patch('campus.family_delivery.transport') as send:process();send.assert_not_called()
+        d.refresh_from_db();self.assertEqual(d.status,'cancelled')
+    def test_booked_appointment_requires_its_child_still_enrolled(self):
+        from .families import appointment_visible
+        GuardianLink.objects.create(guardian=self.us['guardian'],student=self.us['student2'],verified_by=self.us['admin'])
+        a=FamilyAppointment.objects.create(staff=self.us['teacher'],course=self.c,guardian=self.us['guardian'],student=self.us['student'],starts=self.now+timedelta(hours=2),minutes=30,location='Sala')
+        self.assertTrue(appointment_visible(self.us['guardian']).filter(pk=a.pk).exists())
+        self.c.students.remove(self.us['student']);self.assertFalse(appointment_visible(self.us['guardian']).filter(pk=a.pk).exists())

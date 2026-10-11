@@ -670,10 +670,11 @@ function familySettingsForm() {
         ["fr", "Francés"],
       ],
       o.language,
-    )}<div class="form-grid">${field("quiet_start", "Silencio desde", "time", o.quiet_start, "required")}${field("quiet_end", "Silencio hasta", "time", o.quiet_end, "required")}</div>${field("office_hours", "Horario de atención", "text", o.office_hours, 'maxlength="200"')}<div class="form-grid">${field("absence_threshold", "Umbral de ausencias en 30 días", "number", o.absence_threshold, 'required min="1" max="30"')}${field("missing_threshold", "Umbral de actividades pendientes", "number", o.missing_threshold, 'required min="1" max="30"')}</div><p class="form-help">Para SMS, registra tu teléfono internacional en Mi perfil. Los avisos urgentes pueden llegar durante el horario de silencio.</p>`,
+    )}<div class="form-grid">${field("quiet_start", "Silencio desde", "time", o.quiet_start, "required")}${field("quiet_end", "Silencio hasta", "time", o.quiet_end, "required")}</div>${field("office_hours", "Horario de atención", "text", o.office_hours, 'maxlength="200"')}<label class="setting-toggle"><input name="remind_appointments" type="checkbox" ${o.remind_appointments !== false ? "checked" : ""}><span>Recordarme mis citas durante las 24 horas previas</span></label><div class="form-grid">${field("absence_threshold", "Umbral de ausencias en 30 días", "number", o.absence_threshold, 'required min="1" max="30"')}${field("missing_threshold", "Umbral de actividades pendientes", "number", o.missing_threshold, 'required min="1" max="30"')}</div><p class="form-help">Para SMS, registra tu teléfono internacional en Mi perfil. Los avisos urgentes pueden llegar durante el horario de silencio.</p>`,
     "family-settings",
     (d, f) => ({
       ...d,
+      remind_appointments: d.remind_appointments === "on",
       channels: ["inapp", ...f.getAll("channels")],
       absence_threshold: +d.absence_threshold,
       missing_threshold: +d.missing_threshold,
@@ -997,6 +998,25 @@ function familyNotifications() {
         icon: "message",
         color: "purple",
       });
+  if (S.me.role === "guardian" && fs.options.remind_appointments !== false)
+    for (const appointment of fs.appointments || []) {
+      const start = new Date(appointment.starts),
+        now = new Date();
+      if (
+        appointment.guardian === S.me.id &&
+        !appointment.cancelled &&
+        start > now &&
+        start - now <= 86400000
+      )
+        items.push({
+          type: "family-appointment",
+          id: appointment.id,
+          title: "Tu cita con el colegio",
+          body: familyTime(appointment.starts) + " · " + appointment.location,
+          icon: "calendar",
+          color: "green",
+        });
+    }
   return items;
 }
 function familyFormMeta(path) {

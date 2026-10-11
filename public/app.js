@@ -1781,7 +1781,11 @@ function openNotifications() {
         const type = b.dataset.noteType,
           id = +b.dataset.noteId;
         closeModal();
-        if (type === "family") {
+        if (type === "family-appointment") {
+          view = "families";
+          familyTab = "appointments";
+          render();
+        } else if (type === "family") {
           view = "families";
           familyTab = "publications";
           render();

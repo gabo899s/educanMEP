@@ -27,7 +27,7 @@ KINDS={'announcement','permission','event','onboarding'}
 CATEGORIES={'academic','attendance','procedure','wellbeing'}
 STATES={'received','review','information','resolved','rejected'}
 DEFAULTS={'channels':['inapp'],'frequency':'immediate','language':'es','quiet_start':'20:00','quiet_end':'07:00',
-          'office_hours':'Lunes a viernes, de 7:00 a 16:00','absence_threshold':3,'missing_threshold':3}
+          'office_hours':'Lunes a viernes, de 7:00 a 16:00','remind_appointments':True,'absence_threshold':3,'missing_threshold':3}
 
 def clock(value,optional=False):
     if not value and optional:return None
@@ -100,8 +100,9 @@ def appointment_visible(u):
     if u.profile.role=='teacher':return q.filter(staff=u)
     if u.profile.role=='guardian':
         ids=links_for(u).values('student_id')
-        return q.filter(Q(guardian=u,student_id__in=ids)|Q(guardian__isnull=True,cancelled=False,starts__gt=timezone.now())).filter(
-            Q(course__isnull=True)|Q(course__students__id__in=ids)).distinct()
+        booked=Q(guardian=u,student_id__in=ids)&(Q(course__isnull=True)|Q(course__students__id=F('student_id')))
+        available=Q(guardian__isnull=True,cancelled=False,starts__gt=timezone.now())&(Q(course__isnull=True)|Q(course__students__id__in=ids))
+        return q.filter(booked|available).distinct()
     return q.none()
 
 def put_file(request,r):
@@ -317,6 +318,9 @@ def mutate(request,u,path,d):
         if category not in CATEGORIES:raise ValueError('Selecciona un asunto válido.')
         c=FamilyConversation.objects.create(guardian=g,student=s,staff=t,subject=text(d,'subject',160),category=category)
         r=FamilyReply(conversation=c,author=u,body=text(d,'body',6000));put_file(request,r);r.save()
+        if u.id==c.staff_id:
+            from .family_delivery import enqueue_notice
+            enqueue_notice(c.guardian,f'conversation:{c.id}:reply:{r.id}','Un mensaje del colegio','El colegio inició una conversación. Consulta Hogar y colegio → Conversaciones.')
     elif path in ['family-reply','family-close-conversation','family-read-conversation']:
         c=conversation(u,d['id'])
         if path=='family-read-conversation':
@@ -325,6 +329,9 @@ def mutate(request,u,path,d):
         else:
             if c.closed:raise ValueError('Reabre la conversación antes de responder.')
             r=FamilyReply(conversation=c,author=u,body=text(d,'body',6000));put_file(request,r);r.save()
+            if u.id==c.staff_id:
+                from .family_delivery import enqueue_notice
+                enqueue_notice(c.guardian,f'conversation:{c.id}:reply:{r.id}','Un mensaje del colegio','Tienes una respuesta nueva en Hogar y colegio → Conversaciones.')
             c.replies.exclude(author=u).filter(read_at__isnull=True).update(read_at=timezone.now())
         c.save()
     elif path=='family-justify':
@@ -393,7 +400,9 @@ def mutate(request,u,path,d):
         if cs.count()!=len(ids):raise ValueError('Selecciona materias activas con un docente activo.')
         for c in cs:c.students.add(s)
         r.status='resolved';r.responsible=u;r.save()
-        FamilyRequestUpdate.objects.create(request=r,author=u,status='resolved',body='Matrícula confirmada en: '+', '.join(c.title for c in cs))
+        update=FamilyRequestUpdate.objects.create(request=r,author=u,status='resolved',body='Matrícula confirmada en: '+', '.join(c.title for c in cs))
+        from .family_delivery import enqueue_notice
+        enqueue_notice(r.guardian,f'request:{r.id}:update:{update.id}','Matrícula confirmada','El colegio confirmó tu solicitud de matrícula. Consulta Hogar y colegio → Trámites.')
         audit(u,path,f'Matrícula de estudiante #{s.id}: {len(ids)} materias; trámite #{r.id}')
     elif path=='family-request-update':
         r=request_record(u,d['id']);status=d.get('status',r.status)
@@ -406,7 +415,10 @@ def mutate(request,u,path,d):
             elif not r.responsible:r.responsible=u
         h=FamilyRequestUpdate(request=r,author=u,status=status,body=text(d,'body',6000));put_file(request,h);h.save()
         r.status=status;r.save()
-        if role=='admin':audit(u,path,f'Trámite #{r.id}: {status}')
+        if role=='admin':
+            audit(u,path,f'Trámite #{r.id}: {status}')
+            from .family_delivery import enqueue_notice
+            enqueue_notice(r.guardian,f'request:{r.id}:update:{h.id}','Novedades en tu trámite','El colegio actualizó una solicitud. Consulta Hogar y colegio → Trámites.')
     elif path=='family-support':
         s=student(u,d['student']);c=getcourse(u,d['course']);staff(u,c)
         if not c.students.filter(pk=s.id).exists():raise PermissionError('Selecciona un estudiante matriculado en esta materia.')
@@ -425,7 +437,7 @@ def mutate(request,u,path,d):
         frequency=d.get('frequency','immediate');language=d.get('language','es')
         if frequency not in ['immediate','daily','weekly'] or language not in ['es','en','pt','fr']:raise ValueError('Selecciona preferencias válidas.')
         start=text(d,'quiet_start',5);end=text(d,'quiet_end',5);time.fromisoformat(start);time.fromisoformat(end)
-        opt={'channels':list(dict.fromkeys(['inapp',*channels])),'frequency':frequency,'language':language,'quiet_start':start,'quiet_end':end,
+        opt={'remind_appointments':boolean(d.get('remind_appointments',True)),'channels':list(dict.fromkeys(['inapp',*channels])),'frequency':frequency,'language':language,'quiet_start':start,'quiet_end':end,
              'office_hours':text(d,'office_hours',200,False),'absence_threshold':integer(d.get('absence_threshold',3),1,30),
              'missing_threshold':integer(d.get('missing_threshold',3),1,30)}
         p=u.profile;p.preferences={**p.preferences,'family':opt};p.save(update_fields=['preferences'])
